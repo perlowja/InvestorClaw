@@ -91,16 +91,19 @@ That perspective is part of why the project emphasizes compact agent outputs, ra
 InvestorClaw was developed and tested on the following reference systems:
 
 **Developer Workstation**
-- OS: macOS 26.5 (build 25F5042g, Apple Silicon M1 Max)
+- OS: macOS 26.5 (build 25F5042g)
+- CPU: Apple M1 Max (10-core: 8 performance + 2 efficiency)
+- RAM: 32 GB unified memory
 - Python: 3.14.3
 - OpenClaw: 2026.4.9 (0512059)
 - role: primary development, control-path testing, OpenClaw-side workflow validation
 
 **Inference Host**
 - OS: Debian GNU/Linux 13 (trixie)
-- Python: 3.13.5
-- CPU: AMD Ryzen Threadripper PRO 5945WX
+- CPU: AMD Ryzen Threadripper PRO 5945WX (12-core, 24 threads)
+- RAM: 128 GB
 - GPU: NVIDIA RTX 4500 Ada Generation (23034 MiB VRAM), driver 595.58.03
+- Python: 3.13.5
 - Ollama: 0.20.3
 - role: local consultation model and GPU-backed enrichment testing
 
@@ -126,24 +129,49 @@ Although development and validation were done on relatively powerful systems, In
 
 ## Installation
 
-**Via OpenClaw** (recommended): install from the ClawHub skill marketplace.
+> **ClawHub marketplace listing is in progress.** Until then, install directly from GitHub using the steps below.
 
-**Manual install**:
+### Installing from GitHub (current method)
+
 ```bash
-git clone https://github.com/perlowja/InvestorClaw.git
-cd InvestorClaw
-pip install -r requirements.txt
-python3 tests_smoke.py
-python3 investorclaw.py setup
+# 1. Clone the repository to a stable local path
+git clone https://github.com/perlowja/InvestorClaw.git ~/Projects/InvestorClaw
+
+# 2. Install Python dependencies
+pip install -r ~/Projects/InvestorClaw/requirements.txt
+
+# 3. Register the plugin with OpenClaw
+openclaw plugins install --link ~/Projects/InvestorClaw
+
+# 4. Configure API keys
+cp ~/Projects/InvestorClaw/.env.example ~/Projects/InvestorClaw/.env
+# Edit .env — add at minimum FINNHUB_KEY for market data
+
+# 5. Run first-time setup
+python3 ~/Projects/InvestorClaw/investorclaw.py setup
+
+# 6. Restart the OpenClaw gateway to load the plugin
+openclaw gateway restart
 ```
 
-For a full contributor install:
+Verify the plugin loaded after restart:
+```bash
+openclaw plugins inspect investorclaw
+```
+
+Run the smoke test to confirm the skill is fully operational:
+```bash
+python3 ~/Projects/InvestorClaw/tests_smoke.py
+```
+
+### Developer / contributor install
+
 ```bash
 pip install -r requirements.txt -r requirements-dev.txt
 pytest tests/ -v
 ```
 
-Configure API keys in `.env` (copy from `.env.example`). Guided setup and first-run helpers live under `setup/` and are invoked through the entry point.
+Guided setup and first-run helpers live under `setup/` and are invoked through the entry point. API key configuration is managed through `.env` (copied from `.env.example`) and optionally through the OpenClaw plugin config schema (`INVESTOR_CLAW_REPORTS_DIR`, `INVESTOR_CLAW_PORTFOLIO_DIR`, and provider key overrides).
 
 ## What Gets Installed
 
