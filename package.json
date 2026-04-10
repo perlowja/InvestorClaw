@@ -1,0 +1,20 @@
+{
+  "name": "@perlowja/investorclaw",
+  "version": "1.0.0",
+  "description": "Portfolio analysis skill for OpenClaw agents",
+  "type": "module",
+  "openclaw": {
+    "extensions": ["./index.ts"],
+    "compat": {
+      "pluginApi": ">=2026.0.0"
+    }
+  },
+  "peerDependencies": {
+    "@sinclair/typebox": "*",
+    "openclaw": "*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.4.0"
+  }
+}
