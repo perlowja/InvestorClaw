@@ -302,8 +302,6 @@ Why this is the default recommendation:
 - this split matches the architecture InvestorClaw was explicitly designed around
 
 > **Compliance note**: `xai/grok-4-1-fast` requires running `/portfolio update-identity` at the start of each session. Without this step, guardrail disclaimer compliance drops to near zero. This is an xAI quirk, not an InvestorClaw bug.
->
-> Config note: `xai/grok-4-1-fast-reasoning` and `grok-reasoning` are aliases for the same model. `xai/grok-4` (250K context) is a separate, smaller model — do not confuse them.
 
 ### Profile 2 — cloud-only premium / frontier deployment
 
@@ -312,10 +310,10 @@ If you do **not** have a local consultation model, the operational LLM must do m
 Recommended cloud-only frontier choices:
 
 - **xAI Grok 4.1 Fast** — `xai/grok-4-1-fast` (~2M context) — still the primary recommendation even without local consultation
-- **Google Gemini 3 Flash** — `google/gemini-3-flash-preview` (~1M context) — best high-context alternative
+- **Google Gemini 3.1 Pro** — `google/gemini-3.1-pro-preview` (~1M context, reasoning) — best high-context alternative
 - **Together AI / Llama 4 Maverick** — `together/meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8` (~1M context) — good cost/context ratio
-- **OpenAI GPT-5.4** — `openai/gpt-5.4` (266K context) — strong reasoning; verify your full session fits
-- **OpenAI GPT-4.1** — `openai/gpt-4.1` (~1M context) — solid; multimodal
+- **Together AI / Qwen3-235B** — `together/Qwen/Qwen3-235B-A22B-Instruct-2507-tput` (262K context) — strong reasoning, throughput-optimized
+- **OpenAI GPT-5.4** — `openai/gpt-5.4` (~272K context) — strong reasoning; verify your full session fits
 
 Important cost guidance:
 - frontier models are often reasonable for **specific InvestorClaw sessions**
@@ -371,12 +369,12 @@ See the [NemoClaw documentation](https://github.com/NVIDIA/NemoClaw) for deploym
 | Model | Context | Provider | Notes |
 |-------|---------|---------|-------|
 | `xai/grok-4-1-fast` ⭐ | ~2M | xAI | **Primary recommendation**; needs `update-identity` each session |
-| `google/gemini-3-flash-preview` | ~1M | Google | Best high-context alternative |
+| `google/gemini-3.1-pro-preview` | ~1M | Google | Best high-context alternative; reasoning enabled |
 | `together/meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8` | ~1M | Together AI | Good cost/context ratio |
-| `openai/gpt-4.1` | ~1M | OpenAI | Solid; multimodal |
-| `openai/gpt-5.4` | 266K | OpenAI | Strong reasoning; verify session fits |
-| `openai/gpt-5.3-chat-latest` | 391K | OpenAI | Newer; verify session fits |
-| `nvidia/nemotron-3-super-120b-a12b` | 256K | NVIDIA NIM | On-premise / air-gapped |
+| `together/Qwen/Qwen3-235B-A22B-Instruct-2507-tput` | 262K | Together AI | Strong reasoning; throughput-optimized |
+| `openai/gpt-5.4` | ~272K | OpenAI | Strong reasoning; verify session fits |
+| `openai/gpt-5.3-chat-latest` | ~400K | OpenAI | Verify session fits |
+| `nvidia/nemotron-3-super-120b-a12b` | 262K | NVIDIA NIM | On-premise / air-gapped; reasoning enabled |
 | `groq/llama-3.3-70b-versatile` | 128K | Groq | Fast inference; small portfolios only |
 | `openai/gpt-4.1-nano` | ~1M | OpenAI | ❌ **Not recommended** — 30K TPM Tier 1 limit |
 
