@@ -12,6 +12,17 @@ _ERR_NO_HOLDINGS = "No holdings.json found. Run '/portfolio holdings' first."
 _ERR_NO_BONDS = "No bond_analysis.json found. Run '/portfolio bonds' first."
 
 
+def _find_holdings_file(reports_dir: Path) -> str | None:
+    """Return the path to holdings.json, checking .raw/ first (new CDM location)."""
+    raw_path = reports_dir / ".raw" / "holdings.json"
+    if raw_path.exists():
+        return str(raw_path)
+    legacy_path = reports_dir / "holdings.json"
+    if legacy_path.exists():
+        return str(legacy_path)
+    return None
+
+
 def synthesize_command_args(
     command: str,
     script_args: list,
@@ -42,8 +53,8 @@ def synthesize_command_args(
 
     # For bonds command, use holdings.json
     if command == "bonds":
-        holdings_file = str(reports_dir / "holdings.json")
-        if Path(holdings_file).exists():
+        holdings_file = _find_holdings_file(reports_dir)
+        if holdings_file:
             output_file = str(reports_dir / "bond_analysis.json")
             return [holdings_file, output_file], 0
         else:
@@ -52,8 +63,8 @@ def synthesize_command_args(
 
     # For news/sentiment command, auto-detect holdings.json
     if command in ["news", "sentiment"]:
-        holdings_file = str(reports_dir / "holdings.json")
-        if Path(holdings_file).exists():
+        holdings_file = _find_holdings_file(reports_dir)
+        if holdings_file:
             output_file = str(reports_dir / "portfolio_news.json")
             cache_file = str(reports_dir / "portfolio_news_cache.json")
             model_id = os.environ.get("OPENCLAW_MODEL", "").strip()
@@ -65,8 +76,8 @@ def synthesize_command_args(
 
     # For run/pipeline command, auto-detect holdings.json
     if command == "run":
-        holdings_file = str(reports_dir / "holdings.json")
-        if Path(holdings_file).exists():
+        holdings_file = _find_holdings_file(reports_dir)
+        if holdings_file:
             return [holdings_file], 0
         else:
             print(f"❌ {_ERR_NO_HOLDINGS}")
@@ -74,8 +85,8 @@ def synthesize_command_args(
 
     # For news-plan/fetch-plan, show the adaptive fetch plan
     if command in ["news-plan", "fetch-plan"]:
-        holdings_file = str(reports_dir / "holdings.json")
-        if Path(holdings_file).exists():
+        holdings_file = _find_holdings_file(reports_dir)
+        if holdings_file:
             model_id = os.environ.get("OPENCLAW_MODEL", "").strip()
             args = [holdings_file]
             if model_id:
@@ -87,8 +98,8 @@ def synthesize_command_args(
 
     # For analyst/ratings command, auto-detect holdings.json
     if command in ["analyst", "analysts", "ratings"]:
-        holdings_file = str(reports_dir / "holdings.json")
-        if Path(holdings_file).exists():
+        holdings_file = _find_holdings_file(reports_dir)
+        if holdings_file:
             output_file = str(reports_dir / "analyst_data.json")
             args = [holdings_file, output_file]
             # --tier3 injection is handled by the router after arg synthesis;
@@ -100,8 +111,8 @@ def synthesize_command_args(
 
     # For portfolio analysis command
     if command in ["analysis", "portfolio-analysis", "synthesize", "synthesize-opportunities", "multi-factor", "analyze-multi", "recommend", "recommendations"]:
-        holdings_file = str(reports_dir / "holdings.json")
-        if Path(holdings_file).exists():
+        holdings_file = _find_holdings_file(reports_dir)
+        if holdings_file:
             output_file = str(reports_dir / "portfolio_analysis.json")
             return [holdings_file, output_file], 0
         else:
@@ -110,8 +121,8 @@ def synthesize_command_args(
 
     # For performance analysis command
     if command in ["analyze", "performance", "returns"]:
-        holdings_file = str(reports_dir / "holdings.json")
-        if Path(holdings_file).exists():
+        holdings_file = _find_holdings_file(reports_dir)
+        if holdings_file:
             output_file = str(reports_dir / "performance.json")
             return [holdings_file, "ytd", "today", output_file], 0
         else:
@@ -120,8 +131,8 @@ def synthesize_command_args(
 
     # For report/export command, auto-detect holdings.json
     if command in ["report", "export", "csv", "excel"]:
-        holdings_file = str(reports_dir / "holdings.json")
-        if Path(holdings_file).exists():
+        holdings_file = _find_holdings_file(reports_dir)
+        if holdings_file:
             performance_file = str(reports_dir / "performance.json")
             output_prefix = str(reports_dir / "portfolio_report")
             export_format = "csv" if command == "csv" else ("excel" if command == "excel" else "both")
