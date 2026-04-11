@@ -80,6 +80,61 @@ class PortfolioNewsAnalyzer:
         self.portfolio_holdings = {}
         self.all_news = {}
         self.errors = []
+        self._company_names: Dict[str, str] = {}  # ticker → short name cache
+
+    @staticmethod
+    def _yf_ticker(symbol: str) -> str:
+        """Normalise broker symbol to yfinance format (BRK.B → BRK-B)."""
+        return symbol.replace(".", "-")
+
+    def _company_name(self, symbol: str) -> str:
+        """Return the company short name for *symbol*, lazy-loaded from yfinance."""
+        if symbol not in self._company_names:
+            try:
+                info = yf.Ticker(self._yf_ticker(symbol)).info
+                self._company_names[symbol] = (
+                    info.get("shortName") or info.get("longName") or ""
+                )
+            except Exception:
+                self._company_names[symbol] = ""
+        return self._company_names[symbol]
+
+    def _is_relevant(self, symbol: str, company_name: str, title: str, summary: str) -> bool:
+        """Return True only if the article is actually about *symbol*.
+
+        yfinance.Ticker.news returns loosely-related market articles — e.g. an
+        AMD query may return a Nvidia article because both trade in the same
+        sector.  We keep an article only when the ticker symbol or a distinctive
+        token from the company name appears in the headline or summary text.
+        """
+        import re
+        text = f"{title} {summary}".lower()
+
+        # Ticker symbol as a word (case-insensitive)
+        if re.search(r"\b" + re.escape(symbol.lower()) + r"\b", text):
+            return True
+
+        # First meaningful word(s) of the company name
+        if company_name:
+            # Drop legal-entity suffixes that appear in many names
+            _SUFFIXES = re.compile(
+                r"\b(inc|corp|ltd|llc|co|plc|group|holdings|technologies|technology"
+                r"|systems|services|solutions|financial|capital|management|partners"
+                r"|international|global|enterprises|industries|resources)\b\.?",
+                re.I,
+            )
+            cleaned = _SUFFIXES.sub("", company_name).strip()
+            tokens = [t for t in cleaned.split() if len(t) > 3]
+            if tokens and tokens[0].lower() in text:
+                return True
+
+        # Short / single-letter tickers (e.g. "A" for Agilent) have very high
+        # false-positive rates; require the company-name match above.
+        if len(symbol) <= 2:
+            return False
+
+        # For longer tickers with no match in this article: drop it.
+        return False
 
     def load_holdings(self, holdings_file: str) -> None:
         """Load portfolio holdings from JSON"""
@@ -187,10 +242,16 @@ class PortfolioNewsAnalyzer:
             return 5
 
     def fetch_symbol_news(self, symbol: str, max_articles: int = 10) -> List[Dict]:
-        """Fetch news for a single symbol from Yahoo Finance"""
+        """Fetch news for a single symbol from Yahoo Finance.
+
+        Only articles that actually mention the company (by ticker or name) are
+        kept — yfinance returns loosely-correlated market news that may be
+        primarily about different companies.
+        """
         try:
             logger.info(f"Fetching news for {symbol} (max {max_articles} articles)")
-            ticker = yf.Ticker(symbol)
+            company_name = self._company_name(symbol)
+            ticker = yf.Ticker(self._yf_ticker(symbol))
 
             # Get news from yfinance
             news = ticker.news
@@ -201,62 +262,77 @@ class PortfolioNewsAnalyzer:
 
             processed_news = []
 
-            for item in news[:max_articles]:  # adaptive depth
+            for item in news[:max_articles * 3]:  # over-fetch to compensate for filtering
                 try:
-                    # Modern yfinance returns {'id': ..., 'content': {'title': ..., 'summary': ...}}
-                    # Legacy format returns {'title': ..., 'summary': ...} at top level
+                    # Modern yfinance: {'id': ..., 'content': {'title': ..., ...}}
+                    # Legacy yfinance: {'title': ..., 'summary': ..., ...} at top level
                     _content = item.get('content', {})
-                    if isinstance(_content, dict):
-                        title = _content.get('title', '') or item.get('title', '')
-                        summary = _content.get('summary', '') or _content.get('description', '') or item.get('summary', '')
+                    if isinstance(_content, dict) and _content:
+                        title   = _content.get('title', '') or item.get('title', '')
+                        summary = (_content.get('summary', '')
+                                   or _content.get('description', '')
+                                   or item.get('summary', ''))
+                        source  = (_content.get('provider', {}).get('displayName', '')
+                                   or item.get('source', 'Unknown'))
+                        link    = (_content.get('canonicalUrl', {}).get('url', '')
+                                   or _content.get('clickThroughUrl', {}).get('url', '')
+                                   or item.get('link', ''))
+                        pub_raw = _content.get('pubDate', '') or _content.get('displayTime', '')
+                        if pub_raw:
+                            pub_date = pub_raw[:19]  # ISO 8601 truncated to seconds
+                        else:
+                            pub_date = datetime.now().isoformat()
                     else:
-                        title = item.get('title', '')
-                        summary = item.get('summary', '') or str(_content)
-                    source = item.get('source', 'Unknown')
-                    link = item.get('link', '')
+                        title    = item.get('title', '')
+                        summary  = item.get('summary', '')
+                        source   = item.get('source', 'Unknown')
+                        link     = item.get('link', '')
+                        ts       = item.get('providerPublishTime', 0)
+                        pub_date = (datetime.fromtimestamp(ts).isoformat()
+                                    if ts else datetime.now().isoformat())
 
-                    # Try to parse publish date
-                    pub_timestamp = item.get('providerPublishTime', 0)
-                    if pub_timestamp:
-                        pub_date = datetime.fromtimestamp(pub_timestamp).isoformat()
-                    else:
-                        pub_date = datetime.now().isoformat()
+                    # Skip articles not relevant to this ticker
+                    if not self._is_relevant(symbol, company_name, title, summary):
+                        logger.debug(f"Skipping off-topic article for {symbol}: {title[:60]}")
+                        continue
 
                     # Analyze sentiment from title + summary
                     combined_text = f"{title} {summary}"
                     sentiment, confidence = self.simple_sentiment(combined_text)
 
-                    # Calculate portfolio impact
                     holding_value = self.portfolio_holdings[symbol]['value']
-
-                    # Impact multiplier based on sentiment confidence
-                    # Positive news could lift stock ~1-2%, negative could drop 1-3%
                     impact_multiplier = {
-                        'positive': 0.015,  # 1.5% potential upside
-                        'negative': -0.025,  # 2.5% potential downside
-                        'neutral': 0.0
+                        'positive':  0.015,
+                        'negative': -0.025,
+                        'neutral':   0.0,
                     }
-
-                    impact_pct = impact_multiplier.get(sentiment, 0.0) * confidence
+                    impact_pct      = impact_multiplier.get(sentiment, 0.0) * confidence
                     portfolio_impact = holding_value * impact_pct
 
                     processed_news.append({
-                        'symbol': symbol,
-                        'title': title,
-                        'summary': summary,
-                        'source': source,
-                        'link': link,
-                        'publish_date': pub_date,
-                        'sentiment': sentiment,
-                        'confidence': float(confidence),
+                        'symbol':           symbol,
+                        'title':            title,
+                        'summary':          summary,
+                        'source':           source,
+                        'link':             link,
+                        'publish_date':     pub_date,
+                        'sentiment':        sentiment,
+                        'confidence':       float(confidence),
                         'portfolio_impact': float(portfolio_impact),
-                        'impact_pct': float(impact_pct * 100)
+                        'impact_pct':       float(impact_pct * 100),
                     })
+
+                    if len(processed_news) >= max_articles:
+                        break
 
                 except Exception as e:
                     logger.warning(f"Error processing news item for {symbol}: {e}")
                     continue
 
+            logger.info(
+                f"{symbol}: {len(processed_news)} relevant articles "
+                f"(company: '{company_name}')"
+            )
             return processed_news
 
         except Exception as e:
@@ -311,17 +387,37 @@ class PortfolioNewsAnalyzer:
         positive_news = []
         negative_news = []
         per_symbol_cache: Dict[str, List[Dict]] = {}
+        # Deduplication: track (url, normalised_title) across all symbols so the
+        # same article (often a broad market piece) isn't counted multiple times.
+        _seen_urls:   set = set()
+        _seen_titles: set = set()
 
         for symbol in fetch_symbols:
             holding_val = self.portfolio_holdings[symbol]['value']
             weight_pct  = holding_val / total_value * 100
             max_art = self._articles_for_weight(weight_pct)
-            news_items = self.fetch_symbol_news(symbol, max_articles=max_art)
-            per_symbol_cache[symbol] = news_items
+            raw_items = self.fetch_symbol_news(symbol, max_articles=max_art)
 
-            all_news_items.extend(news_items)
+            deduped: List[Dict] = []
+            for item in raw_items:
+                url   = (item.get('link') or '').strip()
+                title_key = item.get('title', '').lower().strip()[:120]
+                if url and url in _seen_urls:
+                    logger.debug(f"Dedup (url): skipping duplicate article for {symbol}: {title_key[:60]}")
+                    continue
+                if title_key and title_key in _seen_titles:
+                    logger.debug(f"Dedup (title): skipping duplicate article for {symbol}: {title_key[:60]}")
+                    continue
+                if url:
+                    _seen_urls.add(url)
+                if title_key:
+                    _seen_titles.add(title_key)
+                deduped.append(item)
 
-            for item in news_items:
+            per_symbol_cache[symbol] = deduped
+            all_news_items.extend(deduped)
+
+            for item in deduped:
                 if item['sentiment'] == 'positive':
                     positive_news.append(item)
                 elif item['sentiment'] == 'negative':
