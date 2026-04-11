@@ -76,11 +76,24 @@ def normalize_portfolio(data: Dict[str, Any]) -> Dict[str, Any]:
                 entry["unrealized_gain_loss"] = position.get("unrealizedGainLoss", 0.0)
                 entry["unrealized_gain_loss_pct"] = position.get("unrealizedGainLossPct", 0.0)
 
+                # For fixed-income positions: preserve price-as-%-of-par and face value
+                # CDM currentPrice.amount IS the clean price as % of par (e.g. 99.769, 113.599)
+                # CDM quantity.amount IS the face/par value of the position
+                if "priceQuantity" in position:
+                    pq = position["priceQuantity"]
+                    cp_amount = pq.get("currentPrice", {}).get("amount")
+                    qty_amount = pq.get("quantity", {}).get("amount")
+                    if cp_amount is not None and 0 < cp_amount <= 200:
+                        entry["price_percent"] = cp_amount
+                    if qty_amount is not None:
+                        entry["par_value"] = qty_amount
+
                 if "asset" in position:
                     asset = position["asset"]
                     entry["sector"] = asset.get("sector")
                     entry["cusip"] = asset.get("cusip")
                     entry["isin"] = asset.get("isin")
+                    entry["security_name"] = asset.get("securityName", "")
 
                 canonical_portfolio[asset_type][symbol] = entry
 
