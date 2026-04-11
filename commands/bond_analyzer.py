@@ -290,6 +290,18 @@ class BondAnalyzer:
 
             bonds = [h for h in holdings if 'bond' in h.get('asset_type', '').lower()]
 
+            # Enrich bonds missing maturity/coupon from security_name (CDM broker format)
+            for bond in bonds:
+                sec_name = bond.get("security_name", "")
+                if sec_name:
+                    parsed = self._parse_security_name(sec_name)
+                    if parsed.get("maturity_date") and not bond.get("maturity_date"):
+                        bond["maturity_date"] = parsed["maturity_date"]
+                    if parsed.get("coupon_rate") is not None and not bond.get("coupon_rate"):
+                        bond["coupon_rate"] = parsed["coupon_rate"]
+                    if parsed.get("asset_type") and bond.get("asset_type") in ("bond", "fixed_income", None, ""):
+                        bond["asset_type"] = parsed["asset_type"]
+
             # Validate via Holding interface (v2.2.1+ CDM-compatible)
             for bond in bonds:
                 try:
@@ -303,6 +315,50 @@ class BondAnalyzer:
             logger.error(f"Error loading holdings.json {json_path}: {e}")
             self.errors.append(f"Holdings load error: {e}")
             return []
+
+    @staticmethod
+    def _parse_security_name(name: str) -> Dict:
+        """Extract coupon, maturity, and asset type from broker security-name strings.
+
+        Handles formats such as:
+          'U S TREASURY BILL MATURES 04/30/26 (912797SN8)'
+          'AIKEN CO SC CONS SCH SOUTH SR A BE/R/ RATE 05.000% MATURES 04/01/33'
+          'ATLANTA GA WTR &WASTEWTR RV BE/R/ RATE 05.000% MATURES 11/01/28'
+
+        Returns a dict with keys (present only when parsed):
+          maturity_date (str MM/DD/YY or MM/DD/YYYY, caller converts to YYYY-MM-DD)
+          coupon_rate   (float, annual percent)
+          asset_type    (str: treasury | municipal_bond | corporate_bond)
+        """
+        extracted: Dict = {}
+        if not name:
+            return extracted
+
+        name_upper = name.upper()
+
+        # Coupon: "RATE 05.000%" or "RATE 5%"
+        coupon_match = re.search(r'\bRATE\s+(\d+\.?\d*)\s*%', name_upper)
+        if coupon_match:
+            try:
+                extracted["coupon_rate"] = float(coupon_match.group(1))
+            except ValueError:
+                pass
+
+        # Maturity: "MATURES MM/DD/YY" or "MATURES MM/DD/YYYY"
+        mat_match = re.search(r'\bMATURES?\s+(\d{1,2}/\d{1,2}/\d{2,4})', name_upper)
+        if mat_match:
+            extracted["maturity_date"] = mat_match.group(1)
+
+        # Asset type heuristic from name
+        if re.search(r'\bTREASURY\b|\bT[\s-]BILL\b|\bT[\s-]BOND\b|\bT[\s-]NOTE\b|\bTREASURIES\b', name_upper):
+            extracted["asset_type"] = "treasury"
+        elif re.search(r'\bTIPS\b|\bINFLATION[\s-]PROTECTED\b', name_upper):
+            extracted["asset_type"] = "treasury"
+        else:
+            # Default to muni for bonds without a clear corporate/treasury marker
+            extracted["asset_type"] = "municipal_bond"
+
+        return extracted
 
     def _is_bond(self, holding: Dict) -> bool:
         """Check if a holding is a bond based on asset_type or data characteristics."""

@@ -48,6 +48,15 @@ def _load_raw(reports_dir: Path, filename: str) -> dict | list | None:
         return json.load(f)
 
 
+def _try_load_raw(reports_dir: Path, filename: str) -> dict | list | None:
+    """Like _load_raw but returns None silently if the file is missing (no error output)."""
+    path = _raw_path(reports_dir, filename)
+    if not path.exists():
+        return None
+    with open(path) as f:
+        return json.load(f)
+
+
 def _filter_fields(record: dict, fields: list[str] | None) -> dict:
     if not fields:
         return record
@@ -109,8 +118,8 @@ def query_analyst_symbol(reports_dir: Path, symbol: str, fields: list[str] | Non
     """
     sym_upper = symbol.upper()
 
-    # 1. Full analyst payload in .raw/
-    data = _load_raw(reports_dir, "analyst_data.json")
+    # 1. Full analyst payload in .raw/ (silent — tier3 fallback may succeed)
+    data = _try_load_raw(reports_dir, "analyst_data.json")
     if data:
         recs = data.get("recommendations", {})
         if sym_upper in recs:
@@ -119,7 +128,7 @@ def query_analyst_symbol(reports_dir: Path, symbol: str, fields: list[str] | Non
             return 0
 
     # 2. Tier3 enriched (has synthesis + consultation block)
-    t3 = _load_raw(reports_dir, "analyst_recommendations_tier3_enriched.json")
+    t3 = _try_load_raw(reports_dir, "analyst_recommendations_tier3_enriched.json")
     if t3:
         enriched = t3.get("enriched_recommendations", {})
         if sym_upper in enriched:
