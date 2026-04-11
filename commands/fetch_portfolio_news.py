@@ -85,10 +85,14 @@ class PortfolioNewsAnalyzer:
         """Load portfolio holdings from JSON"""
         try:
             from pathlib import Path
+            from config.schema import normalize_portfolio
             path = Path(holdings_file).expanduser()
 
             with open(path, 'r') as f:
                 data = json.load(f)
+
+            # Normalize CDM/FINOS format to canonical portfolio schema first
+            data = normalize_portfolio(data)
 
             # Support both schemas; handle wrapper 'data' key
             if 'data' in data:
