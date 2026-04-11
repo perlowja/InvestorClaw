@@ -11,6 +11,7 @@ Checks the basics ClawHub reviewers and cold installs care about:
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 import tempfile
@@ -194,6 +195,96 @@ def main() -> int:
     if "INVESTORCLAW_CONSULTATION_HMAC_KEY" not in config_schema:
         return fail("INVESTORCLAW_CONSULTATION_HMAC_KEY missing from plugin configSchema")
     ok("INVESTORCLAW_CONSULTATION_HMAC_KEY present in plugin configSchema")
+
+    # ------------------------------------------------------------------
+    # WF16: Bad argument returns non-zero exit code
+    # ------------------------------------------------------------------
+    try:
+        bad_arg_result = subprocess.run(
+            [sys.executable, str(ROOT / "investorclaw.py"), "analyst", "@@INVALID"],
+            capture_output=True, text=True, timeout=15, cwd=str(ROOT)
+        )
+        if bad_arg_result.returncode == 0:
+            return fail("WF16: investorclaw.py with @@INVALID arg returned exit code 0 (expected non-zero)")
+        ok("WF16: invalid argument produces non-zero exit code")
+    except Exception as e:
+        return fail(f"WF16: bad-arg test failed: {e}")
+
+    # ------------------------------------------------------------------
+    # WF17: enrichment_status.display matches expected format
+    # ------------------------------------------------------------------
+    try:
+        import re
+        from rendering.compact_serializers import serialize_analyst_compact
+        # Enriched record: consultation dict present with is_heuristic=False
+        wf17_payload = {
+            "recommendations": {
+                "AAPL": {
+                    "consensus": "BUY", "target_price": 200.0, "upside_pct": 12.5,
+                    "analyst_count": 30,
+                    "consultation": {
+                        "is_heuristic": False,
+                        "synthesis": "Strong fundamentals.",
+                        "verbatim_required": False,
+                    },
+                }
+            }
+        }
+        wf17_output = serialize_analyst_compact(wf17_payload)
+        display_val = wf17_output.get("enrichment_status", {}).get("display", "")
+        display_pattern = re.compile(r'^[✅⏳⚠️].+\d+/\d+\s*·\s*[\d.]+%\s*·\s*[0-9a-f]{8}')
+        if not display_pattern.search(display_val):
+            return fail(f"WF17: enrichment_status.display format mismatch: {display_val!r}")
+        ok(f"WF17: enrichment_status.display format correct: {display_val!r}")
+    except Exception as e:
+        return fail(f"WF17: display format test failed: {e}")
+
+    # ------------------------------------------------------------------
+    # WF21: Unenriched symbol has synthesis_basis="structured", no consultation key
+    # ------------------------------------------------------------------
+    try:
+        from rendering.compact_serializers import serialize_analyst_compact
+        wf21_payload = {
+            "recommendations": {
+                "TSLA": {
+                    "consensus": "HOLD", "target_price": 250.0, "upside_pct": 5.0,
+                    "analyst_count": 20,
+                    # No consultation key → heuristic/structured path
+                }
+            }
+        }
+        wf21_output = serialize_analyst_compact(wf21_payload)
+        tsla_rec = wf21_output.get("recommendations", {}).get("TSLA", {})
+        if tsla_rec.get("synthesis_basis") != "structured":
+            return fail(f"WF21: expected synthesis_basis='structured', got {tsla_rec.get('synthesis_basis')!r}")
+        if "consultation" in tsla_rec or "synthesis" in tsla_rec:
+            return fail("WF21: unenriched record should not have consultation/synthesis key")
+        ok("WF21: unenriched symbol has synthesis_basis='structured' and no consultation key")
+    except Exception as e:
+        return fail(f"WF21: unenriched symbol test failed: {e}")
+
+    # ------------------------------------------------------------------
+    # WF27: INVESTOR_CLAW_REPORTS_DIR env override — session writes to custom dir
+    # ------------------------------------------------------------------
+    try:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            env = os.environ.copy()
+            env["INVESTOR_CLAW_REPORTS_DIR"] = tmpdir
+            env["INVESTORCLAW_AUTO_SESSION"] = "true"
+            wf27_result = subprocess.run(
+                [sys.executable, str(ROOT / "investorclaw.py"), "session"],
+                capture_output=True, text=True, timeout=30,
+                cwd=str(ROOT), env=env
+            )
+            session_file = Path(tmpdir) / "session_profile.json"
+            if not session_file.exists():
+                return fail(
+                    f"WF27: session_profile.json not found in INVESTOR_CLAW_REPORTS_DIR={tmpdir}; "
+                    f"exit={wf27_result.returncode}; stderr={wf27_result.stderr[:200]}"
+                )
+            ok(f"WF27: INVESTOR_CLAW_REPORTS_DIR override works — session_profile.json in {tmpdir}")
+    except Exception as e:
+        return fail(f"WF27: REPORTS_DIR override test failed: {e}")
 
     print("SMOKE_OK")
     return 0

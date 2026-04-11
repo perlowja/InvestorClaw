@@ -8,8 +8,8 @@ from pathlib import Path
 
 from config.schema import normalize_portfolio, validate_portfolio
 from services.portfolio_utils import load_holdings_list
-from scripts.analyze_performance_polars import PerformanceAnalyzer
-from scripts.export_report import ReportExporter
+from commands.analyze_performance_polars import PerformanceAnalyzer
+from commands.export_report import ReportExporter
 
 
 def run_pipeline(holdings_file: str, output_dir: str = None):
