@@ -11,8 +11,6 @@ import { Type } from "@sinclair/typebox";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import * as path from "node:path";
-import * as os from "node:os";
-import { fileURLToPath } from "node:url";
 
 const execFileAsync = promisify(execFile);
 
@@ -54,10 +52,14 @@ export default definePluginEntry({
   register(api) {
     const pluginConfig = (api.pluginConfig ?? {}) as Record<string, string>;
 
-    // Resolve the directory containing this file (skill/) to locate investorclaw.py.
+    // Resolve the skill directory: prefer INVESTORCLAW_SKILL_ROOT env/config,
+    // then default workspace location. When loaded from the openclaw extensions
+    // directory, import.meta.url points to extensions/investorclaw/ (not the
+    // workspace skill dir), so we use the workspace path as the fallback.
     const selfDir =
-      api.rootDir ??
-      path.dirname(fileURLToPath(import.meta.url));
+      pluginConfig["INVESTORCLAW_SKILL_ROOT"] ??
+      process.env.INVESTORCLAW_SKILL_ROOT ??
+      path.join(process.env.HOME ?? "/Users/jasonperlow", ".openclaw", "workspace", "skills", "investorclaw");
     const entryScript = path.join(selfDir, "investorclaw.py");
 
     // ------------------------------------------------------------------
