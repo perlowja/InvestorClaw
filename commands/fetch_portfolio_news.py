@@ -110,11 +110,8 @@ class PortfolioNewsAnalyzer:
         import re
         text = f"{title} {summary}".lower()
 
-        # Ticker symbol as a word (case-insensitive)
-        if re.search(r"\b" + re.escape(symbol.lower()) + r"\b", text):
-            return True
-
-        # First meaningful word(s) of the company name
+        # First meaningful word(s) of the company name (checked before ticker for all lengths)
+        name_match = False
         if company_name:
             # Drop legal-entity suffixes that appear in many names
             _SUFFIXES = re.compile(
@@ -126,14 +123,21 @@ class PortfolioNewsAnalyzer:
             cleaned = _SUFFIXES.sub("", company_name).strip()
             tokens = [t for t in cleaned.split() if len(t) > 3]
             if tokens and tokens[0].lower() in text:
-                return True
+                name_match = True
+
+        if name_match:
+            return True
 
         # Short / single-letter tickers (e.g. "A" for Agilent) have very high
-        # false-positive rates; require the company-name match above.
+        # false-positive rates with bare-word matching; require the company-name
+        # match above.
         if len(symbol) <= 2:
             return False
 
-        # For longer tickers with no match in this article: drop it.
+        # Ticker symbol as a word (case-insensitive) — only for 3+ char symbols
+        if re.search(r"\b" + re.escape(symbol.lower()) + r"\b", text):
+            return True
+
         return False
 
     def load_holdings(self, holdings_file: str) -> None:
