@@ -491,6 +491,16 @@ class BondAnalyzer:
         if years_to_maturity <= 0 or current_price <= 0:
             return 0.0
 
+        # Zero-coupon fast path: brentq fails when coupon_rate=0 because
+        # int(years * frequency) can round to 0 for very short maturities.
+        if coupon_rate == 0:
+            try:
+                ytm_decimal = (face_value / current_price) ** (1.0 / years_to_maturity) - 1.0
+                return round(ytm_decimal * 100, 6)
+            except (ZeroDivisionError, ValueError, OverflowError):
+                logger.warning("Zero-coupon YTM formula failed (degenerate inputs).")
+                return None
+
         try:
             # Bond pricing function: Price = sum(coupon/(1+y)^t) + par/(1+y)^n
             # Solve for y (YTM)
