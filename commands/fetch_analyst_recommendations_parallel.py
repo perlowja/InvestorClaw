@@ -85,7 +85,7 @@ class AnalystConsensus:
     data_source: str = "Yahoo Finance"
     data_timestamp: str = field(default_factory=lambda: datetime.now().isoformat())
     analyst_count: int = 0
-    recommendation_mean: float = 2.5  # 1.0-5.0 scale for recommendation strength
+    recommendation_mean: Optional[float] = None  # 1.0-5.0 scale; None = no data (not a "Hold")
     fetch_time_ms: int = 0
 
 
@@ -195,12 +195,26 @@ class ParallelAnalystFetcher:
         logger.info(f"   Executor: {self.executor_type} ({self.max_workers} workers)")
         logger.info(f"   Workload: Network-bound I/O (API calls to yfinance)")
 
+    @staticmethod
+    def _yf_ticker(symbol: str) -> str:
+        """Normalise broker symbol to yfinance format (BRK.B → BRK-B)."""
+        return symbol.replace(".", "-")
+
+    @staticmethod
+    def _parse_avg_rating(avg_rating: str) -> Optional[float]:
+        """Parse yfinance averageAnalystRating (e.g. '2.4 - Buy') into a numeric mean."""
+        import re
+        if not avg_rating:
+            return None
+        m = re.match(r"^\s*([0-9]+(?:\.[0-9]+)?)", str(avg_rating))
+        return float(m.group(1)) if m else None
+
     def _fetch_consensus(self, symbol: str) -> Optional[Tuple[str, AnalystConsensus, float]]:
         """Fetch single symbol (with timing)"""
         start = time.time()
         try:
-            # yfinance Ticker doesn't accept timeout parameter; it uses internal defaults
-            ticker = yf.Ticker(symbol)
+            # Normalise broker symbols: BRK.B → BRK-B (yfinance uses hyphens, not periods)
+            ticker = yf.Ticker(self._yf_ticker(symbol))
             info = ticker.info
 
             current_price = info.get('currentPrice') or info.get('regularMarketPrice')
@@ -210,11 +224,16 @@ class ParallelAnalystFetcher:
 
             analyst_count = info.get('numberOfAnalystOpinions', 0)
             rec_key = info.get('recommendationKey', '').lower()
+
+            # recommendationMean is absent for some tickers; try averageAnalystRating fallback
+            # (yfinance returns strings like "2.4 - Buy" for certain ticker categories)
             rec_mean = info.get('recommendationMean')
+            if rec_mean is None:
+                rec_mean = self._parse_avg_rating(info.get('averageAnalystRating'))
 
             # Estimate distribution
             buy_count = hold_count = sell_count = 0
-            if analyst_count > 0 and rec_mean:
+            if analyst_count > 0 and rec_mean is not None:
                 if rec_mean < 2.0:
                     buy_count = int(analyst_count * 0.60)
                     hold_count = int(analyst_count * 0.30)
@@ -232,15 +251,15 @@ class ParallelAnalystFetcher:
                     hold_count = int(analyst_count * 0.30)
                     sell_count = analyst_count - buy_count - hold_count
 
-            # Consensus recommendation
+            # Consensus recommendation — prefer rec_key (explicit label) then rec_mean
             consensus_rec = None
-            if rec_key == "buy":
-                consensus_rec = "Buy"
+            if rec_key in ("buy", "strong_buy"):
+                consensus_rec = "Strong Buy" if rec_key == "strong_buy" else "Buy"
             elif rec_key == "hold":
                 consensus_rec = "Hold"
-            elif rec_key == "sell":
+            elif rec_key in ("sell", "underperform", "strong_sell"):
                 consensus_rec = "Sell"
-            elif rec_mean:
+            elif rec_mean is not None:
                 if rec_mean < 2.0:
                     consensus_rec = "Strong Buy"
                 elif rec_mean < 2.5:
@@ -269,7 +288,7 @@ class ParallelAnalystFetcher:
                 target_price_low=target_low,
                 target_price_current=float(current_price),
                 analyst_count=analyst_count,
-                recommendation_mean=float(rec_mean) if rec_mean else 2.5,
+                recommendation_mean=float(rec_mean) if rec_mean is not None else None,
                 data_timestamp=datetime.now().isoformat(),
                 fetch_time_ms=int(fetch_time)
             )

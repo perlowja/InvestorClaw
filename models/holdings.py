@@ -91,9 +91,21 @@ class Holding:
             return self.market_value
         return self.shares * self.current_price
 
+    # Bond asset types whose prices are quoted as % of par (e.g. 99.769 = $99.769 per $100 face)
+    _BOND_ASSET_TYPES = frozenset(
+        ('bond', 'municipal_bond', 'treasury', 'corporate_bond', 'government_bond')
+    )
+
     @property
     def cost_basis(self) -> float:
-        """Total cost to acquire this holding."""
+        """Total cost to acquire this holding.
+
+        For bonds, purchase_price is expressed as % of par (e.g. 99.769), so
+        the dollar cost is shares × purchase_price / 100.  For all other asset
+        types, purchase_price is already in dollars-per-unit.
+        """
+        if self.asset_type in self._BOND_ASSET_TYPES:
+            return self.shares * self.purchase_price / 100.0
         return self.shares * self.purchase_price
 
     @property

@@ -259,7 +259,7 @@ class YFinanceProvider:
     def get_history(self, symbol: str, days: int = 365) -> List[Dict]:
         """Historical daily OHLCV."""
         try:
-            t = self._yf.Ticker(symbol)
+            t = self._yf.Ticker(self._yf_symbol(symbol))
             period = "1y" if days <= 365 else "2y"
             hist = t.history(period=period)
             if hist.empty:
@@ -287,7 +287,7 @@ class YFinanceProvider:
         articles = []
         for sym in symbols:
             try:
-                t = self._yf.Ticker(sym)
+                t = self._yf.Ticker(self._yf_symbol(sym))
                 for item in (t.news or [])[:5]:
                     articles.append({
                         "symbol":   sym,
@@ -308,7 +308,7 @@ class YFinanceProvider:
         results = {}
         for sym in symbols:
             try:
-                t = self._yf.Ticker(sym)
+                t = self._yf.Ticker(self._yf_symbol(sym))
                 rec = t.recommendations
                 if rec is None or rec.empty:
                     continue

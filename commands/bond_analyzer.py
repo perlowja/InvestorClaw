@@ -985,6 +985,56 @@ class BondAnalyzer:
             self.errors.append(f"Export error: {e}")
 
 
+def _backfill_holdings_summary(bond_output_file: Path, bonds: list) -> None:
+    """Enrich holdings_summary.json top_bonds with ytm and duration.
+
+    holdings_summary.json is written by fetch_holdings.py *before* bond analysis
+    runs, so it cannot include YTM or duration at write time.  This function
+    finds holdings_summary.json in the same directory as bond_output_file and
+    adds ytm/duration to each top_bonds entry that has a matching CUSIP.
+    """
+    summary_file = bond_output_file.parent / "holdings_summary.json"
+    if not summary_file.exists():
+        return
+
+    # Build CUSIP → analytics lookup from analyzed bonds
+    analytics: dict = {}
+    for b in bonds:
+        cusip = getattr(b, "cusip", None)
+        if not cusip:
+            continue
+        ytm_val      = getattr(b, "ytm", None)
+        dur_val      = getattr(b, "macaulay_duration", None)
+        mod_dur_val  = getattr(b, "modified_duration", None)
+        analytics[cusip] = {
+            "ytm":               round(ytm_val, 4)      if ytm_val      is not None else None,
+            "duration":          round(dur_val, 2)       if dur_val      is not None else None,
+            "modified_duration": round(mod_dur_val, 2)  if mod_dur_val  is not None else None,
+        }
+
+    try:
+        with open(summary_file) as fh:
+            hs = json.load(fh)
+
+        top_bonds = hs.get("top_bonds", [])
+        changed = False
+        for entry in top_bonds:
+            a = analytics.get(entry.get("cusip", ""))
+            if not a:
+                continue
+            for field in ("ytm", "duration", "modified_duration"):
+                if a.get(field) is not None and entry.get(field) is None:
+                    entry[field] = a[field]
+                    changed = True
+
+        if changed:
+            with open(summary_file, "w") as fh:
+                json.dump(hs, fh, indent=2, default=str)
+            logger.info(f"Backfilled ytm/duration into {summary_file}")
+    except Exception as exc:
+        logger.warning(f"Could not enrich holdings_summary.json: {exc}")
+
+
 def main():
     """Main entry point for bond analyzer."""
 
@@ -1052,6 +1102,10 @@ def main():
 
     # Export report
     analyzer.export_report(metrics, output_file)
+
+    # Backfill ytm + duration into holdings_summary.json top_bonds so the LLM
+    # compact summary includes analytics without needing a separate lookup.
+    _backfill_holdings_summary(output_file, analyzer.bonds)
 
     # Emit compact JSON to stdout for LLM (full report is in output_file — do not read it)
     _compact_bond = {

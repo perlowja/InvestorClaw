@@ -1215,7 +1215,7 @@ class PortfolioFetcher:
                     cost_basis_price=Price(amount=holding.purchase_price, currency="USD"),
                 ),
                 market_value=holding.value,
-                cost_basis=holding.shares * holding.purchase_price,
+                cost_basis=holding.cost_basis,
                 unrealized_gain_loss=holding.unrealized_gain_loss,
                 unrealized_gain_loss_pct=holding.unrealized_gain_loss_pct,
             )
@@ -1247,7 +1247,7 @@ class PortfolioFetcher:
                     cost_basis_price=Price(amount=holding.purchase_price, currency="USD"),
                 ),
                 market_value=holding.value,
-                cost_basis=holding.shares * holding.purchase_price,
+                cost_basis=holding.cost_basis,
                 unrealized_gain_loss=holding.unrealized_gain_loss,
                 unrealized_gain_loss_pct=holding.unrealized_gain_loss_pct,
             )

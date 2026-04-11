@@ -6,6 +6,7 @@ Finds portfolio files and report directories based on environment and convention
 """
 
 import os
+from datetime import date
 from pathlib import Path
 from typing import Optional
 
@@ -26,15 +27,26 @@ def get_reports_dir() -> Path:
     """
     Get the reports output directory (configurable via env var or default).
 
+    By default, outputs are written to a dated subdirectory:
+        {base}/YYYY-MM-DD/
+
+    This keeps each day's run isolated and prevents files from prior runs being
+    overwritten silently.  Override with:
+        INVESTOR_CLAW_DATED_REPORTS=false   — write directly to base dir
+        INVESTOR_CLAW_RUN_DATE=YYYY-MM-DD   — force a specific date (e.g. for re-runs)
+
     Returns Path to reports directory (creates if doesn't exist).
     """
     _reports_env = os.environ.get("INVESTOR_CLAW_REPORTS_DIR", "").strip()
-    if _reports_env:
-        reports_dir = Path(_reports_env).expanduser()
-    else:
-        reports_dir = Path.home() / "portfolio_reports"
+    base_dir = Path(_reports_env).expanduser() if _reports_env else Path.home() / "portfolio_reports"
 
-    # Ensure it exists
+    dated_env = os.environ.get("INVESTOR_CLAW_DATED_REPORTS", "true").strip().lower()
+    if dated_env not in ("false", "0", "no", "off"):
+        run_date = os.environ.get("INVESTOR_CLAW_RUN_DATE", "").strip()
+        reports_dir = base_dir / (run_date if run_date else date.today().isoformat())
+    else:
+        reports_dir = base_dir
+
     reports_dir.mkdir(parents=True, exist_ok=True)
     return reports_dir
 
