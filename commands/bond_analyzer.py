@@ -274,12 +274,12 @@ class BondAnalyzer:
             if isinstance(data, dict) and 'portfolio' in data:
                 fi = data['portfolio'].get('fixed_income', {})
                 for cusip, bond_data in fi.items():
-                    entry = {'symbol': cusip, 'cusip': cusip}
+                    entry = {'symbol': cusip, 'cusip': cusip, 'asset_type': 'bond'}
                     entry.update(bond_data)
                     holdings.append(entry)
-                # Also check legacy 'bond' key
+                # Also check legacy 'bond' key (canonical schema after CDM normalization)
                 for cusip, bond_data in data['portfolio'].get('bond', {}).items():
-                    entry = {'symbol': cusip, 'cusip': cusip}
+                    entry = {'symbol': cusip, 'cusip': cusip, 'asset_type': 'bond'}
                     entry.update(bond_data)
                     holdings.append(entry)
             # Flat holdings list format
