@@ -144,8 +144,10 @@ def synthesize_args(
     if command == "holdings" and not args:
         portfolio_file = find_portfolio_file(skill_dir)
         if portfolio_file:
-            # Pass base path — fetch_holdings.py redirects the full CDM to .raw/ internally
-            args = [portfolio_file, str(reports_dir / "holdings.json")]
+            # Full CDM goes to .raw/holdings.json; compact summary saved to holdings_summary.json
+            raw_dir = reports_dir / ".raw"
+            raw_dir.mkdir(parents=True, exist_ok=True)
+            args = [portfolio_file, str(raw_dir / "holdings.json")]
         else:
             print(
                 "❌ No portfolio file found. "

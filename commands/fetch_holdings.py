@@ -1496,7 +1496,18 @@ class PortfolioFetcher:
                 self.equity_data, self.bond_data, self.cash_data, self.margin_data,
                 total_value, cdm_summary, output_file,
             )
-            print(json.dumps(compact, separators=(',', ':')))
+            compact_json = json.dumps(compact, separators=(',', ':'))
+            print(compact_json)
+
+            # Also persist compact summary to holdings_summary.json for downstream
+            # scripts and the harness W1 verify check (<20KB, _note present).
+            # The reports dir is the parent of .raw/ (or the output dir itself).
+            reports_dir = output_path.parent
+            if reports_dir.name == ".raw":
+                reports_dir = reports_dir.parent
+            summary_path = reports_dir / "holdings_summary.json"
+            with open(summary_path, 'w') as _sf:
+                _sf.write(compact_json)
 
         except Exception as e:
             logger.error(f"Fatal error in portfolio fetcher: {e}")
