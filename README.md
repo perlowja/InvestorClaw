@@ -313,7 +313,7 @@ Recommended cloud-only frontier choices:
 - **xAI Grok 4.1 Fast** — `xai/grok-4-1-fast` (~2M context) — still the primary recommendation even without local consultation
 - **Google Gemini 3.1 Pro** — `google/gemini-3.1-pro-preview` (~1M context, reasoning) — best high-context alternative
 - **Together AI / Llama 4 Maverick** — `together/meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8` (~1M context) — good cost/context ratio
-- **Together AI / Qwen3-235B** — `together/Qwen/Qwen3-235B-A22B-Instruct-2507-tput` (262K context) — strong reasoning, throughput-optimized
+- **Together AI / Qwen3-235B** — `together/Qwen/Qwen3-235B-A22B-FP8-tput` (262K context) — strong reasoning, throughput-optimized
 - **OpenAI GPT-5.4** — `openai/gpt-5.4` (~272K context) — strong reasoning; verify your full session fits
 
 Important cost guidance:
@@ -372,7 +372,7 @@ See the [NemoClaw documentation](https://github.com/NVIDIA/NemoClaw) for deploym
 | `xai/grok-4-1-fast` ⭐ | ~2M | xAI | **Primary recommendation**; needs `update-identity` each session |
 | `google/gemini-3.1-pro-preview` | ~1M | Google | Best high-context alternative; reasoning enabled |
 | `together/meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8` | ~1M | Together AI | Good cost/context ratio |
-| `together/Qwen/Qwen3-235B-A22B-Instruct-2507-tput` | 262K | Together AI | Strong reasoning; throughput-optimized |
+| `together/Qwen/Qwen3-235B-A22B-FP8-tput` | 262K | Together AI | Strong reasoning; throughput-optimized |
 | `openai/gpt-5.4` | ~272K | OpenAI | Strong reasoning; verify session fits |
 | `openai/gpt-5.3-chat-latest` | ~400K | OpenAI | Verify session fits |
 | `nvidia/nemotron-3-super-120b-a12b` | 262K | NVIDIA NIM | On-premise / air-gapped; reasoning enabled |
