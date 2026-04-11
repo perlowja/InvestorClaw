@@ -139,6 +139,7 @@ SINGLE_INVESTOR_MODE = ModeDefinition(
         Feature.SESSION_CALIBRATION,
         Feature.REPORTS_EXPORT,
         Feature.BASIC_BOND_REPORTING,  # All modes can see bond holdings
+        Feature.BOND_ANALYSIS,         # Single investors with bonds need YTM/duration
         Feature.REBALANCING_EDUCATIONAL,
         Feature.SECTOR_ANALYSIS_EDUCATIONAL,
     },
