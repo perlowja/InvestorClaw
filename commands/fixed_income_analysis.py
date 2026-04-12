@@ -35,7 +35,7 @@ class BondAlert:
     impact: str
 
 class FixedIncomeAnalyzer:
-    """Provides fiduciary-level advice for fixed income portfolios"""
+    """Provides educational fixed income analysis for portfolio holdings."""
 
     # Bond ladder stages
     LADDER_STAGES = {

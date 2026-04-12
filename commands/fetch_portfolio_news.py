@@ -444,6 +444,7 @@ class PortfolioNewsAnalyzer:
             return {
                 'symbol': item['symbol'],
                 'title': item['title'],
+                'url': item.get('link', ''),
                 'summary': (item.get('summary') or '')[:300],
                 'sentiment': item['sentiment'],
                 'confidence': item['confidence'],
@@ -483,8 +484,116 @@ class PortfolioNewsAnalyzer:
                 'digest':         article_digest,
             })
 
-        macro_themes       = None
-        portfolio_narrative = None
+        # Rule-based macro theme extraction from news titles/summaries.
+        # Groups news items by keyword-matched themes across fetched symbols.
+        _THEME_KEYWORDS: Dict[str, list] = {
+            'AI & Technology Investment': [
+                'artificial intelligence', ' ai ', 'chip', 'semiconductor', 'gpu',
+                'data center', 'machine learning', 'cloud computing', 'nvidia', 'microsoft',
+            ],
+            'Trade Policy & Tariffs': [
+                'tariff', 'trade war', 'trade deal', 'import duty', 'china trade',
+                'sanction', 'trade policy', 'export restriction', 'customs',
+            ],
+            'Interest Rates & Monetary Policy': [
+                'federal reserve', 'fed rate', 'interest rate', 'fomc', 'inflation',
+                'rate cut', 'rate hike', 'cpi', 'monetary policy', 'treasury yield',
+            ],
+            'Corporate Earnings': [
+                'earnings', 'quarterly results', 'revenue beat', ' eps ', 'profit',
+                'guidance', 'beat expectations', 'missed estimates', 'q1', 'q2', 'q3', 'q4',
+            ],
+            'Energy & Infrastructure': [
+                'oil price', ' oil ', 'energy', 'renewable', 'natural gas', 'lng',
+                'clean energy', 'power grid', 'infrastructure', 'utility',
+            ],
+        }
+        _theme_buckets: Dict[str, Dict] = {}
+        for _sym in fetch_symbols:
+            _items = per_symbol_cache.get(_sym, [])
+            _hval = self.portfolio_holdings[_sym]['value']
+            _wpct = _hval / total_value * 100
+            for _item in _items:
+                _text = (_item.get('title', '') + ' ' + (_item.get('summary') or '')).lower()
+                for _tname, _keywords in _THEME_KEYWORDS.items():
+                    if any(_kw in _text for _kw in _keywords):
+                        if _tname not in _theme_buckets:
+                            _theme_buckets[_tname] = {'syms': set(), 'pos': set(), 'neg': set()}
+                        _theme_buckets[_tname]['syms'].add(_sym)
+                        if _item['sentiment'] == 'positive':
+                            _theme_buckets[_tname]['pos'].add(_sym)
+                        elif _item['sentiment'] == 'negative':
+                            _theme_buckets[_tname]['neg'].add(_sym)
+        _theme_list = []
+        for _tname, _tdata in _theme_buckets.items():
+            _n_pos = len(_tdata['pos'])
+            _n_neg = len(_tdata['neg'])
+            _direction = 'bullish' if _n_pos > _n_neg else ('bearish' if _n_neg > _n_pos else 'neutral')
+            _agg_wt = sum(
+                self.portfolio_holdings[s]['value'] / total_value * 100
+                for s in _tdata['syms'] if s in self.portfolio_holdings
+            )
+            _theme_list.append({
+                'theme': _tname,
+                'direction': _direction,
+                'portfolio_weight_pct': round(_agg_wt, 1),
+                'affected_symbols': sorted(_tdata['syms']),
+            })
+        _theme_list.sort(key=lambda x: x['portfolio_weight_pct'], reverse=True)
+        macro_themes = {'themes': _theme_list} if _theme_list else {'themes': []}
+
+        # Rule-based narrative — always populated so EOD report never has empty narrative.
+        # When LLM consultation is enabled, a richer synthesis overwrites this.
+        _pos_count = len(positive_news)
+        _neg_count = len(negative_news)
+        _total     = len(all_news_items)
+        _n_syms    = len(fetch_symbols)
+        _posture   = (
+            'broadly positive' if _pos_count > _neg_count * 2
+            else 'broadly negative' if _neg_count > _pos_count * 2
+            else 'mixed'
+        )
+        # Top positive symbols by story count
+        _pos_syms = sorted(
+            {i['symbol'] for i in positive_news},
+            key=lambda s: sum(1 for n in positive_news if n['symbol'] == s),
+            reverse=True
+        )[:3]
+        # Top negative symbols
+        _neg_syms = sorted(
+            {i['symbol'] for i in negative_news},
+            key=lambda s: sum(1 for n in negative_news if n['symbol'] == s),
+            reverse=True
+        )[:2]
+
+        _narr_parts = [
+            f"News sentiment across {_n_syms} covered symbols is {_posture} "
+            f"({_pos_count} positive, {_neg_count} negative, "
+            f"{_total - _pos_count - _neg_count} neutral across {_total} items)."
+        ]
+        if _pos_syms:
+            _narr_parts.append(f"Positive coverage led by {', '.join(_pos_syms)}.")
+        if _neg_syms:
+            _narr_parts.append(f"Negative signals noted for {', '.join(_neg_syms)}.")
+        if not _neg_syms and not _pos_syms:
+            _narr_parts.append("No material single-name signals detected.")
+
+        _tailwinds = [
+            i['title'] for i in
+            sorted(positive_news, key=lambda x: x['portfolio_impact'], reverse=True)[:3]
+        ]
+        _risks = [
+            i['title'] for i in
+            sorted(negative_news, key=lambda x: x['portfolio_impact'])[:3]
+        ]
+
+        portfolio_narrative = {
+            'overall_posture': ('positive' if _pos_count > _neg_count else
+                                'negative' if _neg_count > _pos_count else 'neutral'),
+            'narrative': ' '.join(_narr_parts),
+            'key_tailwinds': _tailwinds,
+            'key_risks': _risks,
+        }
 
         compact_report = {
             'timestamp': datetime.now().isoformat(),

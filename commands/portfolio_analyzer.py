@@ -345,7 +345,7 @@ class PortfolioAnalyzer:
             espp_count = is_espp.sum()
             if espp_count > 0:
                 logger.info(f"Excluding {espp_count} ESPP holding(s) from concentration analysis")
-        except:
+        except Exception:
             portfolio_for_analysis = self.portfolio_df
             espp_count = 0
 

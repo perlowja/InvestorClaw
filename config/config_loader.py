@@ -131,9 +131,25 @@ def get_espp_programs() -> Dict:
 
 
 def get_espp_symbols() -> list:
-    """Get list of symbols held through ESPP programs."""
+    """Get list of symbols held through ESPP programs.
+
+    Falls back to parsing ESPP_HOLDINGS env var when no config file is present.
+    Format: ESPP_HOLDINGS=SYMBOL:account,SYMBOL2:account2
+    """
     espp = get_espp_programs()
-    return list(set(prog.get("symbol", "") for prog in espp.values() if prog.get("symbol")))
+    from_config = list(set(prog.get("symbol", "") for prog in espp.values() if prog.get("symbol")))
+    if from_config:
+        return from_config
+    # Fallback: parse ESPP_HOLDINGS env var directly
+    import os
+    espp_str = os.environ.get('ESPP_HOLDINGS', '').strip()
+    symbols = []
+    for pair in espp_str.split(','):
+        if ':' in pair:
+            sym = pair.split(':', 1)[0].strip().upper()
+            if sym:
+                symbols.append(sym)
+    return list(set(symbols))
 
 
 def has_espp_holding(symbol: str) -> bool:

@@ -636,8 +636,15 @@ def fetch_analyst_for_holdings(holdings_file: str, verbose: bool = False) -> Dic
 
     logger.info(f"📂 Loaded {len(symbols_weighted)} holdings from {holdings_file}")
 
+    # Resolve dated output directory (same as other commands)
+    try:
+        from config.path_resolver import get_reports_dir as _get_reports_dir
+        _fetcher_output_dir = _get_reports_dir()
+    except Exception:
+        _fetcher_output_dir = Path(os.environ.get("INVESTOR_CLAW_REPORTS_DIR", str(Path.home() / "portfolio_reports")))
+
     # Fetch with parallel progressive loading
-    fetcher = ParallelAnalystFetcher()
+    fetcher = ParallelAnalystFetcher(output_dir=_fetcher_output_dir)
 
     # Tier 1: Immediate
     tier1_results, tier1_metrics = fetcher.fetch_tier1_immediate(symbols_weighted)
@@ -677,8 +684,12 @@ if __name__ == "__main__":
 
     print(f"Analyst data: {len(recommendations)} symbols — see analyst_data.json for full detail")
 
-    # Resolve output paths — respect INVESTOR_CLAW_REPORTS_DIR and .raw/ segregation
-    _reports_dir = Path(os.environ.get("INVESTOR_CLAW_REPORTS_DIR", str(Path.home() / "portfolio_reports")))
+    # Resolve output paths — use dated subdirectory (same as other commands)
+    try:
+        from config.path_resolver import get_reports_dir as _get_reports_dir
+        _reports_dir = _get_reports_dir()
+    except Exception:
+        _reports_dir = Path(os.environ.get("INVESTOR_CLAW_REPORTS_DIR", str(Path.home() / "portfolio_reports")))
     _raw_dir = _reports_dir / ".raw"
     _raw_dir.mkdir(parents=True, exist_ok=True)
     # sys.argv[2] is the output_file injected by command_builders (.raw/analyst_data.json)
@@ -692,14 +703,16 @@ if __name__ == "__main__":
         'recommendations': {
             symbol: {
                 'symbol': rec.symbol,
-                'consensus': rec.consensus_recommendation,
+                'consensus': rec.consensus_recommendation or (
+                    'No Coverage' if rec.analyst_count == 0 else 'Unknown'
+                ),
                 'analyst_count': rec.analyst_count,
-                'recommendation_mean': rec.recommendation_mean,
+                'recommendation_mean': rec.recommendation_mean if rec.recommendation_mean is not None else 0.0,
                 'current_price': rec.current_price,
                 'buy_count': rec.buy_count,
                 'hold_count': rec.hold_count,
                 'sell_count': rec.sell_count,
-                'target_price_mean': rec.target_price_mean,
+                'target_price_mean': rec.target_price_mean if rec.target_price_mean is not None else 0.0,
                 'data_source': rec.data_source,
             }
             for symbol, rec in recommendations.items()
