@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "description": "Portfolio analysis skill for OpenClaw agents",
   "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit"
+  },
   "openclaw": {
     "extensions": ["./dist/index.js"],
     "compat": {

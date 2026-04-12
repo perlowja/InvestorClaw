@@ -21,12 +21,14 @@ ROOT = Path(__file__).resolve().parent
 
 REQUIRED_FILES = [
     "openclaw.plugin.json",
+    "package.json",
     "SKILL.md",
     "README.md",
     "LICENSE",
     "requirements.txt",
     "investorclaw.py",
     "index.ts",
+    "dist/index.js",
 ]
 
 
@@ -63,6 +65,30 @@ def main() -> int:
     if "./" not in oc.get("skills", []):
         return fail("openclaw.skills must include './'")
     ok("plugin skills entry present")
+
+    # Verify openclaw.plugin.json and package.json agree on extension artifact
+    pkg = json.loads((ROOT / "package.json").read_text())
+    plugin_ext = (oc.get("extensions") or [""])[0]
+    pkg_ext = (pkg.get("openclaw", {}).get("extensions") or [""])[0]
+    if plugin_ext != pkg_ext:
+        return fail(
+            f"manifest extension mismatch: openclaw.plugin.json={plugin_ext!r} "
+            f"vs package.json={pkg_ext!r} — both must point to the same artifact"
+        )
+    if "dist/" not in plugin_ext:
+        return fail(
+            f"plugin extension must point into dist/ (got {plugin_ext!r}); "
+            "run 'npm run build' or 'tsc' and commit dist/index.js"
+        )
+    ok(f"manifest extensions consistent ({plugin_ext})")
+
+    # Verify versions match
+    if plugin.get("version") != pkg.get("version"):
+        return fail(
+            f"version mismatch: openclaw.plugin.json={plugin.get('version')!r} "
+            f"vs package.json={pkg.get('version')!r}"
+        )
+    ok("manifest versions consistent")
 
     sys.path.insert(0, str(ROOT))
     from runtime.router import COMMANDS, resolve_script  # noqa: WPS433
@@ -271,6 +297,8 @@ def main() -> int:
             env = os.environ.copy()
             env["INVESTOR_CLAW_REPORTS_DIR"] = tmpdir
             env["INVESTORCLAW_AUTO_SESSION"] = "true"
+            # Disable dated subdirectories so we can check the flat path predictably.
+            env["INVESTOR_CLAW_DATED_REPORTS"] = "false"
             wf27_result = subprocess.run(
                 [sys.executable, str(ROOT / "investorclaw.py"), "session"],
                 capture_output=True, text=True, timeout=30,

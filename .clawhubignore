@@ -35,10 +35,14 @@ __pycache__/
 *.so
 tests/
 node_modules/
-dist/
+# dist/ is intentionally NOT excluded — dist/index.js is the compiled OpenClaw
+# plugin entry point and must be present in the ClawHub bundle.
 build/
 .mypy_cache/
 .ruff_cache/
+tsconfig.json
+*.ts.map
+index.ts
 
 # OS and editor noise
 .DS_Store

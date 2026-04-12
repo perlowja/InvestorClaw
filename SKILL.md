@@ -9,10 +9,10 @@ metadata: {"openclaw":{"emoji":"📊","requires":{"bins":["python3"]},"install":
 
 # InvestorClaw
 
-> **Installation scope**: This SKILL.md describes the **local installation** of InvestorClaw.
-> Install it via `openclaw skill add https://github.com/perlowja/InvestorClaw` or by placing
-> it directly in `~/.openclaw/workspace/skills/investorclaw/`. It is not required to publish
-> this skill to ClawHub for personal use.
+> **Installation scope**: This SKILL.md describes the **linked plugin installation** of InvestorClaw.
+> Install via `openclaw plugins install --link ~/Projects/InvestorClaw` after cloning from GitHub.
+> See README.md Quick Install section for the full one-shot install procedure.
+> It is not required to publish this skill to ClawHub for personal use.
 
 Portfolio analysis for OpenClaw agents. **v1.0.0** | FINOS CDM 5.x | Educational guardrails.
 
@@ -47,7 +47,8 @@ All output files written to `$INVESTOR_CLAW_REPORTS_DIR` (default: `~/portfolio_
 
 **Invocation**: Always run commands via the entry point using the absolute path — never use `cd && python3` (blocked by OpenClaw exec preflight):
 ```bash
-python3 ~/.openclaw/workspace/skills/investorclaw/investorclaw.py <command>
+# Linked plugin install (recommended)
+python3 ~/Projects/InvestorClaw/investorclaw.py <command>
 ```
 The entry point loads `.env`, sets PYTHONPATH, injects `--tier3` when consultation is enabled, and routes to the correct script.
 Add `--verbose` to any command for full detail (default is compact/summary).
@@ -112,7 +113,7 @@ All outputs use the mandatory disclaimer wrapper:
 **NEVER read files from `.raw/` directly.** Work exclusively from compact stdout output or the summary files in `portfolio_reports/`. If a user asks for a specific symbol or detail not in the compact output, use the lookup command:
 
 ```bash
-IC_ENTRY=~/.openclaw/workspace/skills/investorclaw/investorclaw.py
+IC_ENTRY=~/Projects/InvestorClaw/investorclaw.py
 
 # Holdings detail for a symbol
 python3 $IC_ENTRY lookup --symbol AAPL
@@ -190,7 +191,7 @@ The display string is sourced from `enrichment_status.display` in the compact st
 
 **Automated setup** (recommended):
 ```bash
-IC_ENTRY=~/.openclaw/workspace/skills/investorclaw/investorclaw.py
+IC_ENTRY=~/Projects/InvestorClaw/investorclaw.py
 
 # Check what models are available
 python3 $IC_ENTRY ollama-setup --check --endpoint http://your-ollama-host:11434
@@ -297,24 +298,24 @@ Account type is inferred from the account name if not set in the CSV: `ROTH` →
 
 The following behaviours are confirmed against OpenClaw 2026.4.9 and must be followed exactly.
 
-### Skill installation (W0.3)
+### Skill installation
 
-`openclaw skill install` and `openclaw plugin install --local` are **not functional** in 2026.4.9.
-Primary install path is a direct copy:
+Primary install path uses the linked plugin mechanism (OpenClaw 2026.4.9+):
 
 ```bash
-cp -r /path/to/investorclaw ~/.openclaw/workspace/skills/investorclaw
+git clone https://github.com/perlowja/InvestorClaw.git ~/Projects/InvestorClaw
+pip install -r ~/Projects/InvestorClaw/requirements.txt
+openclaw plugins install --link ~/Projects/InvestorClaw
+openclaw gateway restart
 ```
 
-Do **not** attempt the CLI install subcommand — it silently fails to deploy.
+The `--link` flag creates a symlink so updates (`git pull`) are reflected immediately without reinstalling.
 
 ### Skill removal
 
-The correct namespace is `openclaw skills` (plural). There is **no** `remove` subcommand.
-To uninstall, delete the skill directory directly:
-
 ```bash
-rm -rf ~/.openclaw/workspace/skills/investorclaw
+openclaw plugins uninstall investorclaw
+openclaw gateway restart
 ```
 
 ### Exec session isolation (W0.1 – W0.3 and cleanup)

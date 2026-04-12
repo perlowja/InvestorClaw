@@ -87,8 +87,8 @@
     }
   },
   "openclaw": {
-    "compat": ">=2026.0.0",
-    "extensions": ["./index.ts"],
+    "compat": {"pluginApi": ">=2026.0.0"},
+    "extensions": ["./dist/index.js"],
     "skills": ["./"],
     "emoji": "📊"
   }
