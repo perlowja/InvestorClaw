@@ -68,6 +68,13 @@ COMMANDS: dict = {
     "ollama-setup":                  "ollama_model_config.py",
     "model-setup":                   "ollama_model_config.py",
     "consult-setup":                 "ollama_model_config.py",
+    "eod-report":                    "eod_report.py",
+    "eod":                           "eod_report.py",
+    "daily-report":                  "eod_report.py",
+    "end-of-day":                    "eod_report.py",
+    "fa-topics":                     "fa_discussion.py",
+    "fa-discussion":                 "fa_discussion.py",
+    "discussion-topics":             "fa_discussion.py",
     "run":                           "../pipeline.py",
     "pipeline":                      "../pipeline.py",
 }
@@ -80,6 +87,8 @@ NON_ANALYSIS_COMMANDS: frozenset = frozenset({
     "report", "export", "csv", "excel",
     "lookup", "query", "detail",
     "ollama-setup", "model-setup", "consult-setup",
+    "eod-report", "eod", "daily-report", "end-of-day",
+    "fa-topics", "fa-discussion", "discussion-topics",
     "help", "update-identity", "update_identity", "identity",
 })
 

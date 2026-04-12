@@ -33,3 +33,6 @@ python-dateutil>=2.8.0
 pytz>=2023.3
 orjson>=3.9.0
 python-dotenv>=1.0.0
+
+# ── EOD report (optional PDF generation) ────────────────────────────────────
+# weasyprint>=62.0          # Uncomment to enable PDF attachment in EOD report

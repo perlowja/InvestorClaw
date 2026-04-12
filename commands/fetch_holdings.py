@@ -164,6 +164,95 @@ def _is_espp_holding(symbol: str, account_name: Optional[str], espp_holdings: Di
     )
 
 
+def _load_managed_accounts_from_env() -> set:
+    """
+    Load the set of account names that are discretionary-managed (e.g. UBS managed strategies).
+
+    Format: MANAGED_ACCOUNTS=account_id1,account_id2,...
+    Partial substring match is supported (e.g. "JT Value Stock" matches "(BX 49690) JT Value Stock")
+
+    Returns: set of raw account IDs/substrings to match against
+    """
+    import os
+    raw = os.environ.get('MANAGED_ACCOUNTS', '').strip()
+    if not raw:
+        return set()
+    managed = {a.strip() for a in raw.split(',') if a.strip()}
+    if managed:
+        logger.info(f"Loaded managed accounts from environment: {managed}")
+    return managed
+
+
+def _is_managed_account(account_name: Optional[str], managed_accounts: set) -> bool:
+    """Return True if account_name matches any entry in managed_accounts (substring match)."""
+    if not account_name or not managed_accounts:
+        return False
+    n = account_name.strip()
+    return any(ma in n or n in ma for ma in managed_accounts)
+
+
+def _load_account_labels_from_env() -> Dict[str, str]:
+    """
+    Load account display-name overrides from environment variables.
+
+    Format: ACCOUNT_LABELS=account_id:display_name,account_id2:display_name2
+    Example:
+      ACCOUNT_LABELS=(BX 75135):Fidelity 401K,(BX 48162) JT Brokerage:Joint Brokerage
+
+    Returns: Dict mapping raw account ID (as it appears in CSV) -> friendly display name
+    """
+    import os
+    raw = os.environ.get('ACCOUNT_LABELS', '').strip()
+    if not raw:
+        return {}
+    labels: Dict[str, str] = {}
+    for pair in raw.split(','):
+        if ':' not in pair:
+            continue
+        acct_id, _, display = pair.partition(':')
+        acct_id = acct_id.strip()
+        display = display.strip()
+        if acct_id and display:
+            labels[acct_id] = display
+    if labels:
+        logger.info(f"Loaded account labels from environment: {labels}")
+    return labels
+
+
+def _infer_financial_type(account_name: str, explicit_type: Optional[str] = None) -> str:
+    """Infer account financial type from name or explicit override."""
+    if explicit_type:
+        return explicit_type.lower().replace(' ', '_')
+    n = (account_name or '').upper()
+    if 'ROTH' in n:
+        return 'roth_ira'
+    if 'SEP' in n:
+        return 'sep_ira'
+    if 'IRA' in n:
+        return 'ira'
+    if '401K' in n or '401(K)' in n or '401 K' in n or 'RETIREMENT' in n:
+        return '401k'
+    if 'FIDELITY' in n:
+        return '401k'   # Fidelity accounts are commonly 401K in this portfolio
+    if 'BROKERAGE' in n:
+        return 'brokerage'
+    if 'MUNI' in n or 'BOND' in n:
+        return 'taxable'
+    return 'taxable'
+
+
+def _is_ubs_managed_strategy(account_name: Optional[str]) -> bool:
+    """Return True if the account name looks like a UBS discretionary managed strategy."""
+    if not account_name:
+        return False
+    n = account_name.upper()
+    # UBS managed strategy naming patterns
+    return any(kw in n for kw in (
+        'VALUE STOCK', 'GROWTH STOCK', 'GLOBAL STK', 'GLOBAL STOCK',
+        'MANAGED', 'DISCRETIONARY', 'ADVISORY', 'STRATEGY',
+    ))
+
+
 def _load_sector_cache() -> Dict[str, dict]:
     """Load security info cache. Migrates old string-only sector format to {sector, security_type} dicts."""
     try:
@@ -256,24 +345,55 @@ def _build_compact_holdings(equity_data: dict, bond_data: dict, cash_data: dict,
     top_equity = []
     for h in eq_sorted[:25]:
         weight_pct = round(h.value / total_value * 100, 2) if total_value else 0
-        top_equity.append({
+        _display_sector = (
+            "ETF / Diversified" if (h.is_etf or h.security_type == 'etf')
+            else (h.sector or "Unknown")
+        )
+        entry = {
             "symbol":     h.symbol,
-            "sector":     h.sector or "Unknown",
+            "sector":     _display_sector,
             "value":      round(h.value, 2),
             "weight_pct": weight_pct,
             "gl_pct":     round(h.unrealized_gain_loss_pct * 100, 2),
             "type":       h.security_type or "equity",
-        })
+        }
+        if h.espp_status:
+            entry["espp_status"] = h.espp_status
+        top_equity.append(entry)
 
-    # Sector concentration (equity only)
+    # Sector concentration — total and non-ESPP breakdown
     sector_totals: dict = {}
+    sector_totals_non_espp: dict = {}
+    espp_value_by_sector: dict = {}
     for h in equity_data.values():
-        sec = h.sector or "Unknown"
+        # ETFs and ETF-like diversified positions get a distinct sector label
+        if h.is_etf or h.security_type == 'etf':
+            sec = "ETF / Diversified"
+        else:
+            sec = h.sector or "Unknown"
         sector_totals[sec] = sector_totals.get(sec, 0.0) + h.value
+        if h.espp_status:
+            espp_value_by_sector[sec] = espp_value_by_sector.get(sec, 0.0) + h.value
+        else:
+            sector_totals_non_espp[sec] = sector_totals_non_espp.get(sec, 0.0) + h.value
+
     sector_weights = {
         sec: round(val / equity_value * 100, 1)
         for sec, val in sorted(sector_totals.items(), key=lambda x: x[1], reverse=True)
     } if equity_value else {}
+
+    # Non-ESPP sector weights (organic portfolio concentration)
+    non_espp_equity_value = sum(sector_totals_non_espp.values())
+    sector_weights_ex_espp = {
+        sec: round(val / non_espp_equity_value * 100, 1)
+        for sec, val in sorted(sector_totals_non_espp.items(), key=lambda x: x[1], reverse=True)
+    } if non_espp_equity_value else {}
+
+    # ESPP value by sector (for concentration context)
+    espp_sector_pct = {
+        sec: round(val / equity_value * 100, 1)
+        for sec, val in sorted(espp_value_by_sector.items(), key=lambda x: x[1], reverse=True)
+    } if equity_value and espp_value_by_sector else {}
 
     # Top 5 bonds by value
     bd_sorted = sorted(bond_data.values(), key=lambda h: h.value, reverse=True)
@@ -321,6 +441,38 @@ def _build_compact_holdings(equity_data: dict, bond_data: dict, cash_data: dict,
         "remaining_equity_count": max(0, len(equity_data) - 25),
         "output_file":   output_file,
     }
+    # Include ESPP-adjusted sector breakdown when ESPP positions are present
+    if espp_sector_pct:
+        compact["sector_weights_ex_espp"] = sector_weights_ex_espp
+        compact["espp_sector_pct"] = espp_sector_pct
+
+    # Account-level breakdown: name → {financial_type, managed, value, position_count}
+    _acct_totals: dict = {}
+    for h in equity_data.values():
+        _acct_name = h.account or 'Unknown'
+        if _acct_name not in _acct_totals:
+            _ft = _infer_financial_type(_acct_name, h.account_type)
+            _is_mgd = (h.managed_status == 'discretionary') or _is_ubs_managed_strategy(_acct_name)
+            _acct_totals[_acct_name] = {
+                'financial_type': _ft,
+                'managed': _is_mgd,
+                'value': 0.0,
+                'position_count': 0,
+            }
+        _acct_totals[_acct_name]['value']          += h.value
+        _acct_totals[_acct_name]['position_count'] += 1
+    if _acct_totals:
+        compact["accounts"] = {
+            name: {
+                'financial_type': data['financial_type'],
+                'managed': data['managed'],
+                'value': round(data['value'], 2),
+                'position_count': data['position_count'],
+                'weight_pct': round(data['value'] / equity_value * 100, 1) if equity_value else 0,
+            }
+            for name, data in sorted(_acct_totals.items(), key=lambda x: x[1]['value'], reverse=True)
+        }
+
     return compact
 
 
@@ -648,10 +800,12 @@ class PortfolioFetcher:
     def fetch_equity_holdings(self, equity_df: pl.DataFrame) -> Dict:
         """Fetch current prices for equity positions.
 
-        If the input DataFrame already has broker-supplied market_value and price columns
-        (e.g., from a UBS XLS export), those values are used as-is.  Live API prices are
-        only fetched for rows where the broker did NOT supply a valid price/value pair.
-        This preserves the broker-snapshot fidelity.
+        By default (INVESTOR_CLAW_REFRESH_PRICES=true), live prices are always fetched
+        from the configured price provider.  Broker-supplied prices from the CSV are kept
+        as a fallback for when the provider fails.
+
+        Set INVESTOR_CLAW_REFRESH_PRICES=false to use broker-snapshot prices as-is
+        (older behaviour — useful when the CSV is same-day and you want broker fidelity).
 
         ESPP Detection:
         - On first run: Displays detected symbols and accounts (for user to identify ESPP)
@@ -661,6 +815,12 @@ class PortfolioFetcher:
 
         # Load ESPP symbol+account configuration from environment (if set during discovery)
         espp_holdings = _load_espp_holdings_from_env()
+
+        # Load account display-name overrides (e.g. (BX 75135) → Fidelity 401K)
+        _account_labels = _load_account_labels_from_env()
+
+        # Load discretionary-managed account identifiers
+        _managed_accounts = _load_managed_accounts_from_env()
 
         # On first portfolio load, run account detection to prompt user
         if not espp_holdings:
@@ -679,7 +839,8 @@ class PortfolioFetcher:
         from collections import defaultdict
         _agg: dict = defaultdict(
             lambda: {'market_value': 0.0, 'shares': 0.0, 'price': None, '_row': None,
-                     '_asset_type': None, '_proxy': None, '_account_type': None, '_real_sym': None}
+                     '_asset_type': None, '_proxy': None, '_account_type': None, '_real_sym': None,
+                     '_espp_account': None, '_espp_shares': 0.0, '_labeled_account': None}
         )
         for _row in equity_df.to_dicts():
             _sym = _row.get('symbol')
@@ -689,6 +850,8 @@ class PortfolioFetcher:
             _acct = (_row.get('account') or _row.get('source') or 'default')
             if isinstance(_acct, str):
                 _acct = _acct.strip()
+            # Apply account label override (e.g. "(BX 75135)" → "Fidelity 401K")
+            _acct = _account_labels.get(_acct, _acct)
             # Collapse key: by symbol only (single investor) or symbol+account (FA)
             _agg_key = _sym if _collapse_by_symbol else f"{_sym}__{_acct}"
             _mv = _row.get('market_value')
@@ -716,6 +879,15 @@ class PortfolioFetcher:
                 _agg[_agg_key]['_proxy'] = _raw_proxy.strip() if _raw_proxy else None
             if _agg[_agg_key]['_account_type'] is None:
                 _agg[_agg_key]['_account_type'] = _row.get('account_type')
+            # Store labeled account name (first seen wins for non-ESPP override)
+            if _agg[_agg_key]['_labeled_account'] is None:
+                _agg[_agg_key]['_labeled_account'] = _acct
+            # Track ESPP account: if ANY row for this symbol is from an ESPP account, record it
+            if _agg[_agg_key]['_espp_account'] is None and _is_espp_holding(_sym, _acct, espp_holdings):
+                _agg[_agg_key]['_espp_account'] = _acct
+                _agg[_agg_key]['_espp_shares'] = _sh_f
+            elif _agg[_agg_key]['_espp_account'] == _acct:
+                _agg[_agg_key]['_espp_shares'] += _sh_f
 
         # Build row_map with aggregated values (one entry per agg key)
         row_map: dict = {}
@@ -729,6 +901,13 @@ class PortfolioFetcher:
             _base['_proxy']        = _data['_proxy']
             _base['_account_type'] = _data['_account_type']
             _base['_real_sym']     = _data['_real_sym']
+            # Apply labeled account name (overrides raw CSV account ID)
+            if _data['_labeled_account']:
+                _base['account'] = _data['_labeled_account']
+            # Propagate ESPP account: prefer the ESPP-matching account over first-seen account
+            if _data['_espp_account']:
+                _base['account'] = _data['_espp_account']
+                _base['_espp_shares'] = _data['_espp_shares']
             row_map[_agg_key] = _base
 
         # Ordered key list (preserves XLS order, deduplicates)
@@ -742,6 +921,7 @@ class PortfolioFetcher:
             _a = (_row_d.get('account') or _row_d.get('source') or 'default')
             if isinstance(_a, str):
                 _a = _a.strip()
+            _a = _account_labels.get(_a, _a)
             _k = _s if _collapse_by_symbol else f"{_s}__{_a}"
             if _k not in _seen:
                 _seen.add(_k)
@@ -756,10 +936,15 @@ class PortfolioFetcher:
         equity_data    = {}
         failed_symbols = []
 
-        # Determine which symbols already have broker-supplied prices/values and
-        # which need a live price fetch.  mutual_fund rows use purchase_price as NAV
-        # when no broker price is present (the user supplies NAV in the CSV).
-        # In FA mode, agg_key is sym__account; real ticker = row['_real_sym'].
+        # Determine which symbols need a live price fetch.
+        # INVESTOR_CLAW_REFRESH_PRICES=true (default): always fetch live prices; broker CSV
+        # prices are only used as a fallback when the provider fails.
+        # INVESTOR_CLAW_REFRESH_PRICES=false: use broker-snapshot prices as-is (old behaviour).
+        import os as _os
+        _refresh_prices = _os.environ.get(
+            'INVESTOR_CLAW_REFRESH_PRICES', 'true'
+        ).strip().lower() not in ('0', 'false', 'no')
+
         needs_live  = []
         broker_only = {}
         for agg_key in symbols:
@@ -775,8 +960,13 @@ class PortfolioFetcher:
             except (ValueError, TypeError):
                 mv = price = None
 
-            if mv and mv > 0 and price and price > 0:
+            if mv and mv > 0 and price and price > 0 and not _refresh_prices:
+                # Refresh disabled: use broker snapshot price as-is
                 broker_only[agg_key] = {'price': price, 'market_value': mv, 'sym': sym}
+            elif mv and mv > 0 and price and price > 0:
+                # Refresh enabled: store broker data for fallback, queue for live fetch
+                broker_only[agg_key] = {'price': price, 'market_value': mv, 'sym': sym}
+                needs_live.append(sym)
             elif (row.get('_asset_type') or 'equity') == 'mutual_fund':
                 # For mutual funds: prefer proxy live price > broker NAV > purchase_price NAV
                 proxy = row.get('_proxy')
@@ -802,9 +992,10 @@ class PortfolioFetcher:
                 needs_live.append(sym)
 
         if needs_live:
-            logger.info(f"Live price fetch needed for {len(needs_live)} symbols (no broker price)")
-        if broker_only:
-            logger.info(f"Using broker-supplied prices for {len(broker_only)} symbols")
+            _mode = "refresh" if _refresh_prices else "no broker price"
+            logger.info(f"Live price fetch for {len(needs_live)} symbols ({_mode})")
+        if broker_only and not _refresh_prices:
+            logger.info(f"Using broker-supplied prices for {len(broker_only)} symbols (refresh disabled)")
 
         # Batch price fetch for symbols without broker prices (use real tickers, not compound keys)
         quotes: Dict[str, Dict] = {}
@@ -815,10 +1006,13 @@ class PortfolioFetcher:
             except Exception as e:
                 logger.error(f"PriceProvider.get_quotes failed: {e}")
 
-        # Merge broker prices into quotes map keyed by real ticker symbol
+        # Merge broker prices into quotes map — only fill gaps where live fetch failed.
+        # When _refresh_prices is True, live prices take precedence; broker prices are
+        # only used as a fallback for symbols the provider couldn't return.
         for agg_key, bp in broker_only.items():
             real_sym = bp.get('sym', agg_key)
-            quotes[real_sym] = {'price': bp['price'], 'provider': 'broker'}
+            if real_sym not in quotes or not quotes[real_sym].get('price'):
+                quotes[real_sym] = {'price': bp['price'], 'provider': 'broker'}
 
         # Sector lookup — load from cache, fetch missing symbols in parallel.
         # mutual_fund rows (asset_type == 'mutual_fund') skip yfinance; their security_type
@@ -907,9 +1101,17 @@ class PortfolioFetcher:
                 except (ValueError, TypeError):
                     market_value_stored = None
 
-                # If broker supplied a market_value, use it as-is (most accurate).
-                # Otherwise, compute from shares × current_price (live mode).
-                if market_value_stored and market_value_stored > 0:
+                # When refresh is enabled, always compute value from shares × live price.
+                # When refresh is disabled (broker snapshot mode), prefer broker market_value.
+                if market_value_stored and market_value_stored > 0 and not _refresh_prices:
+                    # Broker snapshot mode: use CSV market value as-is
+                    value = market_value_stored
+                    if shares == 0:
+                        shares = value / current_price if current_price > 0 else 1.0
+                elif shares > 0 and current_price > 0:
+                    value = shares * current_price
+                elif market_value_stored and market_value_stored > 0:
+                    # Fallback: use broker value when shares unknown
                     value = market_value_stored
                     if shares == 0:
                         shares = value / current_price if current_price > 0 else 1.0
@@ -958,9 +1160,10 @@ class PortfolioFetcher:
                     )
                     _sector = (_sec_info.get('sector', 'Unknown') if isinstance(_sec_info, dict) else 'Unknown')
 
-                # Determine ESPP status based on symbol+account pair
+                # Determine ESPP and managed-account status
                 _account = row.get('account') or row.get('source')
-                _espp_status = 'vested' if _is_espp_holding(sym, _account, espp_holdings) else None
+                _espp_status    = 'vested' if _is_espp_holding(sym, _account, espp_holdings) else None
+                _managed_status = 'discretionary' if _is_managed_account(_account, _managed_accounts) else None
 
                 # Create Holding object (current CDM-compatible interface).
                 # Key is agg_key (sym in single_investor, sym__account in fa_professional).
@@ -980,6 +1183,7 @@ class PortfolioFetcher:
                     asset_type=_row_asset_type,
                     data_provider=quote.get('provider', 'unknown'),
                     espp_status=_espp_status,
+                    managed_status=_managed_status,
                 )
                 logger.info(f"{sym}: {shares} shares @ ${current_price:.2f} = ${value:,.2f}")
 

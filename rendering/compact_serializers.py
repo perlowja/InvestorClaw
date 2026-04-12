@@ -249,6 +249,7 @@ def serialize_news_compact(
         {
             'symbol': i.get('symbol', ''),
             'title': _truncate(i.get('title', ''), 80),
+            'url': i.get('url') or i.get('link', ''),
             'summary': _truncate(i.get('summary') or '', summary_limit),
             'impact': round(i.get('portfolio_impact', 0), 2),
         }
@@ -259,6 +260,7 @@ def serialize_news_compact(
         {
             'symbol': i.get('symbol', ''),
             'title': _truncate(i.get('title', ''), 80),
+            'url': i.get('url') or i.get('link', ''),
             'summary': _truncate(i.get('summary') or '', summary_limit),
             'impact': round(i.get('portfolio_impact', 0), 2),
         }

@@ -53,13 +53,12 @@ export default definePluginEntry({
     const pluginConfig = (api.pluginConfig ?? {}) as Record<string, string>;
 
     // Resolve the skill directory: prefer INVESTORCLAW_SKILL_ROOT env/config,
-    // then default workspace location. When loaded from the openclaw extensions
-    // directory, import.meta.url points to extensions/investorclaw/ (not the
-    // workspace skill dir), so we use the workspace path as the fallback.
+    // then derive from this file's own location (works whether installed as a
+    // linked plugin from the canonical repo or copied into extensions/).
     const selfDir =
       pluginConfig["INVESTORCLAW_SKILL_ROOT"] ??
       process.env.INVESTORCLAW_SKILL_ROOT ??
-      path.join(process.env.HOME ?? "/Users/jasonperlow", ".openclaw", "workspace", "skills", "investorclaw");
+      path.dirname(new URL(import.meta.url).pathname);
     const entryScript = path.join(selfDir, "investorclaw.py");
 
     // ------------------------------------------------------------------
@@ -120,23 +119,34 @@ export default definePluginEntry({
     }
 
     // ------------------------------------------------------------------
+    // Helpers
+    // ------------------------------------------------------------------
+
+    /** Wrap a text string as an AgentToolResult (content + required details). */
+    function tr(text: string) {
+      return { content: [{ type: "text" as const, text }], details: {} };
+    }
+
+    // ------------------------------------------------------------------
     // Tools
     // ------------------------------------------------------------------
 
     api.registerTool({
       name: "investorclaw_setup",
+      label: "Setup Portfolio",
       description:
         "Run initial portfolio setup. Discovers PDF, Excel, and CSV files in the " +
         "portfolios/ directory, extracts tables, and consolidates them into " +
         "master_portfolio.csv. Run this once before other tools.",
       parameters: Type.Object({}),
       async execute(_id, _p) {
-        return { content: [{ type: "text", text: await run("setup", [], QUICK_TIMEOUT_MS) }] };
+        return tr(await run("setup", [], QUICK_TIMEOUT_MS));
       },
     });
 
     api.registerTool({
       name: "investorclaw_holdings",
+      label: "Portfolio Holdings",
       description:
         "Get a portfolio snapshot with current prices for every holding in " +
         "master_portfolio.csv. Fetches live quotes via Finnhub → Massive → " +
@@ -144,36 +154,39 @@ export default definePluginEntry({
         "portfolio_reports/holdings.json.",
       parameters: Type.Object({}),
       async execute(_id, _p) {
-        return { content: [{ type: "text", text: await run("holdings") }] };
+        return tr(await run("holdings"));
       },
     });
 
     api.registerTool({
       name: "investorclaw_performance",
+      label: "Portfolio Performance",
       description:
         "Analyze portfolio performance: YTD and 12-month returns, Sharpe ratio, " +
         "beta, volatility, max drawdown. Requires holdings.json from " +
         "investorclaw_holdings. Returns JSON saved to portfolio_reports/performance.json.",
       parameters: Type.Object({}),
       async execute(_id, _p) {
-        return { content: [{ type: "text", text: await run("performance") }] };
+        return tr(await run("performance"));
       },
     });
 
     api.registerTool({
       name: "investorclaw_analysis",
+      label: "Portfolio Analysis",
       description:
         "Run a full portfolio analysis combining the holdings snapshot with " +
         "performance metrics. Requires holdings.json from investorclaw_holdings. " +
         "Returns JSON saved to portfolio_reports/portfolio_analysis.json.",
       parameters: Type.Object({}),
       async execute(_id, _p) {
-        return { content: [{ type: "text", text: await run("analysis") }] };
+        return tr(await run("analysis"));
       },
     });
 
     api.registerTool({
       name: "investorclaw_bonds",
+      label: "Bond Analysis",
       description:
         "Analyze fixed-income holdings: exact YTM, modified duration, convexity, " +
         "tax-equivalent yield for munis, and benchmark spread vs. FRED live " +
@@ -181,48 +194,52 @@ export default definePluginEntry({
         "is absent). Returns JSON saved to portfolio_reports/bond_analysis.json.",
       parameters: Type.Object({}),
       async execute(_id, _p) {
-        return { content: [{ type: "text", text: await run("bonds") }] };
+        return tr(await run("bonds"));
       },
     });
 
     api.registerTool({
       name: "investorclaw_fixed_income",
+      label: "Fixed Income Report",
       description:
         "Generate a fixed-income strategy report with yield curve positioning, " +
         "duration risk, and rebalancing recommendations. Returns JSON saved to " +
         "portfolio_reports/fixed_income_analysis.json.",
       parameters: Type.Object({}),
       async execute(_id, _p) {
-        return { content: [{ type: "text", text: await run("fixed-income") }] };
+        return tr(await run("fixed-income"));
       },
     });
 
     api.registerTool({
       name: "investorclaw_news",
+      label: "Portfolio News",
       description:
         "Fetch and summarize recent news correlated to portfolio holdings. " +
         "Requires NEWSAPI_KEY and holdings.json from investorclaw_holdings. " +
         "Returns JSON saved to portfolio_reports/portfolio_news.json.",
       parameters: Type.Object({}),
       async execute(_id, _p) {
-        return { content: [{ type: "text", text: await run("news") }] };
+        return tr(await run("news"));
       },
     });
 
     api.registerTool({
       name: "investorclaw_analyst",
+      label: "Analyst Ratings",
       description:
         "Get analyst consensus ratings and price targets for portfolio holdings. " +
         "Uses Finnhub and/or Massive. Requires holdings.json from " +
         "investorclaw_holdings. Returns JSON saved to portfolio_reports/analyst_data.json.",
       parameters: Type.Object({}),
       async execute(_id, _p) {
-        return { content: [{ type: "text", text: await run("analyst") }] };
+        return tr(await run("analyst"));
       },
     });
 
     api.registerTool({
       name: "investorclaw_report",
+      label: "Export Report",
       description:
         "Export portfolio data to CSV or Excel. Requires holdings.json from " +
         "investorclaw_holdings. Returns the path of the generated report file.",
@@ -236,12 +253,13 @@ export default definePluginEntry({
       }),
       async execute(_id, params) {
         const cmd = params.format === "excel" ? "excel" : "csv";
-        return { content: [{ type: "text", text: await run(cmd) }] };
+        return tr(await run(cmd));
       },
     });
 
     api.registerTool({
       name: "investorclaw_session",
+      label: "Risk Session",
       description:
         "Initialize a risk-calibration session before running analysis. Sets a " +
         "heat level (1 = very conservative … 10 = aggressive) and optional macro " +
@@ -265,12 +283,13 @@ export default definePluginEntry({
         const args: string[] = [];
         if (params.heat_level != null) args.push("--heat-level", String(params.heat_level));
         if (params.concerns) args.push("--concerns", params.concerns);
-        return { content: [{ type: "text", text: await run("session", args, QUICK_TIMEOUT_MS) }] };
+        return tr(await run("session", args, QUICK_TIMEOUT_MS));
       },
     });
 
     api.registerTool({
       name: "investorclaw_lookup",
+      label: "Symbol Lookup",
       description:
         "Look up detailed data for a specific ticker symbol from cached .raw/ files " +
         "(holdings, analyst, or news data). Faster than re-running a full command " +
@@ -291,26 +310,26 @@ export default definePluginEntry({
       async execute(_id, params) {
         const args = ["--symbol", params.symbol.toUpperCase()];
         if (params.file) args.push("--file", params.file);
-        return { content: [{ type: "text", text: await run("lookup", args, QUICK_TIMEOUT_MS) }] };
+        return tr(await run("lookup", args, QUICK_TIMEOUT_MS));
       },
     });
 
     api.registerTool({
       name: "investorclaw_ollama_setup",
+      label: "Ollama Setup",
       description:
         "Check Ollama endpoint availability and list models suitable for " +
         "InvestorClaw consultation (tier-3 enrichment). Use this to verify the " +
         "local LLM setup before enabling INVESTORCLAW_CONSULTATION_ENABLED.",
       parameters: Type.Object({}),
       async execute(_id, _p) {
-        return {
-          content: [{ type: "text", text: await run("ollama-setup", [], QUICK_TIMEOUT_MS) }],
-        };
+        return tr(await run("ollama-setup", [], QUICK_TIMEOUT_MS));
       },
     });
 
     api.registerTool({
       name: "investorclaw_guardrails",
+      label: "Guardrails",
       description:
         "Inspect or interact with InvestorClaw's financial-advice guardrails. " +
         "'status' reports current enforcement state. 'prime' injects the " +
@@ -339,9 +358,7 @@ export default definePluginEntry({
         const args: string[] = [];
         if (params.action === "prime") args.push("--prime");
         if (params.query) args.push("--query", params.query);
-        return {
-          content: [{ type: "text", text: await run("guardrails", args, QUICK_TIMEOUT_MS) }],
-        };
+        return tr(await run("guardrails", args, QUICK_TIMEOUT_MS));
       },
     });
   },

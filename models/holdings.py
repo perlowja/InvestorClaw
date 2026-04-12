@@ -45,7 +45,8 @@ class Holding:
     account: Optional[str] = None
     account_type: Optional[str] = None
     data_provider: Optional[str] = None
-    espp_status: Optional[str] = None  # 'vested', 'unvested', 'restricted', or None for non-ESPP
+    espp_status: Optional[str] = None      # 'vested', 'unvested', 'restricted', or None for non-ESPP
+    managed_status: Optional[str] = None   # 'discretionary' for advisor-managed accounts, else None
 
     # Optional fields for bonds
     cusip: Optional[str] = None
