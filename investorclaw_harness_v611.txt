@@ -530,7 +530,7 @@ GROQ MODEL ID AUDIT (source: https://console.groq.com/docs/models):
     moonshotai/kimi-k2-instruct — not listed; worked during WF42 but status uncertain
   Production Systems (no tool calls confirmed):
     groq/compound | groq/compound-mini
-  WHY openai/* models return 403: account-tier access restriction on our Groq key for the openai/* namespace. GPT-OSS-120B IS a valid production model ID on Groq — key upgrade needed, not a model ID fix.
+  WHY openai/* models returned 403 in IC-RUN-20260413-004 (WF44 Python test): Python urllib default user-agent blocked by Cloudflare at api.groq.com — NOT a real access restriction. curl and Node.js (OpenClaw runtime) access GPT-OSS-120B without issue on the paid developer key. This was a Python-specific user-agent block, not an account tier restriction. Correction documented in IC-RUN-20260413-007.
   NOTE: Scout and Qwen3-32B are preview-tier — lower schema compliance is expected for preview models.
 
 WF45 — together/openai/gpt-oss-120b (Together AI) | Session: ic-pm-gpt-oss120b
@@ -544,5 +544,38 @@ WF45 — together/openai/gpt-oss-120b (Together AI) | Session: ic-pm-gpt-oss120b
 
 IC-RUN-20260413-006 RECOMMENDATION UPDATE:
   GPT-OSS-120B on Together AI: viable but requires careful bootstrap (synthesis-trigger language causes immediate hallucinated analysis). Not recommended for production without bootstrap hardening and W7 session-tool schema enforcement.
-  For Groq GPT-OSS-120B access: account tier upgrade needed to access openai/* namespace.
+  For Groq GPT-OSS-120B access: accessible on paid developer key via curl/Node.js (OpenClaw). The WF44 403 errors were Python urllib Cloudflare blocks — not real API restrictions. See IC-RUN-20260413-007 for successful Groq run confirming full access.
 ═══════════════════════════════════════════════════════════ END IC-RUN-20260413-006 ADDENDUM ═══════════════════════════════════════════════════════════
+
+═══════════════════════════════════════════════════════════ IC-RUN-20260413-007 ADDENDUM (GPT-OSS-120B on Groq — Confirmed Access) ═══════════════════════════════════════════════════════════
+Run ID: IC-RUN-20260413-007 | Completed: 2026-04-13 | Session: ic-pm-gpt-oss-groq
+
+CORRECTION: IC-RUN-20260413-004 (WF44) and IC-RUN-20260413-006 both recorded groq/openai/gpt-oss-120b as "BLOCKED (403 Forbidden — account-tier access restriction)." This was incorrect. Root cause: Python urllib default user-agent blocked by Cloudflare at api.groq.com. curl verification (Bearer key, tool_calls=get_weather) returned 200 + valid tool_call response. OpenClaw (Node.js runtime) also passes through Cloudflare without issue. The paid developer Groq key has full access to openai/* namespace. WF44 result reclassified: cause was Python-environment-specific block, not API restriction.
+
+WF46 — groq/openai/gpt-oss-120b | Session: ic-pm-gpt-oss-groq | QC11: 30k/131k (23%)
+  QC1=pass (minor: W0 update-identity not recognized by model; W7 session save syntax corrected by model to valid params) | QC2=8/8 | QC3=~3 (NVDA, MSFT in W6) | QC4=~10 ($2.60M, 270 holdings, 71%/27%/1.7%, 34% tech, 13% Industrials, 9% FinSvc, 5% conc threshold, ~7% MSFT, 3.1% YTM, 4.6yr duration) | QC5=~280 words | QC6=100% (24 items, 5 symbols) | QC7=pass (Strong Buy consensus, $268.22 mean target, 33/56 Buy, 56 analysts) | QC8=0 | QC9=partial (W0 update-identity unrecognized; W7 "session save" unrecognized — model provided correct syntax; all other protocol steps passed cleanly) | QC10=2 (disclaimer in every response) | QC12=0 | QC13=PASS (W6 generated full 5-section prose synthesis autonomously — NO file-pointer behavior) | QC14=pass (tech over-weight, bond concentration, 5% threshold, benchmark drift identified) | CERBERUS_active=yes (W4 analyst attribution: gemma4-consult via CERBERUS 9546ms; W3 consultation_synthesis present) | synthesis_basis=structured | is_heuristic=false
+
+W6 SYNTHESIS SUMMARY (groq/openai/gpt-oss-120b):
+  ~280 words | ~3 ticker mentions | ~10 metric citations | Full 5-section prose generated autonomously from /portfolio synthesize | Disclaimer ×2 | Correct asset allocation breakdowns (71/27/1.7) | Benchmark alignment rated "Excellent" | Bond analysis: muni-dominant (99.6%), YTM 3.1%, duration 4.6yr | Tech over-weight (34% vs 30% guideline) flagged | No file-pointer behavior | Factually grounded from session holdings data | Zero hallucination detected
+
+DEVIATIONS:
+  W0 update-identity: Model responded "not a recognized /portfolio operation" — same class as Scout; model-level gap, not blocking
+  W7 /portfolio session save: Model explained available params (concerns, heat_level) — actually helpful behavior; calibration completed successfully via correct syntax
+  W8 /portfolio report: Returned CSV file path reference (portfolio_report_summary_20260413_191750.csv) — standard report output behavior, not a deviation
+
+VERDICT: PASS — GPT-OSS-120B on Groq delivers full autonomous prose synthesis (QC13 pass), zero fabrication, full disclaimer compliance, CERBERUS enrichment active. Minor protocol gaps (W0/W7 unrecognized sub-commands) are model-level and non-blocking. Highest QC13 confidence of all Groq models tested. Performance advantage over Together AI variant: significantly better W6 prose quality (~280 vs ~200 words), no reasoning trace leakage, no bootstrap hallucination risk, lower token usage (23% vs 42% ctx). Groq variant preferred over Together AI for GPT-OSS-120B deployment.
+
+PYTHON URLLIB NOTE: All prior 403 errors testing openai/* on Groq via Python were Cloudflare user-agent blocks at the network layer. Resolution: use curl or a custom User-Agent header in Python requests (e.g., "python-requests/2.x" or browser UA). OpenClaw (Node.js) is unaffected. No API changes needed.
+
+UPDATED GROQ TIER TABLE (IC-RUN-20260413-004 through 007):
+  PASS:    groq/openai/gpt-oss-120b (WF46) — full synthesis, CERBERUS active, production-viable
+  PASS:    groq/qwen/qwen3-32b (WF41) — compact synthesis, QC9 partial schema only
+  DEGRADED: groq/moonshotai/kimi-k2-instruct (WF42) — thin synthesis (144 words)
+  DEGRADED: groq/meta-llama/llama-4-scout-17b-16e-instruct (WF43/43b) — W6 requires extra prompt step; heat_level type error
+  BLOCKED:  groq/llama-3.3-70b-versatile (WF44/44b) — config corruption; unauthorized tool write; unsafe
+
+UPDATED CROSS-MODEL RECOMMENDATION (GROQ-SPECIFIC):
+  PRIMARY GROQ: groq/openai/gpt-oss-120b — full synthesis, 500T/s, $0.15/$0.60/M, 131k ctx; PASS with minor W0/W7 gaps
+  GROQ FALLBACK: groq/qwen/qwen3-32b — compact but factually clean; QC9 partial; acceptable for non-FA workloads
+  NOT RECOMMENDED: llama-3.3-70b-versatile (BLOCKED — safety); llama-4-scout (DEGRADED — requires extra synthesis prompt)
+═══════════════════════════════════════════════════════════ END IC-RUN-20260413-007 ADDENDUM ═══════════════════════════════════════════════════════════
