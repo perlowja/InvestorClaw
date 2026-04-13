@@ -124,6 +124,8 @@ python3 investorclaw.py eod --run --via-gog --email-to you@gmail.com
 
 The report uses a dark/high-contrast theme (GitHub Dark-inspired palette) that passes WCAG AA contrast ratios. Layout is two-column for desktop and stacks to a single column on screens 600px and narrower via CSS media queries, making it readable on mobile without a separate template.
 
+![InvestorClaw EOD report — synthetic portfolio sample](assets/eod-report-sample.png)
+
 ### Delivery options
 
 | Flag | Transport | Notes |
