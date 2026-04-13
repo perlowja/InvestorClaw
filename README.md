@@ -297,56 +297,83 @@ Full artifact names: `holdings.json`, `performance.json`, `bond_analysis.json`, 
 
 ## Choosing Your Operational LLM
 
-InvestorClaw uses a single operational LLM for routing, analysis, and guardrail enforcement through OpenClaw. In practice, the best model depends on whether you also run a local consultation model.
+InvestorClaw uses a single operational LLM for routing, analysis, and guardrail enforcement through OpenClaw. The right configuration depends on two things: **portfolio complexity** and **whether you have a local GPU available for consultation**.
 
-### Profile 1 — recommended hybrid architecture
+### Does your portfolio need local enrichment?
+
+Not every portfolio benefits equally from the local consultation model. The synthesis quality gap between cloud-only and hybrid configurations is driven by how much per-holding analyst data exists to enrich. ETFs and index funds have no individual analyst ratings — synthesis for an ETF-heavy portfolio is primarily allocation math and bond analytics, which cloud models handle well. Individual equities have per-symbol analyst consensus, earnings estimates, and price targets that the local model extracts and structures before synthesis runs.
+
+| Portfolio type | Typical holdings | Account mix | Cloud-only quality | Local enrichment benefit |
+|----------------|:----------------:|-------------|:-----------------:|:------------------------:|
+| Simple — mostly ETFs + a few ESPPs | < 50 | 1–2 accounts | ✅ Acceptable | Low — ETFs carry no per-holding analyst ratings |
+| Mixed — ETFs and individual equities | 50–150 | 2–3 accounts | ⚠️ Workable | Moderate |
+| Complex — large individual equity portfolio, bonds, managed accounts | 150+ | Multiple account types | ❌ Shallow synthesis | High — the harness measured a 10–15× metric density gap |
+
+**If your portfolio is mostly ETFs and index funds with a handful of ESPPs, cloud-only deployment is fine for an initial release.** The synthesis output is primarily about allocation percentages and sector distribution — data the operational model derives well without enrichment. The local consultation layer adds the most measurable value when there are many individual equities with distinct analyst coverage, price targets, and earnings data to enrich before synthesis runs.
+
+---
+
+### Profile 1 — canonical recommendation (hybrid)
 
 **Operational LLM**: xAI Grok 4.1 Fast  
 Model ID: `xai/grok-4-1-fast` (alias: `grok-reasoning`)
 
-**Consultative LLM**: `gemma4-consult` on local Ollama
+**Consultative LLM**: `gemma4-consult` on local Ollama (CERBERUS or equivalent ~16 GB VRAM GPU)
 
-This is the recommended default architecture for most serious InvestorClaw users because it gives the best balance of:
-- persistent-session context headroom (~2M tokens)
-- operational cost control
-- strong agentic responsiveness
-- local deterministic synthesis before cloud interpretation
+This is the recommended deployment for initial release. It is the configuration InvestorClaw was designed around and the one validated by the test harness. It gives:
+- persistent-session context headroom (~2M tokens — no session truncation on large portfolios)
+- per-holding analyst enrichment before synthesis, producing measurably denser output
+- anti-fabrication controls (HMAC fingerprint chain, verbatim attribution, `is_heuristic=false`)
+- local data residency — raw portfolio detail stays on-premise; the operational model sees only reduced artifacts
+- zero marginal cost for the enrichment layer (local inference)
 
-Why this is the default recommendation:
-- Grok handles long-lived, tool-heavy OpenClaw sessions well
-- the local consultative model reduces cloud token pressure
-- raw portfolio detail can remain local while the operational model sees only reduced artifacts
-- this split matches the architecture InvestorClaw was explicitly designed around
+Why Grok 4.1 Fast specifically:
+- handles long-lived, tool-heavy OpenClaw sessions well
+- 2M context means even a fully-enriched 270-holding session never hits a limit
+- agentic calibration is a better fit for InvestorClaw's multi-step workflow than models tuned for single-shot chat
 
 > **Compliance note**: `xai/grok-4-1-fast` requires running `/portfolio update-identity` at the start of each session. Without this step, guardrail disclaimer compliance drops to near zero. This is an xAI quirk, not an InvestorClaw bug.
 
-### Profile 2 — cloud-only premium / frontier deployment
+Why `gemma4-consult` specifically:
+- runs at ~65 tok/s on a single RTX 4500 Ada or equivalent — fast enough to enrich 20 holdings in the background while the session continues
+- the `gemma4-consult` Ollama variant uses a concise system prompt that prioritises structured analytical output over conversational filler
+- validated end-to-end against InvestorClaw's tier-3 enrichment format; other models will likely work but are untested
 
-If you do **not** have a local consultation model, the operational LLM must do more of the synthesis work directly. In that case, use stronger frontier models and treat them as session-specific InvestorClaw models rather than always-on defaults for all OpenClaw activity.
+**Hardware requirement**: any system with a GPU carrying ~10 GB of VRAM in the 16 GB VRAM class or better running Ollama. A Mac with 16 GB unified memory also works via Metal acceleration.
 
-Recommended cloud-only frontier choices:
+---
 
-- **xAI Grok 4.1 Fast** — `xai/grok-4-1-fast` (~2M context) — still the primary recommendation even without local consultation
-- **Google Gemini 3.1 Pro** — `google/gemini-3.1-pro-preview` (~1M context, reasoning) — best high-context alternative
-- **Together AI / Llama 4 Maverick** — `together/meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8` (~1M context) — good cost/context ratio
-- **Together AI / Qwen3-235B** — `together/Qwen/Qwen3-235B-A22B-FP8-tput` (262K context) — strong reasoning, throughput-optimized
-- **OpenAI GPT-5.4** — `openai/gpt-5.4` (~272K context) — strong reasoning; verify your full session fits
+### Profile 2 — cloud-only deployment
+
+**Honest quality advisory for complex portfolios**: if you have a large portfolio with many individual equity positions, bonds, and multiple account types, cloud-only synthesis will be shallower than the hybrid configuration. The harness measured 5–11 metric citations in cloud-only synthesis output vs. 120 in the hybrid configuration on an identical portfolio. This is not a model capability limitation — it is a data availability limitation. The cloud models are synthesising from thin heuristic analyst summaries; the hybrid configuration synthesises from per-holding enriched records. No frontier model, regardless of cost, can close that gap without the enrichment step.
+
+**For simple portfolios this caveat does not apply.** If your holdings are primarily ETFs, broad index funds, and a small number of ESPPs, there is little per-holding analyst data to enrich in the first place. Cloud-only output quality for allocation analysis, bond analytics, and sector breakdown is good.
+
+**Recommended cloud-only models** (ranked by harness performance for complex portfolios):
+
+1. **xAI Grok 4.1 Fast** — `xai/grok-4-1-fast` (~2M context) — primary recommendation even without local enrichment; best agentic session calibration of the group
+2. **xAI Grok 4.20** — `xai/grok-4.20-0309-non-reasoning` — best synthesis density of any cloud-only configuration tested; uniquely added cross-holding news sentiment in harness runs
+3. **Together AI / Llama 4 Maverick** — `together/meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8` (~1M context) — good cost/context ratio; untested in harness
+4. **Together AI / Qwen3-235B** — `together/Qwen/Qwen3-235B-A22B-FP8-tput` (262K context) — strong reasoning; throughput-optimized; untested in harness
+5. **OpenAI GPT-5.4** — `openai/gpt-5.4` (~272K context) — produced shallower synthesis than the default baseline in harness testing despite higher cost; see [Benchmark Results](#benchmark-results--harness-v612-2026-04-13)
+6. **Google Gemini 3.1 Pro** — `google/gemini-3.1-pro-preview` (~1M context) — diverged to generic educational content in the synthesis step during harness testing; individual commands worked correctly; not recommended as primary for complex portfolios
 
 Important cost guidance:
 - frontier models are often reasonable for **specific InvestorClaw sessions**
-- they are usually **too expensive to leave as the primary always-on operational model** for constant use
-- a good pattern is to keep a cheaper general OpenClaw default, then switch to a stronger frontier model only for high-value InvestorClaw workflows
+- they are usually **too expensive to leave as the primary always-on operational model** for all OpenClaw activity
+- a good pattern is to keep a cheaper general OpenClaw default and switch to a frontier model only for high-value InvestorClaw workflows
 
 > **Do not use GPT-4.1-nano** (`openai/gpt-4.1-nano`). Its Tier 1 rate limit is **30K TPM shared across all OpenClaw session activity**. Any concurrent agentic work exhausts the budget before a full portfolio analysis completes.
 
-### Profile 3 — modest single-system deployment
+### Profile 3 — getting started / modest single-system deployment
 
-For a modest single-machine OpenClaw setup, InvestorClaw can still be useful without the full Developer Workstation / Inference Host reference environment.
+If you are new to InvestorClaw or running a modest single-machine OpenClaw setup:
 
-Recommended practical approach:
-- start with **xAI Grok 4.1 Fast** as the operational model
-- add `gemma4-consult` later if/when a local inference path is available
-- use premium frontier models selectively for demanding InvestorClaw sessions rather than for all OpenClaw traffic
+1. **Start with Profile 2** using `xai/grok-4-1-fast` as the operational model. Run through the basic portfolio workflows and assess whether synthesis depth meets your needs.
+2. **Add local enrichment when ready**: if you have or acquire a compatible GPU, install Ollama, pull `gemma4-consult`, and set `INVESTORCLAW_CONSULTATION_ENABLED=true` in `.env`. The enrichment layer activates automatically on the next session.
+3. **Use premium frontier models selectively** for high-value InvestorClaw sessions rather than as the always-on OpenClaw default.
+
+This path lets you get value immediately without hardware commitment, and upgrade to the hybrid architecture without any code changes — just a configuration update.
 
 ### Why this recommendation structure exists
 
@@ -394,6 +421,93 @@ See the [NemoClaw documentation](https://github.com/NVIDIA/NemoClaw) for deploym
 | `nvidia/nemotron-3-super-120b-a12b` | 262K | NVIDIA NIM | On-premise / air-gapped; reasoning enabled |
 | `groq/llama-3.3-70b-versatile` | 128K | Groq | Fast inference; small portfolios only |
 | `openai/gpt-4.1-nano` | ~1M | OpenAI | Not recommended — 30K TPM Tier 1 limit |
+
+---
+
+## Benchmark Results — Harness V6.1.2 (2026-04-13)
+
+These results come from a full run of the InvestorClaw Test Harness V6.1.2 against a live 270-holding, $2.59M multi-account portfolio. The harness exercises all core workflows (holdings, analysis, performance, bonds, synthesis, lookup, export) across five model configurations and scores the output across 14 quality-control dimensions.
+
+### Why these results are surprising
+
+The headline finding is that **a local 10B-parameter model running on a single GPU, combined with the default operational LLM, produces information density an order of magnitude higher than the top frontier models used alone**. This is not because the local model is smarter — it is because it operates at the *data layer*, not the synthesis layer. By enriching analyst records before the operational model ever runs synthesis, the combined configuration changes what the model is writing *about*, not how well it writes.
+
+### Test configuration
+
+| Configuration | Operational LLM | Enrichment model | Mode |
+|---------------|-----------------|------------------|------|
+| **Combined (recommended)** | `xai/grok-4-1-fast-reasoning` | `gemma4-consult` (CERBERUS, Ollama) | Tier-3 enriched |
+| True baseline | `xai/grok-4-1-fast-reasoning` | none | Heuristic |
+| WF36 | `openai/gpt-5.4` | none | Heuristic |
+| WF37 | `xai/grok-4.20-0309-non-reasoning` | none | Heuristic |
+| WF38 | `google/gemini-3.1-pro-preview` | none | Heuristic |
+
+### Information density scores (W6 synthesis output)
+
+Scores are measured against the portfolio synthesis command output — the highest-value single response in a typical InvestorClaw session.
+
+| Metric | Combined (grok + CERBERUS) | Grok 4.20 | True baseline | GPT-5.4 | Gemini 3.1 Pro |
+|--------|:--------------------------:|:---------:|:-------------:|:-------:|:--------------:|
+| **QC3** Ticker mentions | **8** | 8 | 7 | 2 | 0 |
+| **QC4** Metric citations | **120** | 11 | 8 | 6 | 5 |
+| **QC5** Word count | **1,184** | 260 | 200 | 180 | 175 |
+| **QC8** `is_heuristic=false` | **✅** | ✗ | ✗ | ✗ | ✗ |
+| **QC9** `synthesis_basis=enriched` | **✅** | ✗ | ✗ | ✗ | ✗ |
+| **QC10** HMAC fingerprint | **✅** | ✗ | ✗ | ✗ | ✗ |
+| **QC11** `verbatim_required=True` | **✅** | ✗ | ✗ | ✗ | ✗ |
+| **QC12–14** All commands exit 0 | **✅** | ✅ | ✅ | ✅ | ✅ |
+
+**QC4 amplification**: the combined config produces 120 metric citations in the synthesis response vs. 5–11 for any premium-only configuration. The local enrichment model generates per-symbol insights, key metrics, and risk assessments for 20 holdings before the synthesis pass runs — the operational model then synthesises those pre-computed results rather than inferring from heuristic summaries.
+
+### Anti-fabrication properties (combined config only)
+
+The tier-3 enrichment path adds audit controls that no cloud-only configuration provides:
+
+- **HMAC fingerprint chain** — each enriched record gets a 16-character hex fingerprint; the session accumulates a chained fingerprint across all enriched symbols, allowing post-hoc verification that synthesis content matches the enrichment artifacts it claims to summarise.
+- **`verbatim_required=True` + attribution** — enriched analyst quotes carry a verbatim flag and source attribution; the synthesis layer is constrained to cite rather than paraphrase.
+- **`is_heuristic=false`** — signals to downstream consumers that synthesis was produced from enriched model inference, not keyword matching.
+
+These controls are absent in all cloud-only configurations regardless of model capability.
+
+### Premium model ranking (cloud-only, no enrichment)
+
+When tier-3 enrichment is not available and the operational model must do all synthesis work directly, the ranking from this harness run is:
+
+**1. Grok 4.20** (`xai/grok-4.20-0309-non-reasoning`) — best premium-only result. Matched CERBERUS on ticker density (QC3=8), highest metric count of the cloud-only group (QC4=11), and uniquely added cross-holding news sentiment correlation (TXG, AMD, AEIS, AIR) that no other model surfaced. Synthesis remained portfolio-specific throughout all workflow steps.
+
+**2. grok-4-1-fast-reasoning (true baseline)** — marginally below Grok 4.20 on density metrics (QC3=7, QC4=8) but noticeably more compact. No padding. Functions as the reliable operational default.
+
+**3. GPT-5.4** — underperformed relative to its reputation in this workload. Synthesis collapsed to high-level talking points with only 2 ticker mentions and 6 metric citations — worse than the free baseline. Not worth the cost premium for InvestorClaw sessions specifically.
+
+**4. Gemini 3.1 Pro** — failed to engage with portfolio-specific synthesis. Produced a generic allocation scenario table (Conservative/Balanced/Aggressive Growth) with zero ticker mentions. The model answered a different question than was asked. Individual commands (holdings, bonds, lookup) all worked correctly — the failure was specific to the synthesis routing step.
+
+> **Important caveat**: these are single-session results on one portfolio. Model behavior varies by prompt shape, session length, and provider updates. Treat the rankings as an informed starting point, not a permanent ordering.
+
+### The core finding
+
+**The enrichment layer, not the operational model, is the primary driver of synthesis quality.** Switching from the default operational model to any premium frontier model produces at most a small improvement in ticker density and a modest improvement in phrasing quality. Switching from heuristic mode to tier-3 enrichment produces a 10–15× increase in metric density and adds anti-fabrication guarantees that no amount of model capability can replicate.
+
+This is consistent with the original design intent: the consultative model is responsible for *data enrichment*; the operational model is responsible for *session management and synthesis routing*. The harness results quantify that split empirically for the first time.
+
+### What this means for your deployment
+
+The benchmark portfolio — 270 holdings, 38 bond positions, 8 accounts, multiple managed accounts and ESPPs — represents a complex, real-world scenario. The results are most relevant to users in that tier.
+
+**If your portfolio is complex** (many individual equities, multiple account types, significant bond positions): the harness results apply directly. Cloud-only synthesis will be measurably shallower. Profile 1 is strongly recommended. The cost of a GPU node capable of running `gemma4-consult` is small relative to the portfolio scale where enrichment matters most.
+
+**If your portfolio is simple** (mostly ETFs, 1–2 accounts, a handful of ESPPs): the metric density gap narrows significantly. ETFs do not have individual analyst ratings, so there is less to enrich in the first place. Cloud-only deployment with `xai/grok-4-1-fast` is a reasonable starting point and the harness results should not alarm you. Start with Profile 2 and upgrade to Profile 1 if you find the synthesis depth insufficient.
+
+**On premium frontier models specifically**: the harness result for GPT-5.4 scoring below the free baseline — and Gemini 3.1 Pro producing zero ticker mentions in synthesis — reflects real behaviour on this specific workload, not a general capability assessment. These models are capable systems that may behave differently on other portfolio shapes or with different prompt structures. The finding is that paying more for the operational model is a poor substitute for enriching the data the model synthesises from.
+
+### Reproducibility
+
+The harness is at `investorclaw_harness_v611.txt` in the repository root. To reproduce:
+
+```bash
+# Requires OpenClaw gateway running with investorclaw plugin loaded
+# Requires CERBERUS (or equivalent Ollama host) for tier-3 enrichment steps
+# Full run covers 39 workflow checkpoints across 5 phases
+```
 
 ---
 
