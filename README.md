@@ -1,7 +1,7 @@
 # InvestorClaw
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/perlowja/InvestorClaw/main/assets/investorclaw-logo.svg" alt="InvestorClaw Logo" width="160"/>
+  <img src="https://raw.githubusercontent.com/perlowja/InvestorClaw/main/assets/investorclaw-logo.png" alt="InvestorClaw Logo" width="200"/>
 </p>
 
 Portfolio analysis and market intelligence skill for OpenClaw and other agentic systems. **v1.0.0** | FINOS CDM 5.x | MIT License
