@@ -12,7 +12,6 @@ Usage:
 """
 from __future__ import annotations
 
-import base64
 import re
 import textwrap
 from pathlib import Path
@@ -27,18 +26,25 @@ _TEXT_COLOR = "#b0b8c8"
 _ATTR_COLOR = "#6b7280"
 _BADGE_BG = "#4a9eff"
 _BADGE_TEXT = "#ffffff"
-_LOGO_PATH = Path(__file__).resolve().parent.parent / "assets" / "investorclaw-logo.png"
+
+_LOGO_SVG_PATH = Path(__file__).resolve().parent.parent / "assets" / "investorclaw-logo.svg"
 
 
-def _load_logo_data_uri() -> str | None:
-    """Return a base64 data URI for the logo, or None if the file is missing."""
-    if not _LOGO_PATH.exists():
-        return None
+def _load_logo_element() -> str:
+    """Inline the SVG logo as a <g> element, or return empty string if unavailable."""
+    if not _LOGO_SVG_PATH.exists():
+        return ""
     try:
-        encoded = base64.b64encode(_LOGO_PATH.read_bytes()).decode("ascii")
-        return f"data:image/png;base64,{encoded}"
+        raw = _LOGO_SVG_PATH.read_text(encoding="utf-8")
+        # Extract inner content from <svg …>…</svg> — strip the outer svg wrapper
+        inner_match = re.search(r'<svg[^>]*>(.*?)</svg>', raw, re.DOTALL)
+        if not inner_match:
+            return ""
+        inner = inner_match.group(1).strip()
+        # Place wordmark top-right: card is 480px wide, logo viewBox 120px, 10px right margin
+        return f'  <!-- Logo (inline SVG wordmark — no raster embed) -->\n  <g transform="translate(350,10)">\n{inner}\n  </g>\n'
     except OSError:
-        return None
+        return ""
 
 
 def _escape_xml(text: str) -> str:
@@ -79,8 +85,10 @@ def render_card(
     safe_symbol = re.sub(r'[^A-Z0-9.\-]', '_', symbol.upper()) or "UNKNOWN"
     out_path = cards_dir / f"{safe_symbol}.svg"
 
-    # Wrap synthesis into lines of ~62 chars, max 7 lines
-    wrapped_lines = textwrap.wrap(synthesis, 62)[:7]
+    # Wrap synthesis into lines of ~56 chars, max 7 lines
+    # Card is 480px wide, text starts at x=24 → 456px available.
+    # Monospace 13px ≈ 7.7px/char → 56 chars ≈ 431px (safe margin).
+    wrapped_lines = textwrap.wrap(synthesis, 56)[:7]
 
     # Build synthesis text elements (y starts at 80, 22px line-height)
     synthesis_elements = ""
@@ -91,14 +99,8 @@ def render_card(
             f'fill="{_TEXT_COLOR}">{_escape_xml(line)}</text>\n'
         )
 
-    # Logo element (top-right) — gracefully absent if asset not bundled
-    logo_data_uri = _load_logo_data_uri()
-    logo_element = ""
-    if logo_data_uri:
-        logo_element = (
-            f'  <image x="360" y="14" width="96" height="30" '
-            f'preserveAspectRatio="xMidYMid meet" href="{logo_data_uri}" opacity="0.90"/>\n'
-        )
+    # Logo element (top-right) — inline SVG, gracefully absent if asset not bundled
+    logo_element = _load_logo_element()
 
     # Fingerprint badge (bottom-right)
     badge_x = _WIDTH - 160

@@ -8,6 +8,7 @@
 import { definePluginEntry } from "openclaw/plugin-sdk/plugin-entry";
 import { Type } from "@sinclair/typebox";
 import { execFile } from "node:child_process";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { promisify } from "node:util";
 import * as path from "node:path";
 const execFileAsync = promisify(execFile);
@@ -102,6 +103,36 @@ export default definePluginEntry({
         function tr(text) {
             return { content: [{ type: "text", text }], details: {} };
         }
+        /**
+         * Run the analyst command and append any available SVG consultation cards
+         * as ImageContent so the web UI can render them inline.
+         */
+        async function analystWithCards() {
+            const text = await run("analyst");
+            const content = [{ type: "text", text }];
+            try {
+                const env = buildEnv();
+                const reportsBase = env.INVESTOR_CLAW_REPORTS_DIR
+                    || path.join(process.env.HOME || "", "portfolio_reports");
+                const cardsDir = path.join(reportsBase, ".raw", "consultation_cards");
+                if (existsSync(cardsDir)) {
+                    const files = readdirSync(cardsDir)
+                        .filter(f => f.endsWith(".svg"))
+                        .sort()
+                        .slice(0, 20);
+                    for (const file of files) {
+                        const svg = readFileSync(path.join(cardsDir, file), "utf8");
+                        content.push({
+                            type: "image",
+                            data: Buffer.from(svg).toString("base64"),
+                            mimeType: "image/svg+xml",
+                        });
+                    }
+                }
+            }
+            catch { /* non-fatal — text result still returned */ }
+            return { content, details: {} };
+        }
         // ------------------------------------------------------------------
         // Tools
         // ------------------------------------------------------------------
@@ -192,7 +223,7 @@ export default definePluginEntry({
                 "investorclaw_holdings. Returns JSON saved to portfolio_reports/analyst_data.json.",
             parameters: Type.Object({}),
             async execute(_id, _p) {
-                return tr(await run("analyst"));
+                return analystWithCards();
             },
         });
         api.registerTool({
