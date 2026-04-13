@@ -517,3 +517,32 @@ IC-RUN-20260413-005 FINDINGS SUMMARY:
   Llama-3.3 config corruption: Confirmed model safety issue — BLOCKED classification stands
   Recommendation: Do not deploy Llama-3.3-70B-Versatile (Groq) with InvestorClaw without tool call sandboxing hardening.
 ═══════════════════════════════════════════════════════════ END IC-RUN-20260413-005 ADDENDUM ═══════════════════════════════════════════════════════════
+
+═══════════════════════════════════════════════════════════ IC-RUN-20260413-006 ADDENDUM (GPT-OSS-120B + Groq Model ID Audit) ═══════════════════════════════════════════════════════════
+Run ID: IC-RUN-20260413-006 | Completed: 2026-04-13 | Session: ic-pm-gpt-oss120b
+
+GROQ MODEL ID AUDIT (source: https://console.groq.com/docs/models):
+  Production models (confirmed):
+    llama-3.3-70b-versatile | llama-3.1-8b-instant | openai/gpt-oss-120b ($0.15/$0.60/M, 500T/s) | openai/gpt-oss-20b ($0.075/$0.30/M, 1000T/s)
+  Preview models (evaluation-only, may be discontinued):
+    meta-llama/llama-4-scout-17b-16e-instruct (750T/s) | qwen/qwen3-32b (400T/s) | openai/gpt-oss-safeguard-20b
+  NOT in official docs (undocumented/beta):
+    moonshotai/kimi-k2-instruct — not listed; worked during WF42 but status uncertain
+  Production Systems (no tool calls confirmed):
+    groq/compound | groq/compound-mini
+  WHY openai/* models return 403: account-tier access restriction on our Groq key for the openai/* namespace. GPT-OSS-120B IS a valid production model ID on Groq — key upgrade needed, not a model ID fix.
+  NOTE: Scout and Qwen3-32B are preview-tier — lower schema compliance is expected for preview models.
+
+WF45 — together/openai/gpt-oss-120b (Together AI) | Session: ic-pm-gpt-oss120b
+  QC11: 56k/131k (42%) | QC8=0 (clean run) | QC12=0
+  QC1=pass | QC2=8/8 | QC3=~6 | QC4=~10 | QC5=~200 words | QC6=100% | QC7=99.5%
+  QC9=partial (reasoning traces leak into output as "final"/"finalfinal" prefixes; W7 tool payload rejection)
+  QC10=2 | QC13=pass | QC14=pass | CERBERUS_active=no | synthesis_basis=structured
+  DEVIATION: First bootstrap attempt (discarded) generated hallucinated synthesis with $1.2B portfolio value before any portfolio commands ran. Clean session started fresh; no fabrication in actual W0-W8 run.
+  NOTE: GPT-OSS-120B is a reasoning/thinking model — response structure has reasoning field + content field. Content IS populated for prose tasks (unlike Qwen3.5-397B). Tool calls work. W7 /portfolio session tool payload rejection indicates model sends wrong parameter types for session schema (similar to Scout heat_level issue).
+  VERDICT: DEGRADED — synthesis brief (~200 words) but factually grounded; W7 tool failure; reasoning trace leakage in output; bootstrap hallucination risk requires careful prompt design.
+
+IC-RUN-20260413-006 RECOMMENDATION UPDATE:
+  GPT-OSS-120B on Together AI: viable but requires careful bootstrap (synthesis-trigger language causes immediate hallucinated analysis). Not recommended for production without bootstrap hardening and W7 session-tool schema enforcement.
+  For Groq GPT-OSS-120B access: account tier upgrade needed to access openai/* namespace.
+═══════════════════════════════════════════════════════════ END IC-RUN-20260413-006 ADDENDUM ═══════════════════════════════════════════════════════════
