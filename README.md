@@ -329,7 +329,7 @@ This is the recommended deployment for initial release. It is the configuration 
 
 Why Grok 4.1 Fast specifically:
 - handles long-lived, tool-heavy OpenClaw sessions well
-- 2M context means even a fully-enriched 270-holding session never hits a limit
+- 2M context means even large fully-enriched sessions never hit a limit
 - agentic calibration is a better fit for InvestorClaw's multi-step workflow than models tuned for single-shot chat
 
 > **Compliance note**: `xai/grok-4-1-fast` requires running `/portfolio update-identity` at the start of each session. Without this step, guardrail disclaimer compliance drops to near zero. This is an xAI quirk, not an InvestorClaw bug.
@@ -360,7 +360,7 @@ Why `gemma4-consult` specifically:
 | 5 | `openai/gpt-5.4` | ~272K | 2 | 6 | 180 | ⚠️ **Scored below the free baseline on all synthesis metrics** despite higher cost — synthesis collapsed to high-level talking points; not recommended for complex portfolios |
 | 6 | `google/gemini-3.1-pro-preview` | ~1M | 0 | 5 | 175 | ❌ **Failed synthesis task** — produced generic allocation scenario table instead of portfolio-specific analysis; zero ticker mentions; individual commands work correctly but synthesis routing diverges on complex portfolios |
 
-> **Harness context**: QC3 = ticker mentions in synthesis output, QC4 = metric citations, QC5 = word count. Tested on a 270-holding, $2.59M multi-account portfolio. Simple ETF portfolios will not show the same divergence — see [Benchmark Results](#benchmark-results--harness-v612-2026-04-13).
+> **Harness context**: QC3 = ticker mentions in synthesis output, QC4 = metric citations, QC5 = word count. Tested on a large multi-account portfolio with individual equities, bonds, and managed accounts. Simple ETF portfolios will not show the same divergence — see [Benchmark Results](#benchmark-results--harness-v612-2026-04-13).
 
 Important cost guidance:
 - frontier models are often reasonable for **specific InvestorClaw sessions**
@@ -431,7 +431,7 @@ See the [NemoClaw documentation](https://github.com/NVIDIA/NemoClaw) for deploym
 
 ## Benchmark Results — Harness V6.1.2 (2026-04-13)
 
-These results come from a full run of the InvestorClaw Test Harness V6.1.2 against a live 270-holding, $2.59M multi-account portfolio. The harness exercises all core workflows (holdings, analysis, performance, bonds, synthesis, lookup, export) across five model configurations and scores the output across 14 quality-control dimensions.
+These results come from a full run of the InvestorClaw Test Harness V6.1.2 against a real-world multi-account portfolio with individual equities, bonds, and managed accounts. The harness exercises all core workflows (holdings, analysis, performance, bonds, synthesis, lookup, export) across five model configurations and scores the output across 14 quality-control dimensions.
 
 ### Why these results are surprising
 
@@ -496,7 +496,7 @@ This is consistent with the original design intent: the consultative model is re
 
 ### What this means for your deployment
 
-The benchmark portfolio — 270 holdings, 38 bond positions, 8 accounts, multiple managed accounts and ESPPs — represents a complex, real-world scenario. The results are most relevant to users in that tier.
+The benchmark portfolio — a complex multi-account mix of individual equities, bonds, managed accounts, and ESPPs — represents the upper end of InvestorClaw deployment complexity. The results are most relevant to users in that tier.
 
 **If your portfolio is complex** (many individual equities, multiple account types, significant bond positions): the harness results apply directly. Cloud-only synthesis will be measurably shallower. Profile 1 is strongly recommended. The cost of a GPU node capable of running `gemma4-consult` is small relative to the portfolio scale where enrichment matters most.
 
