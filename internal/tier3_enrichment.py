@@ -216,6 +216,8 @@ class Tier3Enricher:
     @staticmethod
     def _strength_from_mean(recommendation_mean: float) -> str:
         """Map 1-5 Finnhub/Yahoo recommendation_mean to strength label."""
+        if recommendation_mean is None:
+            return "neutral"
         if recommendation_mean <= 1.5:
             return "strong_buy"
         if recommendation_mean <= 2.5:
