@@ -1,10 +1,10 @@
 # InvestorClaw
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/perlowja/InvestorClaw/main/assets/investorclaw-logo.png" alt="InvestorClaw Logo" width="200"/>
+  <img src="https://raw.githubusercontent.com/perlowja/InvestorClaw/main/assets/investorclaw-logo.svg" alt="InvestorClaw Logo" width="160"/>
 </p>
 
-Portfolio analysis skill for OpenClaw agents. **v1.0.0** | FINOS CDM 5.x | MIT License
+Portfolio analysis and market intelligence skill for OpenClaw and other agentic systems. **v1.0.0** | FINOS CDM 5.x | MIT License
 
 > **Naming note**: the package id is `investorclaw` (used by the ClawHub marketplace and `openclaw.plugin.json`). The OpenClaw invocation command is `/portfolio` — that is what users type at the prompt. Both names are intentional.
 
@@ -12,9 +12,14 @@ Portfolio analysis skill for OpenClaw agents. **v1.0.0** | FINOS CDM 5.x | MIT L
 
 ## TL;DR
 
-InvestorClaw is an OpenClaw skill that answers agentic Q&A over your own portfolio files — holdings, performance, bonds, analyst ratings, news, and a nightly end-of-day email report — with built-in guardrails that enforce educational-only output.
+InvestorClaw is an OpenClaw skill with two distinct use cases:
 
-- **What it does**: reads your broker CSV exports, fetches live prices, runs analysis pipelines, and answers follow-up questions inside a persistent OpenClaw session.
+1. **Personal portfolio analysis** — reads your broker CSV exports, runs holdings/performance/bond pipelines, and answers follow-up questions in a persistent session.
+2. **General market data & news tool** — any agentic system (OpenClaw, Claude, custom agents) can query live prices, analyst ratings, news correlation, and yield-curve analytics for arbitrary tickers, without any portfolio files required.
+
+Both modes share the same guardrails that enforce educational-only output.
+
+- **What it does**: fetches live quotes (Finnhub → Massive → Alpha Vantage → yfinance), analyst consensus, news summaries, fixed-income analytics, and optional LLM consultation synthesis via a local Ollama model (CERBERUS tier-3 enrichment).
 - **What it does not do**: execute trades, replace your broker portal, or give investment advice.
 - **Time to first report**: roughly 5 minutes from `git clone` to `holdings.json` on an existing OpenClaw install.
 - **No API keys required to start**: falls back to `yfinance` automatically; add keys later for better reliability.
