@@ -48,23 +48,24 @@ Rankings across synthesis quality, speed, guardrail adherence, and zero hallucin
 
 #### Hybrid mode (consultation + operational LLM)
 
-Full hybrid benchmark completed IC-RUN-20260414-003 addendum (WF87–WF94). Rankings by QC4 with current injection stack.
+Full hybrid benchmark completed IC-RUN-20260414-003 addendum (WF87–WF94). **Current injection stack rankings** — grok WF39 is a pre-injection historical result and is listed separately.
 
 | Rank | Configuration | QC3 | QC4 | QC5 | Notes |
 |------|--------------|:---:|:---:|:---:|-------|
-| 🥇 | `xai/grok-4-1-fast` + `gemma4-consult` | 8 | **113** | **1,184** | Pre-injection baseline WF39. Re-tested WF88 with injection: QC4=52, QC5=564 — regression under investigation. WF39 score stands as historical best. |
-| 🥈 | `together/MiniMaxAI/MiniMax-M2.7` + `gemma4-consult` | **29** | 97 | **836** | WF87. **Best hybrid under current injection stack.** Note: single-model QC4=108 (WF82) is higher — consultation costs -10% citation density but adds +55% word count. |
-| 🥉 | `together/zai-org/GLM-5` + `gemma4-consult` | 21 | 86 | 587 | WF90. Gains +16% vs single-model (QC4=74→86). Structured table output, consistent account breakdown. |
-| | `together/moonshotai/Kimi-K2.5` + `gemma4-consult` | 24 | 82 | 579 | WF84. Gains +49% vs single-model (QC4=55→82). Rich narrative, full bond analytics, news. |
-| | `xai/grok-4-1-fast` + `gemma4-consult` (injection) | 20 | 52 | 564 | WF88. Re-baseline of WF39 with current stack. 33% gain vs cloud-only (WF85 QC4=39). |
-| | `together/deepseek-ai/DeepSeek-V3.1` + `gemma4-consult` | 10 | 43 | 408 | WF89. Flat vs single-model (QC4=44→43). Consultation neutral. |
-| | `google/gemini-3.1-pro-preview` + `gemma4-consult` | 15 | 38 | 259 | WF91. Regresses vs single-model (QC4=46→38, -17%). Use cloud-only. |
-| | `groq/moonshotai/kimi-k2-instruct-0905` + `gemma4-consult` | 11 | 35 | 201 | WF94. Gains +40% vs single-model (QC4=25→35). Best groq-served hybrid. |
-| | `openai/gpt-5.4` + `gemma4-consult` | 14 | 27 | 235 | WF92. Flat vs single-model (QC4=28→27). Consultation neutral. |
-| | `xai/grok-4.20-0309-non-reasoning` + `gemma4-consult` | 14 | 17 | ~200 | WF74. Narrative prose. Hybrid-only model (WF64+WF86 FAIL cloud-only). |
-| | `groq/openai/gpt-oss-120b` + `gemma4-consult` | 11 | 8 | 237 | WF93. Severe regression vs single-model (QC4=17→8, -53%). Consultation actively interferes. Do not use hybrid. |
+| 🥇 | `together/MiniMaxAI/MiniMax-M2.7` + `gemma4-consult` | **29** | **97** | **836** | WF87. Highest absolute hybrid QC4 under current stack. **Consultation hurts this model (−10% vs cloud-only QC4=108).** Only use hybrid when audit controls (HMAC fingerprint, `is_heuristic=false`) are required; otherwise use cloud-only. |
+| 🥈 | `together/zai-org/GLM-5` + `gemma4-consult` | 21 | 86 | 587 | WF90. **Recommended hybrid default.** Consultation adds net value: +16% vs cloud-only (QC4=74→86). Structured table output, consistent account breakdown. |
+| 🥉 | `together/moonshotai/Kimi-K2.5` + `gemma4-consult` | 24 | 82 | 579 | WF84. +49% vs cloud-only (QC4=55→82). Rich narrative, full bond analytics, news. |
+| | `xai/grok-4-1-fast` + `gemma4-consult` | 20 | 52 | 564 | WF88. +33% vs cloud-only (WF85 QC4=39). Current injection stack re-baseline of historical WF39. |
+| | `together/deepseek-ai/DeepSeek-V3.1` + `gemma4-consult` | 10 | 43 | 408 | WF89. Flat vs cloud-only (QC4=44→43). Consultation neutral. |
+| | `google/gemini-3.1-pro-preview` + `gemma4-consult` | 15 | 38 | 259 | WF91. −17% vs cloud-only (QC4=46→38). Use cloud-only. |
+| | `groq/moonshotai/kimi-k2-instruct-0905` + `gemma4-consult` | 11 | 35 | 201 | WF94. +40% vs cloud-only (QC4=25→35). Best Groq-served hybrid. ⚠️ preview endpoint. |
+| | `openai/gpt-5.4` + `gemma4-consult` | 14 | 27 | 235 | WF92. Flat vs cloud-only (QC4=28→27). Consultation neutral. |
+| | `xai/grok-4.20-0309-non-reasoning` + `gemma4-consult` | 14 | 17 | ~200 | WF74. Hybrid-only model — cloud-only FAIL (WF64, WF86). |
+| ⚠️ do not hybrid | `groq/openai/gpt-oss-120b` + `gemma4-consult` | 11 | 8 | 237 | WF93. −53% vs cloud-only (QC4=17→8). Consultation severely interferes. |
 
-> **Consultation benefit varies by model.** Models that gain: Kimi-K2.5 (+49%), kimi-k2/groq (+40%), grok-4-1-fast (+33%), GLM-5 (+16%). Models where consultation is neutral or harmful: MiniMax-M2.7 (-10%), Gemini (-17%), GPT-OSS-120b (-53%), DeepSeek/GPT-5.4 (flat). The operational model's output style determines whether consultation data is expressed as citations.
+**Historical record (pre-injection, not reproducible under current stack):** `xai/grok-4-1-fast` + `gemma4-consult` — QC4=113, QC5=1,184 (WF39). Re-baseline with current injection stack: QC4=52 (WF88). WF39 predates cross-step injection and cannot be compared directly against injection-era results.
+
+> **Consultation benefit varies by model.** Gains: Kimi-K2.5 (+49%), kimi-k2/groq (+40%), grok-4-1-fast (+33%), GLM-5 (+16%). Neutral: DeepSeek, GPT-5.4. Harmful: MiniMax-M2.7 (−10%), Gemini (−17%), GPT-OSS-120b (−53%). The operational model's synthesis style, not just data richness, determines whether consultation data is expressed as citations.
 
 #### Single-model (cloud-only, no consultation)
 
@@ -86,12 +87,11 @@ Rankings from IC-RUN-20260414-003 re-benchmark with cross-step context injection
 | ⚠️ last | `xai/grok-4-1-fast` (cloud-only, pre-injection) | 0 | **6** | ~50 | xAI | WF72 — pre-injection baseline; **not recommended cloud-only** |
 
 **Speed category winner**: `groq/openai/gpt-oss-120b` (~500 tok/s, production-stable; gpt-oss-20b excluded: FAIL WF79)  
-**Value category winner**: `together/MiniMaxAI/MiniMax-M2.7` ($0.30/$1.20/M, 197K ctx — best single-model QC4=108; use cloud-only, consultation hurts)  
+**Value category winner**: `together/MiniMaxAI/MiniMax-M2.7` ($0.30/$1.20/M, 197K ctx — QC4=108 cloud-only, $0.011/QC4-point; use cloud-only, consultation hurts)  
 **Synthesis quality winner (single-model)**: `together/MiniMaxAI/MiniMax-M2.7` (QC4=108, QC5=541 — full account tables, analyst, bond breakdown)  
-**Synthesis quality winner (hybrid, current stack)**: `together/MiniMaxAI/MiniMax-M2.7` + `gemma4-consult` (QC4=97, QC5=836, WF87) — single-model still higher at QC4=108  
-**Historical hybrid record**: `xai/grok-4-1-fast` + `gemma4-consult` (QC4=113, QC5=1,184, WF39 pre-injection) — re-baseline WF88 with injection gives QC4=52; regression under investigation  
+**Synthesis quality winner (hybrid, current stack)**: `together/zai-org/GLM-5` + `gemma4-consult` (QC4=86, WF90) — best hybrid where consultation adds net value. MiniMax hybrid (QC4=97, WF87) has higher absolute QC4 but cloud-only outperforms it; only use MiniMax hybrid when audit controls are required.  
 **Not recommended cloud-only**: `xai/grok-4-1-fast` — WF85 QC4=39, below MiniMax-M2.7 (108), GLM-5 (74), Kimi-K2.5 (55). Hybrid adds value: WF88 QC4=52.  
-**Not recommended hybrid**: `groq/openai/gpt-oss-120b` — hybrid QC4=8 (WF93) is 53% below single-model QC4=17 (WF78). Use cloud-only.  
+**Not recommended hybrid**: `groq/openai/gpt-oss-120b` — hybrid QC4=8 (WF93) is 53% below cloud-only QC4=17 (WF78). Use cloud-only.  
 **Hybrid-only models**: `xai/grok-4.20-0309-non-reasoning` — consistently fails cloud-only (WF64, WF86); passes only when consultation is enabled (WF74).
 
 #### Guardrail compliance
