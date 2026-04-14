@@ -275,6 +275,43 @@ Previously listed models and their final verdicts:
 
 ---
 
+## Context Window Comparison
+
+Context window capacity is a separate model selection axis from synthesis quality (QC4). For the current 215-holding portfolio in compact mode, context is not the bottleneck — models are using 17–34K tokens, well within every supported model's limit. Context becomes the decisive dimension as portfolio size, session length, or enrichment depth increases.
+
+### Context tiers
+
+| Tier | Models | Context | When this tier matters |
+|------|--------|--------:|------------------------|
+| **Tier 1: 2M** | `xai/grok-4-1-fast` | ~2,000K | Only model in this tier. 8–15× capacity advantage over all others. Comfortable for any non-compact, enterprise-scale, or extended-session scenario. |
+| **Tier 2: ~1M** | `xai/grok-4.20-0309-non-reasoning`, `google/gemini-3.1-pro-preview` | ~977K–1M | Ample for non-compact mode; handles large portfolios and multi-turn accumulation. |
+| **Tier 3: 262–272K** | `openai/gpt-5.4`, `together/moonshotai/Kimi-K2.5`, `groq/moonshotai/kimi-k2-instruct-0905` | 262–272K | Adequate for large compact-mode sessions; tight under non-compact with full enrichment. |
+| **Tier 4: 197–203K** | `together/MiniMaxAI/MiniMax-M2.7`, `together/zai-org/GLM-5` | 197–203K | Fine for typical compact sessions; not recommended for non-compact with >150 enriched symbols. |
+| **Tier 5: 128–131K** | `together/deepseek-ai/DeepSeek-V3.1`, `groq/openai/gpt-oss-120b`, `groq/openai/gpt-oss-20b` | 128–131K | Smallest working tier. Sufficient for the 215-holding compact benchmark; marginal for enriched or extended sessions. |
+
+### Portfolio token utilization (reference)
+
+| Scenario | Estimated tokens | Fits in tier 3+? | Fits in tier 4+? | Fits in tier 5? |
+|----------|----------------:|:----------------:|:----------------:|:---------------:|
+| 215 holdings, compact mode (benchmark) | ~17–34K | ✅ | ✅ | ✅ |
+| W1 raw output alone, non-compact | ~72K | ✅ | ✅ | ✅ |
+| Full enriched session (215 symbols) | ~80–120K | ✅ | ✅ | ⚠️ tight |
+| Large portfolio, non-compact (500 holdings) | ~300–400K | ✅ | ❌ | ❌ |
+| Enterprise portfolio + long session (1000+ holdings) | ~1M+ | ✅ (Gemini) | ❌ | ❌ |
+
+### Takeaway: where grok-4-1-fast fits on context
+
+`xai/grok-4-1-fast` is the **only model in the 2M tier** — a unique capacity advantage that no current Together AI, Groq, or OpenAI option comes close to. For the standard 215-holding compact-mode benchmark, this advantage is invisible (all models have headroom). It becomes the decisive factor when:
+
+- Running non-compact mode at scale (raw W-step data exhausts smaller-context models)
+- Scaling to enterprise-size portfolios (500–1000+ positions)
+- Multi-turn sessions where accumulated history approaches model limits
+- Maximizing enrichment density without context truncation risk
+
+Combined with its hybrid QC4=52 (WF88) and synthesis quality that improves significantly with consultation (+33% vs cloud-only), grok-4-1-fast is the **recommended operational LLM when context capacity is the primary constraint**, even though its QC4 synthesis ranking is mid-tier under the current injection stack.
+
+---
+
 ## Provider Model Catalog
 
 ### xAI (Grok)
