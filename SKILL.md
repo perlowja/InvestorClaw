@@ -40,7 +40,7 @@ Portfolio analysis for OpenClaw agents. **v1.0.0** | FINOS CDM 5.x | Educational
 | `/portfolio setup` | `auto-setup`, `init`, `initialize` | — |
 | `/portfolio update-identity` | `update_identity`, `identity` | — |
 | `/portfolio run` | `pipeline` | *(compact stdout)* |
-| `/portfolio ollama-setup` | `model-setup`, `consult-setup` | *(stdout: model status)* |
+| `/portfolio ollama-setup` | `model-setup`, `consult-setup` *(compatibility aliases only)* | *(stdout: model status)* |
 | `/portfolio help` | — | — |
 
 All output files written to `$INVESTOR_CLAW_REPORTS_DIR` (default: `~/portfolio_reports/`).
@@ -53,19 +53,20 @@ python3 ~/Projects/InvestorClaw/investorclaw.py <command>
 The entry point loads `.env`, sets PYTHONPATH, injects `--tier3` when consultation is enabled, and routes to the correct script.
 Add `--verbose` to any command for full detail (default is compact/summary).
 
-### ic_result Verification Protocol
+### Canonical Verification Protocol: ic_result
 
-Every script invocation emits a terminal verification envelope as the last stdout line:
+Every verified script invocation emits a terminal JSON envelope as the last stdout line:
 
 ```json
 {"ic_result":{"script":"fetch_holdings.py","exit_code":0,"duration_ms":1420}}
 ```
 
 **Agent rules**:
+- Treat `ic_result` as the single canonical verification protocol.
 - Echo `ic_result.exit_code` in every response that invokes a script.
-- Absence of `ic_result` = UNVERIFIED — state this explicitly; do not report success.
+- Absence of `ic_result` = UNVERIFIED, state this explicitly and do not report success.
 - If exec preflight blocks the command, output only: `"BLOCKED: <exact error>"`.
-- Do NOT reconstruct or narrate a hypothetical result for blocked or missing output.
+- Do not reconstruct or narrate a hypothetical result for blocked or missing output.
 
 ### Output Directory Layout
 

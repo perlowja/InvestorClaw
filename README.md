@@ -28,7 +28,7 @@ Both modes enforce educational-only output via always-on guardrails.
 
 ## Quick Install
 
-> **ClawHub marketplace listing is in progress.** Until then, install from GitHub.
+> Install from the canonical GitHub repo: `https://github.com/perlowja/InvestorClaw`
 
 ### Ask your agent
 
@@ -40,39 +40,37 @@ The agent will clone, register, install Python deps, and restart the gateway.
 
 ```bash
 git clone https://github.com/perlowja/InvestorClaw.git ~/Projects/InvestorClaw
-pip install -r ~/Projects/InvestorClaw/requirements.txt
+python3 -m pip install -r ~/Projects/InvestorClaw/requirements.txt
 openclaw plugins install --link ~/Projects/InvestorClaw
 cp ~/Projects/InvestorClaw/.env.example ~/Projects/InvestorClaw/.env
-# Edit .env — add FINNHUB_KEY at minimum
+# Edit .env as needed, then run first-time setup
 python3 ~/Projects/InvestorClaw/investorclaw.py setup
 openclaw gateway restart
 ```
 
 ```bash
-# Verify
+# Verify the linked plugin and Python entrypoint
 openclaw plugins inspect investorclaw
+python3 ~/Projects/InvestorClaw/investorclaw.py help
 python3 ~/Projects/InvestorClaw/tests_smoke.py
 ```
 
-> **Important after every fresh clone**: copy your `.env` to the workspace:
-> ```bash
-> cp ~/Projects/InvestorClaw/.env ~/.openclaw/workspace/skills/investorclaw/.env
-> ```
-> Without this, the background enricher process (detached subprocess) will not pick up your API keys or consultation endpoint config.
+> Keep `.env` in the repo root you linked into OpenClaw. The entrypoint loads that file before dispatching commands.
 
 ---
 
 ## Quick Start
 
 ```bash
-python3 investorclaw.py setup         # first-time portfolio file discovery
-python3 investorclaw.py holdings      # holdings snapshot with live prices
-python3 investorclaw.py performance   # performance analysis
-python3 investorclaw.py bonds         # bond analytics (YTM, duration, FRED benchmarks)
-python3 investorclaw.py help          # show all commands
+python3 ~/Projects/InvestorClaw/investorclaw.py setup         # first-time portfolio file discovery
+python3 ~/Projects/InvestorClaw/investorclaw.py holdings      # holdings snapshot with live prices
+python3 ~/Projects/InvestorClaw/investorclaw.py performance   # performance analysis
+python3 ~/Projects/InvestorClaw/investorclaw.py bonds         # bond analytics (YTM, duration, FRED benchmarks)
+python3 ~/Projects/InvestorClaw/investorclaw.py fixed-income  # fixed income strategy report
+python3 ~/Projects/InvestorClaw/investorclaw.py help          # show all commands
 ```
 
-Always invoke via the entry point — never call command scripts directly.
+Canonical public command surface inside OpenClaw is `/portfolio ...`. The Python entrypoint above is the matching local CLI wrapper. Always invoke via the entry point, never call command scripts directly.
 
 ---
 
@@ -87,14 +85,14 @@ Always invoke via the entry point — never call command scripts directly.
 | `news` | `sentiment` | `portfolio_news.json` |
 | `analysis` | `portfolio-analysis` | `portfolio_analysis.json` |
 | `synthesize` | `multi-factor`, `recommend` | `portfolio_analysis.json` |
-| `fixed-income` | `fixed-income-analysis` | `fixed_income_analysis.json` |
+| `fixed-income` | `fixed-income-analysis`, `bond-strategy` | `fixed_income_analysis.json` |
 | `report` | `export`, `csv`, `excel` | `portfolio_report.{csv,xlsx}` |
 | `eod` | `end-of-day`, `daily-report` | `eod_report.html` |
 | `session` | `session-init`, `risk-profile` | `session_profile.json` |
 | `lookup` | `query`, `detail` | stdout |
 | `guardrails` | `guardrail`, `guardrails-status` | stdout |
 | `run` | `pipeline` | pipeline stdout + artifacts |
-| `ollama-setup` | `model-setup`, `consult-setup` | stdout |
+| `ollama-setup` | `model-setup`, `consult-setup` (compatibility aliases) | stdout |
 | `setup` | `auto-setup`, `init` | setup output |
 
 Output files go to `$INVESTOR_CLAW_REPORTS_DIR` (default: `~/portfolio_reports/`). Add `--verbose` to any command for full detail.
@@ -250,7 +248,7 @@ ollama create gemma4-consult -f docs/gemma4-consult.Modelfile
 
 **Hardware**: ~10 GB VRAM (RTX 3080 class or better, CUDA 8.0+, or Mac 16 GB unified memory). Ollama >= 0.20.x.
 
-Run `/portfolio ollama-setup` to auto-detect available models on your endpoint.
+Run `/portfolio ollama-setup` to auto-detect available models on your endpoint. `consult-setup` remains as a compatibility alias, not the primary public command.
 
 ---
 
@@ -300,7 +298,30 @@ With consultation enabled, structured synthesis runs locally first. The cloud mo
 |------|--------|
 | Developer workstation | macOS 26.5, Apple M1 Max 10c, 32 GB, Python 3.14.3, OpenClaw 2026.4.12 |
 | Inference host | Debian 13, AMD Threadripper PRO 5945WX 12c, 128 GB, RTX 4500 Ada 24 GB VRAM, Ollama 0.20.3 |
-| Edge deployment | Debian 13, Raspberry Pi 4 8GB aarch64, Python 3.12.x, OpenClaw 2026.4.12 — all 6 commands validated |
+| Edge deployment | Debian 13, Raspberry Pi 4 8GB aarch64, Python 3.13.5, OpenClaw 2026.4.14 — T2–T8 all pass, pipeline output equivalent to Apple Silicon (see Cross-Platform Battery below) |
+
+### Cross-Platform Battery (2026-04-14, MiniMax-M2.7)
+
+Both platforms ran the full T1–T8 battery in a shared session context with `together/MiniMaxAI/MiniMax-M2.7`.
+
+| Test | Apple Silicon (STUDIO) | Raspberry Pi 4 (clawpi) | Verdict |
+|------|------------------------|-------------------------|---------|
+| T1 Smoke | FAIL — script bug¹ | FAIL — script bug¹ | Both |
+| T2 Portfolio Load | 47,837 tok ✅ | 206s ✅ | Pass |
+| T3 Bonds | 48,754 tok ✅ | 58s ✅ | Pass |
+| T4 Performance | 70,094 tok ✅ | 196s ✅ | Pass |
+| T5 Analyst | 75,418 tok ✅ | 152s ✅ | Pass |
+| T6 News | 77,712 tok ✅ | 32s ✅ | Pass |
+| T7 Synthesize | 79,230 tok ✅ | 34s ✅ | Pass |
+| T8 Guardrails | 79,557 tok ✅ | 23s ✅ | Pass |
+
+**Functional parity confirmed.** Portfolio value, bond analytics (99.6% muni concentration, YTM/duration), analyst flags (VRT above mean target), and synthesis output were identical on both platforms.
+
+**Pi timing note**: T2 and T4 are slow (3+ min) due to heavy Python data processing (pandas/polars over 270 positions). T6–T8 are fast (23–34s) because they operate on cached session context. Apple Silicon timing was not captured (macOS BSD `date` lacks `%3N` millisecond format).
+
+¹ T1 smoke test bug: uses relative `venv/bin/python` path (fails when cwd ≠ skill dir) and `date +%s%3N` which is GNU-only. Fix: use `$SKILL_DIR/venv/bin/python` and `python3 -c "import time; print(int(time.time()*1000))"`.
+
+**Pi gateway note**: restart the gateway before running a battery (`openclaw gateway restart`). A stuck gateway causes 210s timeout before falling back to embedded mode, which returns empty responses for InvestorClaw commands.
 
 ---
 
@@ -351,6 +372,7 @@ The enrichment layer (`internal/tier3_enrichment.py`) is the primary driver of s
 ## Changelog
 
 **v1.0.0 (2026-04-14)**
+- Cross-platform battery: T2–T8 all pass on Raspberry Pi 4 (clawpi, Debian 13, Python 3.13.5, OpenClaw 2026.4.14) with MiniMax-M2.7; pipeline output verified equivalent to Apple Silicon.
 - IC-RUN-20260414-004 Phase 6: FA Dangerous Mode hybrid 5/5; heat trajectory validation (WF95–WF114); BUG-1/2/3 fixes (heat=5 equity cap, disclaimer plumbing, ticker fidelity). See [MODELS.md](MODELS.md).
 - IC-RUN-20260414-003: Full re-benchmark with context injection; MiniMax-M2.7 #1 single-model (QC4=108); GPT-OSS-20B now FAIL. Full results in [MODELS.md](MODELS.md).
 - Phase 5 clean benchmark complete (IC-RUN-20260413-010, WF63–WF71). Session cleanup now part of post-harness RESET protocol.

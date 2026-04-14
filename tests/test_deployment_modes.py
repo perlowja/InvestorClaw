@@ -10,7 +10,7 @@ Covers:
 - FA mode: ETF expansion enabled
 - FA-only features blocked in SI mode (ETF_EXPANSION, TAX_LOSS_HARVESTING,
   COMPLIANCE_DOCUMENTATION, MULTI_PORTFOLIO_MANAGEMENT, AUDIT_TRAIL,
-  FIXED_INCOME_ANALYSIS, MODEL_PORTFOLIO_COMPARISON, SECTOR_REBALANCING_TACTICAL)
+  MODEL_PORTFOLIO_COMPARISON, SECTOR_REBALANCING_TACTICAL)
 - Shared features available in both modes
   (HOLDINGS_SNAPSHOT, PERFORMANCE_ANALYSIS, NEWS_SENTIMENT, ANALYST_RATINGS,
    SESSION_CALIBRATION, REPORTS_EXPORT, BASIC_BOND_REPORTING, BOND_ANALYSIS,
@@ -88,6 +88,7 @@ def test_fa_etf_expansion_enabled(fa):
     Feature.BOND_ANALYSIS,
     Feature.REBALANCING_EDUCATIONAL,
     Feature.SECTOR_ANALYSIS_EDUCATIONAL,
+    Feature.FIXED_INCOME_ANALYSIS,
 ])
 def test_shared_feature_enabled_in_si(si, feature):
     assert si.is_feature_enabled(feature)
@@ -104,6 +105,7 @@ def test_shared_feature_enabled_in_si(si, feature):
     Feature.BOND_ANALYSIS,
     Feature.REBALANCING_EDUCATIONAL,
     Feature.SECTOR_ANALYSIS_EDUCATIONAL,
+    Feature.FIXED_INCOME_ANALYSIS,
 ])
 def test_shared_feature_enabled_in_fa(fa, feature):
     assert fa.is_feature_enabled(feature)
@@ -122,7 +124,6 @@ FA_ONLY_FEATURES = [
     Feature.COMPLIANCE_DOCUMENTATION,
     Feature.MULTI_PORTFOLIO_MANAGEMENT,
     Feature.AUDIT_TRAIL,
-    Feature.FIXED_INCOME_ANALYSIS,
 ]
 
 
@@ -147,7 +148,7 @@ def test_require_fa_feature_in_si_raises(si):
 
 def test_require_fa_feature_in_si_error_message_mentions_mode(si):
     with pytest.raises(FeatureNotAvailableError, match="single_investor"):
-        si.require_feature(Feature.FIXED_INCOME_ANALYSIS)
+        si.require_feature(Feature.ETF_CONSTITUENT_ANALYSIS)
 
 
 def test_require_shared_feature_in_si_does_not_raise(si):

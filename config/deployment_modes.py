@@ -140,6 +140,7 @@ SINGLE_INVESTOR_MODE = ModeDefinition(
         Feature.REPORTS_EXPORT,
         Feature.BASIC_BOND_REPORTING,  # All modes can see bond holdings
         Feature.BOND_ANALYSIS,         # Single investors with bonds need YTM/duration
+        Feature.FIXED_INCOME_ANALYSIS, # Educational fixed income strategy report is public command surface
         Feature.REBALANCING_EDUCATIONAL,
         Feature.SECTOR_ANALYSIS_EDUCATIONAL,
     },

@@ -95,12 +95,21 @@ def test_analysis_commands_do_prime(command):
 # ---------------------------------------------------------------------------
 
 def test_no_orphan_command_scripts():
-    """Every .py in commands/ (except __init__.py) must be referenced by COMMANDS."""
+    """Every public command script in commands/ must be referenced by COMMANDS.
+
+    Internal wrappers and deployment helpers are allowed to exist without a
+    direct router mapping, but they should be called out explicitly here so
+    they do not silently accumulate.
+    """
+    allowed_unregistered = {
+        "__init__.py",
+        "ic_holdings_run.py",  # deployment wrapper used by SKILL.toml / Pi installs
+    }
     registered = set(COMMANDS.values())
     for script_path in COMMANDS_DIR.glob("*.py"):
-        if script_path.name == "__init__.py":
+        if script_path.name in allowed_unregistered:
             continue
         assert script_path.name in registered, (
             f"commands/{script_path.name} exists but is not registered in COMMANDS. "
-            "Add an entry in runtime/router.py or move the file."
+            "Add an entry in runtime/router.py, document it as an internal helper, or move the file."
         )

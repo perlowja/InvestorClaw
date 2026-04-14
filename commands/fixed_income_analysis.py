@@ -387,13 +387,13 @@ class FixedIncomeAnalyzer:
     def generate_report(self, bond_data_file: str, output_file: str = None) -> Dict:
         """Generate comprehensive fixed income analysis report"""
 
-        # Phase 9: Check feature availability (FA mode only)
+        # Phase 9: Check feature availability for the active deployment mode
         if _features_available:
             try:
                 mode_str = get_deployment_mode()
                 mode = DeploymentMode(mode_str)
                 fm = FeatureManager(mode)
-                fm.require_feature(Feature.FIXED_INCOME_ANALYSIS)  # FA-only feature
+                fm.require_feature(Feature.FIXED_INCOME_ANALYSIS)
                 logger.info(f"Fixed income analysis enabled for {mode_str} mode")
             except FeatureNotAvailableError as e:
                 logger.error(f"Fixed income analysis not available: {e}")
@@ -489,11 +489,11 @@ class FixedIncomeAnalyzer:
         return report
 
 if __name__ == '__main__':
-    if len(sys.argv) < 2:
+    if len(sys.argv) < 2 or sys.argv[1] in {'-h', '--help', 'help'}:
         print("Usage: python3 fixed_income_analysis.py <bond_data.json> [output.json]")
         print("\nExample:")
-        print("  python3 fixed_income_analysis.py ~/portfolio_reports/bond_analysis.json ~/portfolio_reports/fi_analyzer.json")
-        sys.exit(1)
+        print("  python3 fixed_income_analysis.py ~/portfolio_reports/bond_analysis.json ~/portfolio_reports/fixed_income_analysis.json")
+        sys.exit(0 if len(sys.argv) >= 2 else 1)
 
     bond_data_file = sys.argv[1]
     output_file = sys.argv[2] if len(sys.argv) > 2 else None
