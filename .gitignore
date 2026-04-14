@@ -80,3 +80,6 @@ InvestorClaw-distribution.zip
 # Development utilities (archived, not for distribution)
 # internal/ contains tier3_enrichment.py (CERBERUS consultation) — must be distributed
 # internal/
+
+# Benchmark raw outputs (large text files)
+scripts/wf_outputs/

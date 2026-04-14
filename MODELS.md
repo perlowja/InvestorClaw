@@ -1,6 +1,6 @@
 # InvestorClaw — Tested Models and Benchmark Results
 
-Harness: V6.1.2 | Runs: IC-RUN-20260413-002 through IC-RUN-20260414-002 | Last updated: 2026-04-14
+Harness: V6.1.2 | Runs: IC-RUN-20260413-002 through IC-RUN-20260414-003 | Last updated: 2026-04-14
 
 ---
 
@@ -42,30 +42,34 @@ Rankings across synthesis quality, speed, guardrail adherence, and zero hallucin
 
 #### Hybrid mode (consultation + operational LLM)
 
-| Rank | Configuration | QC4 | QC5 | Notes |
-|------|--------------|:---:|:---:|-------|
-| 🥇 | `xai/grok-4-1-fast` + `gemma4-consult` | **113** | **1,184** | Canonical best. Data-table dense synthesis, HMAC chain, is_heuristic=false. WF39. |
-| 🥈 | `together/moonshotai/Kimi-K2.5` + `gemma4-consult` | 18 | 350 | Hybrid confirmed (215 SVG cards, fingerprints). Narrative style. WF71. |
+| Rank | Configuration | QC3 | QC4 | QC5 | Notes |
+|------|--------------|:---:|:---:|:---:|-------|
+| 🥇 | `xai/grok-4-1-fast` + `gemma4-consult` | 8 | **113** | **1,184** | Canonical best. Data-table dense synthesis, HMAC chain, is_heuristic=false. WF39. |
+| 🥈 | `together/moonshotai/Kimi-K2.5` + `gemma4-consult` | **24** | 82 | 579 | Re-benchmarked WF84 with context injection: 4.6× vs WF71 (QC4=18). Full account breakdown, bond analytics, news. |
+| 🥉 | `xai/grok-4.20-0309-non-reasoning` + `gemma4-consult` | 14 | 17 | ~200 | Narrative prose; most tickers cited. Upgraded WF64→WF74. 1M context. |
 
-> Grok's 6× higher QC4 in hybrid mode reflects its strength at citing enriched data in structured tables. Both models confirm the consultation layer correctly; the operational model drives how that data is expressed.
+> Grok's higher QC4 in hybrid mode reflects its strength at citing enriched data in structured tables. Kimi-K2.5 hybrid produces richer narrative and more tickers (QC3=24) while Grok leads on metric-citation density. Both models confirm the consultation layer correctly; the operational model drives how data is expressed.
 
 #### Single-model (cloud-only, no consultation)
 
+Rankings from IC-RUN-20260414-003 re-benchmark with cross-step context injection enabled.
+
 | Rank | Model | QC3 | QC4 | QC5 | Speed | Run |
 |------|-------|:---:|:---:|:---:|:-----:|-----|
-| 🥇 | `together/deepseek-ai/DeepSeek-V3.1` | 16 | 35+ | 400 | Together AI | WF68 |
-| 🥈 | `together/moonshotai/Kimi-K2.5` | 13 | 40+ | 250 | Together AI | WF66 |
-| 🥉 | `groq/moonshotai/kimi-k2-instruct-0905` | ~6 | ~20 | ~350 | ~800 tok/s | WF58 ⚠️ preview |
-| | `groq/openai/gpt-oss-120b` | ~3 | ~10 | ~280 | ~500 tok/s | WF46 |
-| | `groq/openai/gpt-oss-20b` | ~2 | ~8 | ~250 | ~1000 tok/s | WF59 |
-| | `together/zai-org/GLM-5` | 3 | 26 | 130 | Together AI | WF70 |
-| | `together/MiniMaxAI/MiniMax-M2.7` | 1 | 14 | 150 | Together AI | WF69 |
-| | `google/gemini-3.1-pro-preview` | 4 | 17 | 104 | Google | WF65 |
+| 🥇 | `together/MiniMaxAI/MiniMax-M2.7` | **27** | **108** | **541** | Together AI | WF82 — **top single-model overall** |
+| 🥈 | `together/zai-org/GLM-5` | 20 | 74 | 481 | Together AI | WF83 |
+| 🥉 | `together/moonshotai/Kimi-K2.5` | 16 | 55 | 256 | Together AI | WF76 |
+| | `google/gemini-3.1-pro-preview` | 15 | 46 | 340 | Google | WF80 |
+| | `together/deepseek-ai/DeepSeek-V3.1` | 13 | 44 | 160 | Together AI | WF75 |
+| | `openai/gpt-5.4` | 14 | 28 | 178 | OpenAI | WF81 |
+| | `groq/moonshotai/kimi-k2-instruct-0905` | 9 | 25 | 151 | ~800 tok/s | WF77 ⚠️ preview |
+| | `groq/openai/gpt-oss-120b` | 19 | 17 | 376 | ~500 tok/s | WF78 — verbose but low metric density |
+| 🚫 | `groq/openai/gpt-oss-20b` | — | — | — | — | WF79 — FAIL: malformed tool calls |
 | ⚠️ last | `xai/grok-4-1-fast` (cloud-only) | 0 | **6** | ~50 | xAI | WF72 — **not recommended cloud-only** |
 
-**Speed category winner**: `groq/openai/gpt-oss-20b` (~1000 tok/s, $0.075/$0.30/M, production-stable)  
-**Value category winner**: `together/MiniMaxAI/MiniMax-M2.7` ($0.30/$1.20/M, 197K ctx)  
-**Synthesis quality winner**: `together/deepseek-ai/DeepSeek-V3.1` (400-word prose, 16 tickers named)  
+**Speed category winner**: `groq/openai/gpt-oss-120b` (~500 tok/s, production-stable; gpt-oss-20b excluded: FAIL WF79)  
+**Value category winner**: `together/MiniMaxAI/MiniMax-M2.7` ($0.30/$1.20/M, 197K ctx, now #1 synthesis quality)  
+**Synthesis quality winner**: `together/MiniMaxAI/MiniMax-M2.7` (QC4=108, QC5=541 — full account tables, analyst, bond breakdown)  
 **Not recommended cloud-only**: `xai/grok-4-1-fast` — lowest synthesis density of all tested models (QC4=6, QC5≈50 words). Optimized as an organizer of enriched consultation data; produces minimal output without it. Use in hybrid mode only.
 
 #### Guardrail compliance
@@ -78,19 +82,20 @@ All PASS models: **QC8=0** across W1–W8. Notable failure: `groq/qwen/qwen3-32b
 
 Scores from runs where local consultation state was confirmed for the recorded mode.
 
-| Metric | Combined WF39 | GPT-OSS-120B WF46 | grok-4-1-fast WF72 |
-|--------|:-------------:|:-----------------:|:------------------:|
-| **QC3** Ticker mentions | **8** | ~3 | 0 |
-| **QC4** Metric citations | **113** | ~10 | **6** |
-| **QC5** Word count | **1,184** | ~280 | ~50 |
-| **QC8** `is_heuristic=false` | **✅** | ✗ | ✗ |
-| **QC10** Disclaimer instances | **2** | 2 | 2 |
-| **QC13** Autonomous W6 prose | **✅** | ✅ | ✅ |
-| **Mode** | Hybrid | Single | Single |
-| **All commands pass** | ✅ | ✅ | ✅ |
+| Metric | Combined WF39 | MiniMax-M2.7 WF82 | GPT-OSS-120B WF78 | grok-4-1-fast WF72 |
+|--------|:-------------:|:-----------------:|:-----------------:|:------------------:|
+| **QC3** Ticker mentions | **8** | **27** | 19 | 0 |
+| **QC4** Metric citations | **113** | **108** | 17 | **6** |
+| **QC5** Word count | **1,184** | **541** | 376 | ~50 |
+| **QC8** `is_heuristic=false` | **✅** | ✗ | ✗ | ✗ |
+| **QC10** Disclaimer instances | **2** | 2 | 2 | 2 |
+| **QC13** Autonomous W6 prose | **✅** | ✅ | ✅ | ✅ |
+| **Mode** | Hybrid | Single | Single | Single |
+| **All commands pass** | ✅ | ✅ | ✅ | ✅ |
 
 **WF39** = `xai/grok-4-1-fast-reasoning` + `gemma4-consult` (canonical combined configuration, intentional hybrid)  
-**WF46** = `groq/openai/gpt-oss-120b` (clean clone, no workspace `.env`, confirmed single-model)  
+**WF82** = `together/MiniMaxAI/MiniMax-M2.7` (IC-RUN-20260414-003, context injection enabled) — top single-model performer  
+**WF78** = `groq/openai/gpt-oss-120b` (IC-RUN-20260414-003) — verbose but low metric density (QC4=17 vs QC4=108)  
 **WF72** = `xai/grok-4-1-fast` cloud-only (CONSULTATION_ENABLED=false, ENDPOINT=localhost:0) — measured 19× lower QC4 vs hybrid WF39
 
 Additional single-model runs (WF58–WF62) confirmed protocol compliance and tool-call stability for their respective models but were not scored against all 14 QC dimensions in the benchmark table above.
@@ -110,7 +115,29 @@ Phase 5 clean runs (WF63–WF71, IC-RUN-20260413-010) produced the following W6 
 | grok-4-1-fast (WF73) | 6 | 23 | ~110 | Hybrid+injection | ✅ PASS — 3.8× vs WF72 |
 | grok-4.20 (WF74) | 14 | 17 | ~200 | Hybrid+injection | ✅ PASS — narrative prose, most tickers |
 
-**Note on WF71 hybrid QC4**: Kimi-K2.5 in hybrid mode produced narrative synthesis (QC4=18) lower than its single-model run (QC4=40+). The enrichment layer shifted output style toward narrative prose drawing on consultation summaries rather than restating raw metrics in tables. Compare to WF39 (grok-4-1-fast-reasoning hybrid, QC4=113) — the operational model choice strongly influences how consultation data is expressed in synthesis.
+**Note on WF71 hybrid QC4**: Kimi-K2.5 in hybrid mode (WF71) produced narrative synthesis (QC4=18) lower than its single-model run (QC4=40+). Re-benchmarked in WF84 with cross-step context injection: QC4=82, QC5=579 — 4.6× improvement. The injection and model-tuning, not just consultation, drive hybrid density.
+
+**IC-RUN-20260414-003** full re-benchmark (WF75–WF84) with context injection + verbose defaults across all 10 validated models:
+
+| Model | QC3 | QC4 | QC5 | Mode | Result |
+|-------|:---:|:---:|:---:|:----:|:------:|
+| MiniMax-M2.7 (WF82) | 27 | **108** | 541 | Single | ✅ PASS — **#1 single-model overall** |
+| GLM-5 (WF83) | 20 | 74 | 481 | Single | ✅ PASS |
+| Kimi-K2.5 (WF84) | 24 | 82 | 579 | Hybrid | ✅ PASS — **4.6× over WF71** |
+| Kimi-K2.5 (WF76) | 16 | 55 | 256 | Single | ✅ PASS |
+| Gemini-3.1-pro (WF80) | 15 | 46 | 340 | Single | ✅ PASS — significant ↑ from WF65 (QC4=17→46) |
+| DeepSeek-V3.1 (WF75) | 13 | 44 | 160 | Single | ✅ PASS |
+| GPT-5.4 (WF81) | 14 | 28 | 178 | Single | ✅ PASS |
+| Kimi-K2-0905/Groq (WF77) | 9 | 25 | 151 | Single | ✅ PASS ⚠️ preview |
+| GPT-OSS-120B/Groq (WF78) | 19 | 17 | 376 | Single | ✅ PASS — verbose, low metric density |
+| GPT-OSS-20B/Groq (WF79) | — | — | — | Single | 🚫 FAIL — malformed tool calls |
+
+**Key IC-RUN-20260414-003 findings**:
+- MiniMax-M2.7 jumps from WF69 QC4=14 to WF82 QC4=108 — a 7.7× improvement from context injection alone.
+- GLM-5 jumps from WF70 QC4=26 to WF83 QC4=74 — 2.8×.
+- Gemini 3.1 Pro jumps from WF65 QC4=17 to WF80 QC4=46 — 2.7×.
+- GPT-OSS-20B (WF79) fails on tool calls — malformed `read<|channel|>commentary` call. Previously functional (WF59) at 250 words; current endpoint behavior incompatible.
+- GPT-OSS-120B (WF78) remains functional but produces low metric density (QC4=17) despite high word count (376) — data-rich context is not being utilized for citations.
 
 ---
 
@@ -138,10 +165,20 @@ Phase 5 clean runs (WF63–WF71, IC-RUN-20260413-010) produced the following W6 
 | WF72 | `xai/grok-4-1-fast` (cloud-only baseline) | Single | — | ✅ PASS (QC3=0, QC4=6, QC5≈50; lowest density; not recommended cloud-only) |
 | WF73 | `xai/grok-4-1-fast` (hybrid, context injection) | Hybrid | ✅ | ✅ PASS (QC3=6, QC4=23, QC5≈110; 3.8× improvement vs WF72 cloud-only) |
 | WF74 | `xai/grok-4.20-0309-non-reasoning` (hybrid, re-test) | Hybrid | ✅ | ✅ PASS — UPGRADED from WF64 DEGRADED; W4/W5 tool rejection was transient. QC3=14, QC4=17, QC5≈200 |
+| WF75 | `together/deepseek-ai/DeepSeek-V3.1` (re-benchmark) | Single | — | ✅ PASS (QC3=13, QC4=44, QC5=160) |
+| WF76 | `together/moonshotai/Kimi-K2.5` (re-benchmark) | Single | — | ✅ PASS (QC3=16, QC4=55, QC5=256) |
+| WF77 | `groq/moonshotai/kimi-k2-instruct-0905` (re-benchmark) | Single | — | ✅ PASS (QC3=9, QC4=25, QC5=151) ⚠️ preview |
+| WF78 | `groq/openai/gpt-oss-120b` (re-benchmark) | Single | — | ✅ PASS (QC3=19, QC4=17, QC5=376) — verbose, low metric density |
+| WF79 | `groq/openai/gpt-oss-20b` (re-benchmark) | Single | — | 🚫 FAIL — malformed tool call `read<|channel|>commentary` |
+| WF80 | `google/gemini-3.1-pro-preview` (re-benchmark) | Single | — | ✅ PASS (QC3=15, QC4=46, QC5=340) — significant ↑ from WF65 |
+| WF81 | `openai/gpt-5.4` (re-benchmark) | Single | — | ✅ PASS (QC3=14, QC4=28, QC5=178) |
+| WF82 | `together/MiniMaxAI/MiniMax-M2.7` (re-benchmark) | Single | — | ✅ PASS (QC3=27, QC4=108, QC5=541) — **#1 single-model overall** |
+| WF83 | `together/zai-org/GLM-5` (re-benchmark) | Single | — | ✅ PASS (QC3=20, QC4=74, QC5=481) |
+| WF84 | `together/moonshotai/Kimi-K2.5` + `gemma4-consult` (re-benchmark) | Hybrid | ✅ | ✅ PASS (QC3=24, QC4=82, QC5=579) — 4.6× over WF71 |
 
 ### Awaiting full QC benchmark
 
-All runs completed through IC-RUN-20260414-002. No models remain in pending-benchmark status.
+All runs completed through IC-RUN-20260414-003. No models remain in pending-benchmark status.
 
 Previously listed models and their final verdicts:
 
@@ -197,22 +234,22 @@ Previously listed models and their final verdicts:
 
 | Model | Context | Benchmark | Notes |
 |-------|---------|:---------:|-------|
-| `openai/gpt-5.4` | ~272K | ✅ WF63 | Passed clean single-model benchmark. W7 questionnaire loop observed (same as Gemini/Kimi-K2.5). 272K context is smallest among frontier models. |
+| `openai/gpt-5.4` | ~272K | ✅ WF63/WF81 | PASS — re-benchmarked WF81: QC3=14, QC4=28, QC5=178. W7 questionnaire loop (same as Gemini/Kimi-K2.5). 272K context is smallest among frontier models. |
 
 ### Google
 
 | Model | Context | Benchmark | Notes |
 |-------|---------|:---------:|-------|
-| `google/gemini-3.1-pro-preview` | ~1M | ✅ WF65 | PASS — clean single-model. QC3=4, QC4=17, QC5=104 words (thin synthesis). W7 questionnaire loop; QC10=1. Functional but lowest synthesis density of frontier models tested. |
+| `google/gemini-3.1-pro-preview` | ~1M | ✅ WF65/WF80 | PASS — re-benchmarked WF80: QC3=15, QC4=46, QC5=340. Significant improvement from context injection (WF65: QC4=17→WF80: QC4=46). W7 questionnaire loop; QC10=1. Emoji-decorated output. |
 
 ### Together AI
 
 | Model | Context | Benchmark | Notes |
 |-------|---------|:---------:|-------|
-| `together/moonshotai/Kimi-K2.5` | 262K | ✅ WF60/WF66 (single) / ✅ WF71 (hybrid) | Single: QC3=13, QC4=40+, QC5=250 — strongest non-frontier single-model performer. Hybrid: 215 SVG cards, HMAC fingerprints, is_heuristic=false; QC3=17, QC4=18, QC5=350 (narrative synthesis vs. data-table). W7 questionnaire loop in both modes. |
-| `together/deepseek-ai/DeepSeek-V3.1` | 131K | ✅ WF68 | PASS — clean single-model. QC3=16, QC4=35+, QC5=400 words. **Top single-model performer** after Kimi-K2.5. Strong synthesis density. $0.60/$1.70/M. |
-| `together/MiniMaxAI/MiniMax-M2.7` | 197K | ✅ WF69 | PASS — clean single-model. QC3=1, QC4=14, QC5=150. Thin synthesis but protocol-compliant. Most economical Together option ($0.30/$1.20/M). |
-| `together/zai-org/GLM-5` | 203K | ✅ WF70 | PASS — clean single-model. QC3=3, QC4=26, QC5=130. Protocol-compliant; account breakdown detail notable. |
+| `together/moonshotai/Kimi-K2.5` | 262K | ✅ WF60/WF66/WF76 (single) / ✅ WF71/WF84 (hybrid) | Single WF76: QC3=16, QC4=55, QC5=256. Hybrid WF84: QC3=24, QC4=82, QC5=579 — **top hybrid performer outside of grok-4-1-fast**; 4.6× over WF71. W7 questionnaire loop in both modes. |
+| `together/deepseek-ai/DeepSeek-V3.1` | 131K | ✅ WF68/WF75 | PASS — re-benchmarked WF75: QC3=13, QC4=44, QC5=160. $0.60/$1.70/M. |
+| `together/MiniMaxAI/MiniMax-M2.7` | 197K | ✅ WF69/WF82 | PASS — re-benchmarked WF82: QC3=27, QC4=108, QC5=541. **#1 single-model overall** with context injection. $0.30/$1.20/M — best value of all top performers. |
+| `together/zai-org/GLM-5` | 203K | ✅ WF70/WF83 | PASS — re-benchmarked WF83: QC3=20, QC4=74, QC5=481. Excellent context utilization; rich account breakdown. $1.00/$3.20/M. |
 | `together/Qwen/Qwen3-235B-A22B-Instruct-2507-tput` | 262K | ✅ WF61 (single) | ~300-word synthesis; 60k/262k context use. |
 | `together/MiniMaxAI/MiniMax-M2.5` | — | ⚠️ DEGRADED | `/portfolio synthesize` not recognized; W5 news non-functional — use M2.7 instead. |
 | `together/Qwen/Qwen3-235B-A22B-Thinking-2507` | — | ⚠️ PARTIAL | Tool calls work; 5–10 min/step — not viable for interactive sessions. |
@@ -229,9 +266,9 @@ Fast inference (500–1000 tok/s) at low cost. 128K context limits to small-to-m
 
 | Model | Context | Benchmark | Notes |
 |-------|---------|:---------:|-------|
-| `groq/openai/gpt-oss-120b` | 128K | ✅ WF46 | **Recommended Groq option.** Full autonomous synthesis; $0.15/$0.60/M; 500 tok/s. Production-stable. |
-| `groq/openai/gpt-oss-20b` | 128K | ✅ WF59 | Full synthesize (~250 words); $0.075/$0.30/M; 1000 tok/s. Production-stable. |
-| `groq/moonshotai/kimi-k2-instruct-0905` | 262K | ✅ WF58 ⚠️ | Best Groq prose (~350 words). **Preview tier — not production-stable; may be discontinued without notice.** |
+| `groq/openai/gpt-oss-120b` | 128K | ✅ WF46/WF78 | **Recommended Groq option.** Re-benchmarked WF78: QC3=19, QC4=17, QC5=376 — verbose but low metric density. $0.15/$0.60/M; 500 tok/s. Production-stable. |
+| `groq/openai/gpt-oss-20b` | 128K | ✅ WF59 / 🚫 WF79 | WF79 FAIL: malformed tool call `read<|channel|>commentary`. Previously functional (WF59). Current endpoint behavior incompatible — do not use. $0.075/$0.30/M. |
+| `groq/moonshotai/kimi-k2-instruct-0905` | 262K | ✅ WF58/WF77 ⚠️ | Re-benchmarked WF77: QC3=9, QC4=25, QC5=151. **Preview tier — not production-stable; may be discontinued without notice.** |
 | `groq/qwen/qwen3-32b` | 128K | ⚠️ WF67 DEGRADED | `/portfolio update-identity` not recognized; W6 thin synthesis (~60 words) with file pointer; W7 offered specific investment recommendations without educational framing (guardrail issue). Preview model. |
 | `groq/meta-llama/llama-4-scout-17b-16e-instruct` | 128K | ⚠️ DEGRADED | Requires extra prompt step for W6 prose; heat_level type error; preview model. |
 | `groq/moonshotai/kimi-k2-instruct` | 128K | ⚠️ DEGRADED | Thin synthesis (~144 words); undocumented endpoint. |
@@ -318,9 +355,20 @@ To disable consultation for a clean single-model benchmark run:
 # Edit ~/Projects/InvestorClaw/.env
 INVESTORCLAW_CONSULTATION_ENABLED=false
 INVESTORCLAW_CONSULTATION_ENDPOINT=http://localhost:0   # unreachable — belt-and-suspenders
-
-# Restart gateway to pick up the change
-openclaw gateway stop && openclaw gateway start
 ```
+
+No gateway restart required — the OpenClaw gateway hot-reloads `openclaw.json` model config changes. For clean runs, **delete the session** rather than restarting the gateway:
+
+```python
+# Delete the session from ~/.openclaw/sessions/sessions.json before each run
+import json
+from pathlib import Path
+store = Path.home() / ".openclaw/sessions/sessions.json"
+data = json.loads(store.read_text())
+data.pop("agent:main:explicit:<session-id>", None)
+store.write_text(json.dumps(data, indent=2))
+```
+
+Then run with a fresh session ID — the hot-reloaded model config takes effect immediately. The IC-RUN-20260414-003 batch (WF75–WF84) used this approach: no gateway restarts across 10 sequential runs.
 
 This finding (DEV-003, discovered IC-RUN-20260413-010) invalidated the 9 earlier Phase 5 benchmark runs (WF36–WF41, WF48, WF53–WF55) that had attempted to disable consultation via workspace `.env` modifications. All 9 were re-run cleanly in WF63–WF71.

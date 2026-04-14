@@ -107,24 +107,26 @@ Best performers across synthesis quality, speed, guardrail compliance, and zero 
 
 ### Hybrid (consultation + operational LLM)
 
-| Rank | Configuration | QC4 | QC5 | Speed | Notes |
-|------|--------------|:---:|:---:|:-----:|-------|
-| 🥇 | `xai/grok-4-1-fast` + `gemma4-consult` | 113 | 1,184 words | ~65 tok/s (local) | **Canonical best.** 19× metric density vs its own cloud-only baseline. HMAC fingerprint chain, verbatim attribution, is_heuristic=false. WF39/WF73. |
-| 🥈 | `xai/grok-4.20-0309-non-reasoning` + `gemma4-consult` | 17 | ~200 words | ~65 tok/s (local) | Narrative prose style; most tickers cited (QC3=14). Upgraded from DEGRADED (WF64→WF74). 1M context. |
-| 🥉 | `together/moonshotai/Kimi-K2.5` + `gemma4-consult` | 18 | 350 words | ~65 tok/s (local) | Hybrid confirmed (215 SVG cards). Narrative synthesis style vs Grok's data-table density. WF71. |
+| Rank | Configuration | QC3 | QC4 | QC5 | Notes |
+|------|--------------|:---:|:---:|:---:|-------|
+| 🥇 | `xai/grok-4-1-fast` + `gemma4-consult` | 8 | 113 | 1,184 words | **Canonical best.** 19× metric density vs cloud-only. HMAC chain, is_heuristic=false. WF39. |
+| 🥈 | `together/moonshotai/Kimi-K2.5` + `gemma4-consult` | 24 | 82 | 579 words | Re-benchmarked WF84: 4.6× over prior run. Full account breakdown, bond analytics, news. |
+| 🥉 | `xai/grok-4.20-0309-non-reasoning` + `gemma4-consult` | 14 | 17 | ~200 words | Narrative prose; most tickers. Upgraded from DEGRADED. 1M context. WF74. |
 
-### Single-model (cloud-only)
+### Single-model (cloud-only, IC-RUN-20260414-003)
 
-| Rank | Model | QC4 | QC5 | Speed | Notes |
-|------|-------|:---:|:---:|:-----:|-------|
-| 🥇 | `together/deepseek-ai/DeepSeek-V3.1` | 35+ | 400 words | Together AI | **Top single-model.** Best synthesis density without enrichment. QC8=0. WF68. |
-| 🥈 | `together/moonshotai/Kimi-K2.5` | 40+ | 250 words | Together AI | Highest metric citation count. Strong analyst coverage prose. QC8=0. WF66. |
-| 🥉 | `groq/moonshotai/kimi-k2-instruct-0905` | ~20 | ~350 words | ~800 tok/s | Best Groq prose quality. ⚠️ Preview tier only — may be discontinued. WF58. |
-| | `groq/openai/gpt-oss-120b` | ~10 | ~280 words | ~500 tok/s | **Best production-stable Groq option.** $0.15/$0.60/M. WF46. |
-| | `groq/openai/gpt-oss-20b` | ~8 | ~250 words | ~1000 tok/s | Fastest option. $0.075/$0.30/M. WF59. |
-| | `openai/gpt-5.4` | — | — | OpenAI | PASS, 272K context (smallest frontier). WF63. |
-| | `google/gemini-3.1-pro-preview` | 17 | 104 words | Google | Thin synthesis; 1M context. WF65. |
-| ⚠️ | `xai/grok-4-1-fast` (cloud-only) | 6 | ~50 words | xAI | **Not recommended cloud-only.** Lowest synthesis density of all tested models. Use hybrid mode only. WF72. |
+| Rank | Model | QC3 | QC4 | QC5 | Notes |
+|------|-------|:---:|:---:|:---:|-------|
+| 🥇 | `together/MiniMaxAI/MiniMax-M2.7` | 27 | **108** | 541 words | **Top single-model overall.** Full account tables, analyst, bond detail. $0.30/$1.20/M. WF82. |
+| 🥈 | `together/zai-org/GLM-5` | 20 | 74 | 481 words | Rich account breakdown. $1.00/$3.20/M. WF83. |
+| 🥉 | `together/moonshotai/Kimi-K2.5` | 16 | 55 | 256 words | Strong analyst coverage prose. $0.50/$1.50/M. WF76. |
+| | `google/gemini-3.1-pro-preview` | 15 | 46 | 340 words | 1M context; significant ↑ from context injection. WF80. |
+| | `together/deepseek-ai/DeepSeek-V3.1` | 13 | 44 | 160 words | $0.60/$1.70/M. WF75. |
+| | `openai/gpt-5.4` | 14 | 28 | 178 words | 272K context (smallest frontier). WF81. |
+| | `groq/moonshotai/kimi-k2-instruct-0905` | 9 | 25 | 151 words | ⚠️ Preview tier only. WF77. |
+| | `groq/openai/gpt-oss-120b` | 19 | 17 | 376 words | Production-stable Groq; verbose but low metric density. $0.15/$0.60/M. WF78. |
+| 🚫 | `groq/openai/gpt-oss-20b` | — | — | — | FAIL: malformed tool calls. Previously functional (WF59). WF79. |
+| ⚠️ last | `xai/grok-4-1-fast` (cloud-only) | 0 | 6 | ~50 words | **Not recommended cloud-only.** Use hybrid mode only. WF72. |
 
 ### Guardrails & hallucination score
 
@@ -168,11 +170,12 @@ OpenClaw config:
 { "agents": { "defaults": { "model": { "primary": "xai/grok-4-1-fast" } } } }
 ```
 
-No `.env` consultation keys needed. Use a premium frontier model for specific high-value sessions:
+No `.env` consultation keys needed. Recommended models by priority (IC-RUN-20260414-003):
 ```bash
-openclaw models set together/deepseek-ai/DeepSeek-V3.1   # top single-model synthesis (QC5≈400 words)
-openclaw models set together/moonshotai/Kimi-K2.5         # strong non-frontier alternative (QC5≈250 words)
-openclaw models set groq/openai/gpt-oss-120b              # fastest/cheapest option (Groq, 128K ctx)
+openclaw models set together/MiniMaxAI/MiniMax-M2.7       # #1 single-model — QC4=108, QC5=541 ($0.30/$1.20/M)
+openclaw models set together/zai-org/GLM-5                # #2 — QC4=74, QC5=481
+openclaw models set together/moonshotai/Kimi-K2.5         # #3 — QC4=55, QC5=256
+openclaw models set groq/openai/gpt-oss-120b              # production-stable Groq (128K ctx, note: low QC4=17)
 ```
 
 > `xai/grok-4.20-0309-non-reasoning` was re-tested (WF74) and **upgraded to PASS** — WF64's W4/W5 tool rejection was a transient model-version issue. Full W0–W8 now passes cleanly. Narrative prose style (QC3=14 tickers, QC5≈200 words). Good alternative to grok-4-1-fast when longer narrative synthesis is preferred.
@@ -349,6 +352,9 @@ The enrichment layer (`internal/tier3_enrichment.py`) is the primary driver of s
 ## Changelog
 
 **v1.0.0 (2026-04-14)**
+- IC-RUN-20260414-003: Full re-benchmark of all 10 validated models (WF75–WF84) with cross-step context injection + verbose defaults. MiniMax-M2.7 is now #1 single-model (QC4=108, 7.7× improvement). GLM-5 #2 (QC4=74). Kimi-K2.5 hybrid WF84 (QC4=82, 4.6× over WF71).
+- GPT-OSS-20B (WF79) now FAIL — malformed tool calls; previously functional. Do not use.
+- Hot-reload model switching: no gateway restart needed between benchmark runs — delete session, change model in config, run with fresh session ID.
 - Phase 5 clean benchmark complete: all 9 DEV-001-contaminated runs (WF36–WF41, WF48, WF53–WF55) re-validated in IC-RUN-20260413-010 (WF63–WF71). Full results in [MODELS.md](MODELS.md).
 - Confirmed new passing models: DeepSeek-V3.1, Kimi-K2.5 (hybrid), Gemini-3.1-pro-preview, GPT-5.4, MiniMax-M2.7, GLM-5.
 - Degraded: grok-4.20-0309-non-reasoning (W4/W5 tool payload rejection), qwen3-32b (update-identity unrecognized, W7 guardrail issue).

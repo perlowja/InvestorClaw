@@ -5,7 +5,7 @@ CREDENTIALS SETUP (one-time, on orchestrator Mac — set before running any harn
   Add these to ~/.zshrc or ~/.zprofile to persist. Do NOT commit credentials or .env files.
   VERIFY: echo "HOME=${ORCHESTRATOR_HOME} REPO=${IC_GITHUB_REPO} OLLAMA=${CONSULTATION_HOST}"
 
-INVESTORCLAW TEST HARNESS V6.1.2 IC-RUN-20260412-003 | IC-RUN-20260413-002 (COMPLETED 2026-04-13) | IC-RUN-20260414-002 (LATEST 2026-04-14) | Min commit: 33e5442 | Session: ic-harness-v612
+INVESTORCLAW TEST HARNESS V6.1.2 IC-RUN-20260412-003 | IC-RUN-20260413-002 (COMPLETED 2026-04-13) | IC-RUN-20260414-003 (LATEST 2026-04-14) | Min commit: 33e5442 | Session: ic-harness-v612
 ═══════════════════════════════════════════════════════════ CAPABILITIES ═══════════════════════════════════════════════════════════
 CAP1 ORCHESTRATION openclaw agent --session-id ic-harness-v612 -m "<instruction>" (W0.4+)
 CAP2 REMEDIATION Claude directly: edit source → commit ARGONAS → push GitHub → restart W0 OpenClaw detects+suggests. Claude verifies then acts. Not optional.
@@ -917,3 +917,146 @@ SYNTHESIS STYLE COMPARISON (hybrid, same consultation layer):
 
 MODEL RESET: xai/grok-4-1-fast (default)
 ═══════════════════════════════════════════════════════════ END IC-RUN-20260414-002 ADDENDUM ═══════════════════════════════════════════════════════════
+
+═══════════════════════════════════════════════════════════ IC-RUN-20260414-003 ADDENDUM ═══════════════════════════════════════════════════════════
+Run date: 2026-04-14 | WF75–WF84 | Full re-benchmark with context injection + verbose defaults
+Purpose:  All 10 validated PASS models re-benchmarked after two code improvements:
+          (1) Cross-step context injection (portfolio_analyzer.py W6 now reads W1/W2/W4 output for citation data)
+          (2) Verbose-default (portfolio_analyzer.py + fetch_analyst_recommendations_parallel.py always verbose)
+          (3) gemma4-consult: num_ctx 2048→4096, num_predict 600→1200, system cap 200→400 words
+Protocol: CONSULTATION_ENABLED=false for WF75–WF83 (single-model); true for WF84 (hybrid)
+          No gateway restarts between runs — hot-reload config + session deletion only
+          Tool: scripts/run_benchmark.py (delete session → set model via openclaw.json → run → restore)
+Commits:  09a15cd (anti-fabrication, verbose, injection) | 8d9cec1 (gemma4-consult tuning)
+
+─── METHODOLOGY NOTE — HOT-RELOAD SESSION MANAGEMENT ───────────────────────────────────────────────
+IC-RUN-20260414-003 established that the OpenClaw gateway hot-reloads openclaw.json model config changes
+without requiring a gateway restart. The new protocol for benchmark runs:
+  1. Delete the session: remove "agent:main:explicit:<session-id>" from ~/.openclaw/sessions/sessions.json
+  2. Edit openclaw.json: set agents.defaults.model.primary to target model
+  3. Wait 1s (hot-reload settle), then run with a fresh session-id
+  4. After run: restore default model
+No stop/start cycles. 10 runs completed in ~90 minutes total (vs ~3 hrs with restarts).
+
+─── WF75 — together/deepseek-ai/DeepSeek-V3.1 (re-benchmark, single-model) ─────────────────────────
+QC SUMMARY (WF75):
+  QC3  w6_ticker_mentions:   13 (MSFT, NVDA, AAPL, UCTT, FSLY, LITE, NOW, FIG, ACHR, SCHB, WGS, GOOG, TEL)
+  QC4  w6_metric_citations:  44 ($2.6M, $188k, $148k, 34.1%, 7.2%, +3.45%, Sharpe 0.53, etc.)
+  QC5  w6_word_count:        160
+  QC8  fabrication_flags:    0
+  synthesis_basis:           heuristic (consultation disabled)
+  elapsed_s:                 17
+VERDICT WF75: ✅ PASS — QC4 44 (vs WF68 35+ pre-injection). Improvement: ~26%.
+
+─── WF76 — together/moonshotai/Kimi-K2.5 (re-benchmark, single-model) ──────────────────────────────
+QC SUMMARY (WF76):
+  QC3  w6_ticker_mentions:   16
+  QC4  w6_metric_citations:  55 ($2,604,536, $1,854,402, $188k, $148k, 71.2%, 27.1%, etc.)
+  QC5  w6_word_count:        256
+  QC8  fabrication_flags:    0
+  synthesis_basis:           heuristic (consultation disabled)
+  elapsed_s:                 104
+VERDICT WF76: ✅ PASS — QC4 55 (vs WF66 40+ pre-injection). Full markdown table output.
+
+─── WF77 — groq/moonshotai/kimi-k2-instruct-0905 (re-benchmark, single-model) ─────────────────────
+QC SUMMARY (WF77):
+  QC3  w6_ticker_mentions:   9 (MSFT, NVDA, ACHR, FSLY, LITE, NOW, SCHB, UCTT, WGS)
+  QC4  w6_metric_citations:  25
+  QC5  w6_word_count:        151
+  QC8  fabrication_flags:    0
+  synthesis_basis:           heuristic (consultation disabled)
+  elapsed_s:                 14
+VERDICT WF77: ✅ PASS ⚠️ — preview tier. Lower QC than Together variant (QC4=25 vs Kimi-K2.5 WF76 QC4=55).
+
+─── WF78 — groq/openai/gpt-oss-120b (re-benchmark, single-model) ───────────────────────────────────
+QC SUMMARY (WF78):
+  QC3  w6_ticker_mentions:   19 (AAPL, ACHR, AXON, CELH, FIG, FSLY, GOOG, LITE, MSFT, NVDA, etc.)
+  QC4  w6_metric_citations:  17 (dollar amounts cited but percentage/metric density low)
+  QC5  w6_word_count:        376
+  QC8  fabrication_flags:    0
+  synthesis_basis:           heuristic (consultation disabled)
+  elapsed_s:                 19
+VERDICT WF78: ✅ PASS — high QC5/QC3 but low QC4. Model is verbose but does not extract metric citations
+              from context injection data. Production-stable Groq option but low information density.
+
+─── WF79 — groq/openai/gpt-oss-20b (re-benchmark, single-model) ────────────────────────────────────
+FAILURE MODE: Tool call validation failed — attempted to call tool 'read<|channel|>commentary' which
+              was not in request.tools. Model generated malformed tool call; pipeline could not proceed.
+  synthesis_basis:           N/A (tool call failure before W6)
+  elapsed_s:                 13
+VERDICT WF79: 🚫 FAIL — malformed tool calls. Previously functional (WF59 ~250 words). Current Groq
+              endpoint for gpt-oss-20b appears incompatible with skill tool schema. Do not use.
+
+─── WF80 — google/gemini-3.1-pro-preview (re-benchmark, single-model) ─────────────────────────────
+QC SUMMARY (WF80):
+  QC3  w6_ticker_mentions:   15 (AAPL, ACHR, AMD, FIG, FSLY, GOOG, LITE, MSFT, NOW, NVDA, etc.)
+  QC4  w6_metric_citations:  46 ($2,604,536, $1,854,402, $188k, $148k, 71.2%, 27.1%, 1.7%, etc.)
+  QC5  w6_word_count:        340
+  QC8  fabrication_flags:    0
+  synthesis_basis:           heuristic (consultation disabled)
+  elapsed_s:                 120
+VERDICT WF80: ✅ PASS — QC4 46 (vs WF65 QC4=17 pre-injection). 2.7× improvement from context injection.
+              Emoji-decorated output. 120s run time (slowest single-model run). 1M context.
+
+─── WF81 — openai/gpt-5.4 (re-benchmark, single-model) ────────────────────────────────────────────
+NOTE: Synthesis extractor initially missed content due to ic_result.exit_code line breaking extraction.
+      Fixed in run_benchmark.py v2. Re-measured from raw output.
+QC SUMMARY (WF81):
+  QC3  w6_ticker_mentions:   14 (MSFT, NVDA, AAPL, UCTT, FSLY, LITE, NOW, TTAN, FIG, TEL, TXN, ENTG, GOOG, SCHB)
+  QC4  w6_metric_citations:  28
+  QC5  w6_word_count:        178
+  QC8  fabrication_flags:    0
+  synthesis_basis:           heuristic (consultation disabled)
+  elapsed_s:                 112
+VERDICT WF81: ✅ PASS — 112s run time. Bullet-point summary style. Opens with "Full analysis is done."
+              then structured breakdown. QC3=14 tickers is strong but metric citation density moderate.
+
+─── WF82 — together/MiniMaxAI/MiniMax-M2.7 (re-benchmark, single-model) ───────────────────────────
+QC SUMMARY (WF82):
+  QC3  w6_ticker_mentions:   27 (AAPL, ACHR, AMZN, AXON, DOCS, FIG, FORM, FSLY, GOOG, LITE, MSFT, NVDA, etc.)
+  QC4  w6_metric_citations:  108 ($2,604,536, $1,854,402, $188k, $148k, $705k, 71.2%, 27.1%, Sharpe 0.53,
+                                   YTM 3.10%, duration 4.63y, +424%, +422%, +373%, PT $149, etc.)
+  QC5  w6_word_count:        541
+  QC8  fabrication_flags:    0
+  synthesis_basis:           heuristic (consultation disabled)
+  elapsed_s:                 194
+VERDICT WF82: ✅ PASS — OUTSTANDING. QC4=108 is highest of ALL single-model runs. Full markdown tables
+              for allocation, account breakdown, analysts, news. 7.7× improvement from WF69 (QC4=14).
+              Context injection fully exploited. NEW #1 SINGLE-MODEL OVERALL.
+
+─── WF83 — together/zai-org/GLM-5 (re-benchmark, single-model) ────────────────────────────────────
+QC SUMMARY (WF83):
+  QC3  w6_ticker_mentions:   20
+  QC4  w6_metric_citations:  74
+  QC5  w6_word_count:        481
+  QC8  fabrication_flags:    0
+  synthesis_basis:           heuristic (consultation disabled)
+  elapsed_s:                 149
+VERDICT WF83: ✅ PASS — QC4 74 (vs WF70 QC4=26 pre-injection). 2.8× improvement. Rich account breakdown
+              with individual account values. Strong structure matching MiniMax output quality.
+
+─── WF84 — together/moonshotai/Kimi-K2.5 + gemma4-consult (hybrid re-benchmark) ───────────────────
+CONSULTATION_ENABLED=true | ENDPOINT=http://192.168.207.96:11434 | MODEL=gemma4-consult
+Session: ic-wf84 | CERBERUS models confirmed: gemma4-consult:latest present
+
+QC SUMMARY (WF84):
+  QC3  w6_ticker_mentions:   24 (AAPL, AAR, AEIS, AIR, DOCS, FIG, FORM, FSLY, GOOG, LITE, MSFT, NVDA, etc.)
+  QC4  w6_metric_citations:  82 (full account breakdown with 8 accounts, bond YTM/duration, analyst PTs,
+                                   news items, $2.6M, $1.85M, 71.2%, Sharpe 0.53, 3.10% YTM, 4.63y, etc.)
+  QC5  w6_word_count:        579
+  QC8  fabrication_flags:    0
+  synthesis_basis:           enriched (gemma4-consult active, num_ctx=4096, num_predict=1200)
+VERDICT WF84: ✅ PASS — QC4 82 (vs WF71 QC4=18 pre-injection). 4.6× improvement. Full 8-account table,
+              bond maturity ladder, analyst top upside, news sentiment — richest narrative structure
+              of all hybrid runs. HMAC fingerprints confirmed.
+
+IC-RUN-20260414-003 FINAL RANKINGS (QC4, W6 synthesis):
+  HYBRID:   WF39 grok-4-1-fast+gemma4 QC4=113 | WF84 Kimi-K2.5+gemma4 QC4=82 | WF74 grok-4.20 QC4=17
+  SINGLE:   WF82 MiniMax-M2.7 QC4=108 | WF83 GLM-5 QC4=74 | WF76 Kimi-K2.5 QC4=55
+            WF80 Gemini-Pro QC4=46 | WF75 DeepSeek-V3.1 QC4=44 | WF81 GPT-5.4 QC4=28
+            WF77 Kimi-K2-0905/Groq QC4=25 | WF78 GPT-OSS-120B QC4=17
+  FAIL:     WF79 GPT-OSS-20B (malformed tool calls)
+  LAST:     WF72 grok-4-1-fast cloud-only QC4=6 (not recommended without consultation)
+
+MODEL RESET: xai/grok-4-1-fast (default restored after all runs)
+═══════════════════════════════════════════════════════════ END IC-RUN-20260414-003 ADDENDUM ═══════════════════════════════════════════════════════════
