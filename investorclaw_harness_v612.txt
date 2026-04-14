@@ -715,3 +715,59 @@ UPDATED CROSS-MODEL RANKINGS (all runs IC-RUN-20260413-001 through 008, excludin
   TOGETHER ALT:   together/MiniMaxAI/MiniMax-M2.7 — $0.30/$1.20/M, PASS, 197k ctx (most economical Together option)
   *Do not use Groq preview models in production without fallback strategy.
 ═══════════════════════════════════════════════════════════ END IC-RUN-20260413-008 ADDENDUM ═══════════════════════════════════════════════════════════
+
+═══════════════════════════════════════════════════════════ IC-RUN-20260413-009 ADDENDUM ═══════════════════════════════════════════════════════════
+Run ID: IC-RUN-20260413-009 | Date: 2026-04-13 | Type: Regression / Quote-fix verification
+Model: xai/grok-4-1-fast | Provider: xai | CERBERUS: active (gemma4-consult, ~1014ms)
+Clone SHA: 6ea3bcef37b4d2d41b3142fc3656640afd50b652 | Commit: tier3 quote.json artifact fix (first run with new persistence)
+
+WF62 REGRESSION VERIFICATION — xai/grok-4-1-fast (recommended default config)
+
+Purpose: (1) Confirm grok-4-1-fast W0-W8 pass after IC-RUN-20260413-008 model-catalog additions and gateway auth changes.
+         (2) Verify tier3_enrichment.py quote.json fix (commit 6ea3bce) writes ~/.investorclaw/quotes/{SYMBOL}.quote.json.
+
+Pre-run state: model had drifted to Qwen/Qwen3-235B-A22B-Thinking-2507 (leftover from last ic-harness-v612 use).
+Fix applied: openclaw models set xai/grok-4-1-fast + /new ic-harness-v612 → model=grok-4-1-fast | provider=xai | override=ABSENT.
+
+STEP RESULTS:
+  W0  skill lifecycle  ✅  clone 6ea3bce, cp to workspace, gateway restart, W0.4 /portfolio setup OK
+  W1  holdings         ✅  Total $2.6M | 71% equity | 270 holdings | disclaimer present
+  W2  performance      ✅  Sharpe 0.53 | UCTT +424% | disclaimer present
+  W3  bond-analysis    ✅  $706K munis | YTM 3.1% | duration 4.6y | disclaimer present
+  W4  analyst+CERBERUS ✅  gemma4-consult active | inference ~1014ms | is_heuristic=false | verbatim quotes present
+  W5  news             ✅  24 items | positive posture | 5 symbols | disclaimer present
+  W6  synthesize       ✅  tech 34% alert | 270 holdings | disclaimer present
+  W7  session-init     ✅  balanced / neutral | heat 5 | macro: tech/AI + rates
+  W8  report           ✅  portfolio_report.xlsx generated
+
+QC SUMMARY:
+  QC1  routing_accuracy:        pass (all commands routed correctly first attempt)
+  QC4  w6_metric_citations:     8 (%, $, ratios cited in synthesis)
+  QC8  fabrication_flags:       0
+  QC9  protocol_adherence:      pass
+  QC10 disclaimer_quality:      2 (contextual, present in every step)
+  QC13 w6_consistency:          pass (tech 34%, MSFT $188k, NVDA $148k consistent with W1 data)
+  QC14 w7_risk_coherence:       pass (balanced/neutral, heat 5)
+  tokens_total (session):       ~40,765
+
+QUOTE.JSON FIX VERIFICATION:
+  Files written: 20 (first 20 symbols enriched in W4 batch)
+  Sample (~/.investorclaw/quotes/MSFT.quote.json):
+    fingerprint: d2dc46f87bd14aa6 | verbatim_required: true | attribution: gemma4-consult via CERBERUS (1014ms)
+  Result: PASS — quote.json written independently of INVESTOR_CLAW_REPORTS_DIR and render_consultation_card import
+
+VERDICT: PASS — default config operational. No regressions from IC-RUN-20260413-008 model additions or gateway auth fix.
+
+SVG CARD + TEXT FINGERPRINT ANALYSIS (from SVG unevenness investigation):
+  Root cause 1: INVESTOR_CLAW_REPORTS_DIR not set in workspace .env → SVG write gated/skipped silently
+  Root cause 2: is_available() live-probes CERBERUS every call (5s timeout) → contention under W4 batch load
+  Root cause 3: SVG render failure logged at logger.debug (silent to operator)
+  Root cause 4: Heuristic path (CERBERUS down) → synthesis="" → quote=None → no text to fingerprint
+  Fix (6ea3bce): ~/.investorclaw/quotes/{SYMBOL}.quote.json written on every successful enrichment
+    - No env var dependency; no render_consultation_card import
+    - HMAC fingerprint + verbatim_required + attribution + timestamp persisted
+    - SVG card remains supplemental visual artifact; quote.json is canonical text artifact
+  WF61 Perplexity fabrication: Qwen3-235B-tput synthesized "According to Perplexity (Sonar model)" —
+    confirmed hallucination; no Perplexity code path exists in tier3_enrichment.py; heuristic mode → model fabricated attribution.
+
+═══════════════════════════════════════════════════════════ END IC-RUN-20260413-009 ADDENDUM ═══════════════════════════════════════════════════════════
