@@ -32,9 +32,13 @@ The operational LLM handles all routing, tool calls, and synthesis directly from
 
 The harness runs 39 workflow checkpoints across 5 phases (W0–W8): holdings, analysis, performance, bonds, synthesis, lookup, export, guardrail validation. Scores below are measured on W6 synthesis output — the highest-value single response in a typical InvestorClaw session.
 
-### Key finding
+### Key findings
 
-**The combined config (xai/grok-4-1-fast + gemma4-consult enrichment) produces 14× more metric citations than the heuristic baseline.** This gap is driven by the enrichment layer, not the operational model. Switching to a more expensive frontier model without enrichment produces at most modest phrasing improvement. Switching from heuristic to enriched mode produces the step-change.
+**Cross-step context injection (IC-RUN-20260414-003) closes most of the hybrid/single-model gap.** Before injection, the best single-model QC4 was ~40. After injection, `together/MiniMaxAI/MiniMax-M2.7` reaches QC4=108 — within 5% of the hybrid canonical best (QC4=113, WF39). For users without a local GPU, MiniMax-M2.7 is now a genuine alternative to the hybrid config.
+
+**The hybrid config still leads on audit controls**, not synthesis density. `is_heuristic=false`, HMAC fingerprint chain, and verbatim attribution are exclusive to hybrid mode regardless of operational model. If those matter, hybrid is the right choice.
+
+**`together/MiniMaxAI/MiniMax-M2.7` is the best price/QC4 ratio of any cloud-only model** at $0.011 per QC4-point (output). The next best is GLM-5 at $0.043/point — 4× worse value. MiniMax-M2.7 is the recommended default for users without local GPU infrastructure.
 
 ### Model all-stars
 

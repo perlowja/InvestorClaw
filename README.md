@@ -138,12 +138,12 @@ All passing models scored **QC8=0** (zero fabricated portfolio facts across W1�
 
 ## Config Profiles
 
-### Profile 1 — Hybrid (recommended)
+### Profile 1 — Hybrid (maximum fidelity, requires local GPU)
 
 **Operational LLM**: `xai/grok-4-1-fast`  
 **Consultation model**: `gemma4-consult` via local Ollama (~10 GB VRAM)
 
-Designed for portfolios with individual equities. The local consultation model enriches per-symbol analyst records before synthesis runs — the harness measured **14× more metric citations** vs cloud-only baseline. Adds HMAC fingerprint chain and verbatim attribution controls.
+Designed for portfolios with individual equities. The local consultation model enriches per-symbol analyst records before synthesis runs. Adds HMAC fingerprint chain, verbatim attribution, and `is_heuristic=false` audit controls not available in any cloud-only config.
 
 OpenClaw config:
 ```json
@@ -157,30 +157,45 @@ INVESTORCLAW_CONSULTATION_MODEL=gemma4-consult
 INVESTORCLAW_CONSULTATION_ENDPOINT=http://localhost:11434
 ```
 
-> `xai/grok-4-1-fast` requires `/portfolio update-identity` at the start of each session for full guardrail disclaimer compliance.
+> `xai/grok-4-1-fast` requires `/portfolio update-identity` at the start of each session for full disclaimer compliance.
 
 ---
 
-### Profile 2 — Cloud-only
+### Profile 2 — Cloud-only (recommended default, no GPU required)
 
-**Operational LLM**: `xai/grok-4-1-fast` (or any frontier model for specific sessions)
+**Operational LLM**: `together/MiniMaxAI/MiniMax-M2.7`
 
-Best for ETF-heavy portfolios where per-holding analyst enrichment adds little value. Cloud-only synthesis quality for allocation, bond analytics, and sector breakdown is good. For complex portfolios with many individual equity positions, synthesis will be shallower — see [MODELS.md](MODELS.md) for measured density scores.
+**IC-RUN-20260414-003 finding**: MiniMax-M2.7 single-model achieves QC4=108 — within 5% of the hybrid config (QC4=113) — with no local GPU, no Ollama endpoint, and no infrastructure overhead. It is the best price/performance of all tested models at $0.30/$1.20/M input/output.
 
 OpenClaw config:
 ```json
-{ "agents": { "defaults": { "model": { "primary": "xai/grok-4-1-fast" } } } }
+{ "agents": { "defaults": { "model": { "primary": "together/MiniMaxAI/MiniMax-M2.7" } } } }
 ```
 
-No `.env` consultation keys needed. Recommended models by priority (IC-RUN-20260414-003):
-```bash
-openclaw models set together/MiniMaxAI/MiniMax-M2.7       # #1 single-model — QC4=108, QC5=541 ($0.30/$1.20/M)
-openclaw models set together/zai-org/GLM-5                # #2 — QC4=74, QC5=481
-openclaw models set together/moonshotai/Kimi-K2.5         # #3 — QC4=55, QC5=256
-openclaw models set groq/openai/gpt-oss-120b              # production-stable Groq (128K ctx, note: low QC4=17)
+No `.env` consultation keys needed (`INVESTORCLAW_CONSULTATION_ENABLED=false`).
+
+**Why MiniMax-M2.7 over hybrid for most users:**
+- No local GPU or Ollama required
+- $0.011 per QC4-point (best ratio of all tested models)
+- Full account breakdown, bond analytics, analyst coverage, news in a single synthesis
+- Zero fabricated facts (QC8=0) across all benchmark runs
+- 196K context window handles large multi-account portfolios
+
+**When to prefer hybrid (Profile 1) instead:**
+- You need HMAC fingerprint chain for audit/compliance
+- You want `is_heuristic=false` provenance on synthesis records
+- You have CERBERUS or equivalent GPU already running (marginal cloud cost is lower)
+
+Alternatives ranked by QC4 (IC-RUN-20260414-003):
+```
+together/MiniMaxAI/MiniMax-M2.7    QC4=108  QC5=541  $0.30/$1.20/M  ← recommended
+together/zai-org/GLM-5             QC4=74   QC5=481  $1.00/$3.20/M
+together/moonshotai/Kimi-K2.5      QC4=55   QC5=256  $0.50/$1.50/M
+google/gemini-3.1-pro-preview      QC4=46   QC5=340  (Google pricing)
+groq/openai/gpt-oss-120b           QC4=17   QC5=376  $0.15/$0.60/M  (low density, high speed)
 ```
 
-> `xai/grok-4.20-0309-non-reasoning` was re-tested (WF74) and **upgraded to PASS** — WF64's W4/W5 tool rejection was a transient model-version issue. Full W0–W8 now passes cleanly. Narrative prose style (QC3=14 tickers, QC5≈200 words). Good alternative to grok-4-1-fast when longer narrative synthesis is preferred.
+> `xai/grok-4.20-0309-non-reasoning`: hybrid-only — consistently fails cloud-only (WF64, WF86). Do not use without consultation enabled.
 
 ---
 
