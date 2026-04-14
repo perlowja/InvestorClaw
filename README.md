@@ -111,11 +111,13 @@ Best performers across synthesis quality, speed, guardrail compliance, and zero 
 
 ### Hybrid (consultation + operational LLM)
 
+Injection-era rankings (IC-RUN-20260414-003 WF87–WF94). Pre-injection historical result (grok WF39, QC4=113) is not comparable under current stack — see MODELS.md.
+
 | Rank | Configuration | QC3 | QC4 | QC5 | Notes |
 |------|--------------|:---:|:---:|:---:|-------|
-| 🥇 | `xai/grok-4-1-fast` + `gemma4-consult` | 8 | 113 | 1,184 words | **Canonical best.** 19× metric density vs cloud-only. HMAC chain, is_heuristic=false. WF39. |
-| 🥈 | `together/moonshotai/Kimi-K2.5` + `gemma4-consult` | 24 | 82 | 579 words | Re-benchmarked WF84: 4.6× over prior run. Full account breakdown, bond analytics, news. |
-| 🥉 | `xai/grok-4.20-0309-non-reasoning` + `gemma4-consult` | 14 | 17 | ~200 words | Narrative prose; most tickers. Upgraded from DEGRADED. 1M context. WF74. |
+| 🥇 | `together/MiniMaxAI/MiniMax-M2.7` + `gemma4-consult` | 29 | **97** | 836 words | **Profile 1 default.** Highest absolute hybrid QC4 (WF87). HMAC chain, is_heuristic=false. Use cloud-only (QC4=108) when audit controls not required. |
+| 🥈 | `together/zai-org/GLM-5` + `gemma4-consult` | 21 | 86 | 587 words | WF90. Best model where consultation adds net value (+16% vs cloud-only). Structured table output. |
+| 🥉 | `together/moonshotai/Kimi-K2.5` + `gemma4-consult` | 24 | 82 | 579 words | WF84. +49% vs cloud-only. Full bond analytics, news. |
 
 ### Single-model (cloud-only, IC-RUN-20260414-003)
 
@@ -142,16 +144,16 @@ All passing models scored **QC8=0** (zero fabricated portfolio facts across W1�
 
 ## Config Profiles
 
-### Profile 1 — Hybrid (maximum fidelity, requires local GPU)
+### Profile 1 — Hybrid (audit controls + maximum fidelity, requires local GPU)
 
-**Operational LLM**: `xai/grok-4-1-fast`  
-**Consultation model**: `gemma4-consult` via local Ollama (~10 GB VRAM)
+**Operational LLM**: `together/MiniMaxAI/MiniMax-M2.7`  
+**Consultation model**: `gemma4-consult` (Gemma4 E4B) via local Ollama (~10 GB VRAM)
 
-Designed for portfolios with individual equities. The local consultation model enriches per-symbol analyst records before synthesis runs. Adds HMAC fingerprint chain, verbatim attribution, and `is_heuristic=false` audit controls not available in any cloud-only config.
+Achieves QC4=97 (WF87) — the highest injection-era hybrid score. Required when HMAC fingerprint chain, verbatim attribution, and `is_heuristic=false` audit controls are needed. Note: MiniMax-M2.7 cloud-only (QC4=108, Profile 2) delivers higher synthesis density; use Profile 1 only when audit provenance is required.
 
 OpenClaw config:
 ```json
-{ "agents": { "defaults": { "model": { "primary": "xai/grok-4-1-fast" } } } }
+{ "agents": { "defaults": { "model": { "primary": "together/MiniMaxAI/MiniMax-M2.7" } } } }
 ```
 
 `.env`:
@@ -160,8 +162,6 @@ INVESTORCLAW_CONSULTATION_ENABLED=true
 INVESTORCLAW_CONSULTATION_MODEL=gemma4-consult
 INVESTORCLAW_CONSULTATION_ENDPOINT=http://localhost:11434
 ```
-
-> `xai/grok-4-1-fast` requires `/portfolio update-identity` at the start of each session for full disclaimer compliance.
 
 ---
 

@@ -40,7 +40,7 @@ The harness runs 39 workflow checkpoints across 5 phases (W0–W8): holdings, an
 
 **`together/MiniMaxAI/MiniMax-M2.7` is the best price/QC4 ratio of any cloud-only model** at $0.011 per QC4-point (output). The next best is GLM-5 at $0.043/point — 4× worse value. MiniMax-M2.7 is the recommended default for users without local GPU infrastructure.
 
-**Key finding (IC-RUN-20260414-003 hybrid addendum)**: Consultation does not uniformly improve synthesis quality. MiniMax-M2.7 scores QC4=108 single-model vs QC4=97 hybrid — consultation hurts it. Gemini-3.1-pro and GPT-OSS-120B also regress under consultation. Models that gain from hybrid: GLM-5 (+16%), Kimi-K2.5 (+49%), grok-4-1-fast (+33%), kimi-k2/groq (+40%). The operational model's synthesis style, not just data richness, determines whether the consultation layer adds value.
+**Key finding (IC-RUN-20260414-003 hybrid addendum)**: Consultation does not uniformly improve synthesis density. MiniMax-M2.7 QC4 drops from 108 (cloud-only) to 97 (hybrid) — yet **MiniMax-M2.7 + gemma4-consult is the Profile 1 default** because it delivers the highest absolute hybrid QC4 under the current stack and is required for HMAC fingerprint chain and `is_heuristic=false` audit controls. Gemini-3.1-pro and GPT-OSS-120B regress under consultation; do not use them in hybrid mode. Models that gain from hybrid: Kimi-K2.5 (+49%), kimi-k2/groq (+40%), grok-4-1-fast (+33%), GLM-5 (+16%). The operational model's synthesis style, not just data richness, determines whether the consultation layer adds measurable value.
 
 ### Model all-stars
 
@@ -52,8 +52,8 @@ Full hybrid benchmark completed IC-RUN-20260414-003 addendum (WF87–WF94). **Cu
 
 | Rank | Configuration | QC3 | QC4 | QC5 | Notes |
 |------|--------------|:---:|:---:|:---:|-------|
-| 🥇 | `together/MiniMaxAI/MiniMax-M2.7` + `gemma4-consult` | **29** | **97** | **836** | WF87. Highest absolute hybrid QC4 under current stack. **Consultation hurts this model (−10% vs cloud-only QC4=108).** Only use hybrid when audit controls (HMAC fingerprint, `is_heuristic=false`) are required; otherwise use cloud-only. |
-| 🥈 | `together/zai-org/GLM-5` + `gemma4-consult` | 21 | 86 | 587 | WF90. **Recommended hybrid default.** Consultation adds net value: +16% vs cloud-only (QC4=74→86). Structured table output, consistent account breakdown. |
+| 🥇 | `together/MiniMaxAI/MiniMax-M2.7` + `gemma4-consult` | **29** | **97** | **836** | WF87. **Profile 1 default.** Highest absolute hybrid QC4 under current stack. Preferred combo for audit-compliant deployments (HMAC fingerprint, `is_heuristic=false`). Cloud-only preferred when audit controls not required (QC4=108 vs hybrid QC4=97). |
+| 🥈 | `together/zai-org/GLM-5` + `gemma4-consult` | 21 | 86 | 587 | WF90. Best model where consultation adds net value: +16% vs cloud-only (QC4=74→86). Structured table output, consistent account breakdown. |
 | 🥉 | `together/moonshotai/Kimi-K2.5` + `gemma4-consult` | 24 | 82 | 579 | WF84. +49% vs cloud-only (QC4=55→82). Rich narrative, full bond analytics, news. |
 | | `xai/grok-4-1-fast` + `gemma4-consult` | 20 | 52 | 564 | WF88. +33% vs cloud-only (WF85 QC4=39). Current injection stack re-baseline of historical WF39. |
 | | `together/deepseek-ai/DeepSeek-V3.1` + `gemma4-consult` | 10 | 43 | 408 | WF89. Flat vs cloud-only (QC4=44→43). Consultation neutral. |
@@ -89,7 +89,7 @@ Rankings from IC-RUN-20260414-003 re-benchmark with cross-step context injection
 **Speed category winner**: `groq/openai/gpt-oss-120b` (~500 tok/s, production-stable; gpt-oss-20b excluded: FAIL WF79)  
 **Value category winner**: `together/MiniMaxAI/MiniMax-M2.7` ($0.30/$1.20/M, 197K ctx — QC4=108 cloud-only, $0.011/QC4-point; use cloud-only, consultation hurts)  
 **Synthesis quality winner (single-model)**: `together/MiniMaxAI/MiniMax-M2.7` (QC4=108, QC5=541 — full account tables, analyst, bond breakdown)  
-**Synthesis quality winner (hybrid, current stack)**: `together/zai-org/GLM-5` + `gemma4-consult` (QC4=86, WF90) — best hybrid where consultation adds net value. MiniMax hybrid (QC4=97, WF87) has higher absolute QC4 but cloud-only outperforms it; only use MiniMax hybrid when audit controls are required.  
+**Profile 1 default (hybrid)**: `together/MiniMaxAI/MiniMax-M2.7` + `gemma4-consult` (QC4=97, WF87) — highest absolute hybrid QC4, preferred for audit-compliant deployments. Cloud-only QC4=108 is higher; use Profile 1 when HMAC fingerprint chain or `is_heuristic=false` controls are required.  
 **Not recommended cloud-only**: `xai/grok-4-1-fast` — WF85 QC4=39, below MiniMax-M2.7 (108), GLM-5 (74), Kimi-K2.5 (55). Hybrid adds value: WF88 QC4=52.  
 **Not recommended hybrid**: `groq/openai/gpt-oss-120b` — hybrid QC4=8 (WF93) is 53% below cloud-only QC4=17 (WF78). Use cloud-only.  
 **Hybrid-only models**: `xai/grok-4.20-0309-non-reasoning` — consistently fails cloud-only (WF64, WF86); passes only when consultation is enabled (WF74).
