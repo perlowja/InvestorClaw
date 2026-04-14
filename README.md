@@ -99,6 +99,10 @@ Always invoke via the entry point — never call command scripts directly.
 
 Output files go to `$INVESTOR_CLAW_REPORTS_DIR` (default: `~/portfolio_reports/`). Add `--verbose` to any command for full detail.
 
+> **Data freshness**: If the agent returns holdings data without fetching live prices, it may be reading cached report files from a prior run. This happens when the agent falls through to the shell tool with a degraded model rather than routing through the plugin. Signs of stale data: the response date does not match today, or no network activity is visible during the command. To force a fresh fetch, delete `~/portfolio_reports/` and re-run `/portfolio holdings`, or upgrade to Profile 1 or 2.
+
+> **Exec preflight**: OpenClaw blocks compound shell invocations (`cd DIR && python3 script.py`). The plugin uses absolute paths internally; if you invoke InvestorClaw scripts directly from the shell tool, use `python3 /absolute/path/to/investorclaw.py <command>` — not a `cd` prefix.
+
 ---
 
 ## Model All-Stars
@@ -309,16 +313,19 @@ With consultation enabled, structured synthesis runs locally first. The cloud mo
 ## Requirements
 
 - Python 3.9+
-- OpenClaw >= 2026.4.x
+- OpenClaw >= 2026.4.12
 - Optional API keys (all have free tiers): Finnhub, Alpha Vantage, Massive, NewsAPI, FRED
 - Without keys: falls back to `yfinance`
+
+> **Set a model explicitly in `openclaw.json`.** An empty `agents` block causes OpenClaw to use its installation default, which may be insufficient for reliable plugin tool routing and can result in the agent reading cached report files instead of running a live data fetch. See [Config Profiles](#config-profiles) below.
 
 ### Tested environment
 
 | Role | System |
 |------|--------|
-| Developer workstation | macOS 26.5, Apple M1 Max 10c, 32 GB, Python 3.14.3, OpenClaw 2026.4.9 |
+| Developer workstation | macOS 26.5, Apple M1 Max 10c, 32 GB, Python 3.14.3, OpenClaw 2026.4.12 |
 | Inference host | Debian 13, AMD Threadripper PRO 5945WX 12c, 128 GB, RTX 4500 Ada 24 GB VRAM, Ollama 0.20.3 |
+| Edge deployment | Debian 13, Raspberry Pi 4 8GB aarch64, Python 3.12.x, OpenClaw 2026.4.12 — all 6 commands validated |
 
 ---
 
