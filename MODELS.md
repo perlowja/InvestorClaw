@@ -273,7 +273,7 @@ Tested on the inference host (RTX 4500 Ada 24 GB VRAM, Ollama 0.20.3).
 
 | Model | tok/s | VRAM | Notes |
 |-------|------:|-----:|-------|
-| `gemma4-consult` | ~65 | 9.6 GB | **Recommended** — tuned gemma4:e4b; optimized for consultative Q&A (num_ctx=2048, num_predict=600) |
+| `gemma4-consult` | ~65 | 9.6 GB | **Recommended** — tuned gemma4:e4b; optimized for consultative Q&A (num_ctx=4096, num_predict=1200, up to 400 words per symbol) |
 | `gemma4:e4b` | ~66 | 9.6 GB | Base model; good quality/speed tradeoff; 128K context |
 | `gemma4:e2b` | ~99 | 7.2 GB | Fastest; suitable for lighter tasks |
 | `nemotron-3-nano:30b-a3b-q4_K_M` | ~25 | 24 GB | High-quality fallback; requires full VRAM |

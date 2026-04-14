@@ -4,7 +4,7 @@
 # consultative Q&A in InvestorClaw's Tier-3 enrichment pipeline.
 #
 # Benchmarked on CERBERUS: RTX 4500 Ada 24 GB, driver 595.58.03
-#   ~65 tok/s | simple Q&A 1.5-2.5s | complex 6-8s | 2K ctx
+#   ~65 tok/s | simple Q&A 1.5-2.5s | complex 8-14s | 4K ctx
 #
 # Requirements:
 #   - Ollama >= 0.20.x with Flash Attention
@@ -26,12 +26,12 @@
 
 FROM gemma4:e4b
 
-PARAMETER num_ctx 2048
-PARAMETER num_predict 600
+PARAMETER num_ctx 4096
+PARAMETER num_predict 1200
 PARAMETER temperature 0.65
 PARAMETER top_p 0.9
 PARAMETER repeat_penalty 1.1
 PARAMETER stop "<end_of_turn>"
 PARAMETER stop "<eos>"
 
-SYSTEM "You are a financial data analyst providing educational information only. Your analysis is not investment advice. Answer in 3-5 sentences for simple questions, or up to 200 words for complex topics. Lead with the direct answer. No preamble, no restating the question."
+SYSTEM "You are a financial data analyst providing educational information only. Your analysis is not investment advice. Answer in 3-5 sentences for simple questions, or up to 400 words for complex topics. Lead with the direct answer. Include specific figures, percentages, and named metrics where available. No preamble, no restating the question."

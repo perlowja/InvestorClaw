@@ -806,3 +806,85 @@ if __name__ == '__main__':
         print("\nQUESTIONS FOR YOUR FINANCIAL ADVISER")
         for question in _questions:
             print(f"  * {question}")
+
+        # Cross-step context injection: load key figures from earlier pipeline steps
+        # so the operational LLM has specific data to cite in its synthesis response.
+        try:
+            from config.path_resolver import get_reports_dir as _get_reports_dir
+            _rdir = _get_reports_dir()
+
+            # Top holdings from W1 — dated dir uses holdings_summary.json; root uses holdings.json
+            _h_file = _rdir / "holdings_summary.json"
+            if not _h_file.exists():
+                _h_file = _rdir / "holdings.json"
+            if _h_file.exists():
+                _h = json.loads(_h_file.read_text())
+                _top_eq = _h.get("top_equity", [])
+                _sectors = _h.get("sector_weights", {})
+                if _top_eq:
+                    print("\nSESSION CONTEXT — top holdings (from W1):")
+                    for p in _top_eq[:7]:
+                        sym = p.get("symbol", "?")
+                        val = p.get("value", 0)
+                        wt = p.get("weight_pct", 0)
+                        sec = p.get("sector", "")
+                        gl = p.get("gl_pct", None)
+                        gl_str = f" GL {gl:+.1f}%" if gl is not None else ""
+                        print(f"  {sym}: ${val:,.0f} ({wt:.1f}%, {sec}){gl_str}")
+                if _sectors:
+                    top_sectors = sorted(_sectors.items(), key=lambda x: x[1], reverse=True)[:5]
+                    print(f"  Sectors: {' | '.join(f'{s} {w:.0f}%' for s, w in top_sectors)}")
+
+            # Top/bottom performers from W2 — compact summary is always at base reports dir root
+            import os as _os
+            _p_base = Path(_os.environ.get("INVESTOR_CLAW_REPORTS_DIR", str(Path.home() / "portfolio_reports"))).expanduser()
+            _p_file = _p_base / "performance.json"
+            if not _p_file.exists():
+                _p_file = _rdir / "performance.json"
+            if _p_file.exists():
+                _p = json.loads(_p_file.read_text())
+                _top_p = _p.get("top_performers", [])
+                _bot_p = _p.get("bottom_performers", [])
+                _ps = _p.get("portfolio_summary", {})
+                if _top_p:
+                    print("\nSESSION CONTEXT — performance (from W2):")
+                    sharpe_wtd = _ps.get("weighted_sharpe", None)
+                    if sharpe_wtd:
+                        print(f"  Portfolio Sharpe (wtd): {sharpe_wtd:.2f}")
+                    _top_str = ", ".join(f"{x['symbol']} {x['return_pct']:+.0f}%" for x in _top_p[:3])
+                    _bot_str = ", ".join(f"{x['symbol']} {x['return_pct']:+.0f}%" for x in _bot_p[:3])
+                    print(f"  Top performers: {_top_str}")
+                    print(f"  Bottom performers: {_bot_str}")
+
+            # Top analyst ratings from W4 (analyst_data.json — full 215-symbol dataset)
+            _a_file = _rdir / "analyst_data.json"
+            if _a_file.exists():
+                _a = json.loads(_a_file.read_text())
+                _recs = _a.get("recommendations", {})
+                _buys = [
+                    (sym, r) for sym, r in _recs.items()
+                    if isinstance(r, dict)
+                    and r.get("consensus", "").lower() in ("strong buy", "buy")
+                    and r.get("target_price_mean") and r.get("current_price")
+                ]
+                _buys.sort(
+                    key=lambda x: (x[1].get("target_price_mean", 0) - x[1].get("current_price", 0))
+                                  / max(x[1].get("current_price", 1), 1),
+                    reverse=True
+                )
+                if _buys:
+                    print("\nSESSION CONTEXT — analyst consensus, top upside (from W4):")
+                    for sym, r in _buys[:5]:
+                        rating = r.get("consensus", "?")
+                        pt = r.get("target_price_mean", 0)
+                        cp = r.get("current_price", 0)
+                        upside = ((pt - cp) / cp * 100) if cp else 0
+                        n = r.get("analyst_count", "?")
+                        print(f"  {sym}: {rating} ({n} analysts) PT ${pt:.0f} ({upside:+.0f}% upside)")
+        except Exception:
+            pass  # Cross-step context is best-effort; never block the main output
+
+        print("\nSYNTHESIS GUIDANCE (for the presenting agent)")
+        print("  Cite specific holdings, sector percentages, and dollar amounts in your response.")
+        print("  Reference top performers and analyst consensus for named positions where relevant.")
+        print("  Present all findings in educational framing. Target 150-250 words.")

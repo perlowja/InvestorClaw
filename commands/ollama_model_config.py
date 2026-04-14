@@ -6,11 +6,11 @@ Defines the gemma4-consult model configuration and provides helpers to
 replicate it on any compatible Ollama endpoint.
 
 gemma4-consult is a tuned derivative of gemma4:e4b optimised for low-latency
-consultative Q&A (num_ctx=2048, num_predict=600). It is the recommended
+consultative Q&A (num_ctx=4096, num_predict=1200). It is the recommended
 INVESTORCLAW_CONSULTATION_MODEL.
 
 Benchmarked on: local-inference — RTX 4500 Ada 24 GB, driver 595.58.03
-  gemma4-consult:  ~65 tok/s, simple Q&A 1.5-2.5s, complex 6-8s
+  gemma4-consult:  ~65 tok/s, simple Q&A 1.5-2.5s, complex 8-14s
   gemma4:e4b:      ~66 tok/s, 128K native context
   gemma4:e2b:      ~99 tok/s, 128K native context
 
@@ -50,21 +50,21 @@ logger = logging.getLogger(__name__)
 GEMMA4_CONSULT_MODELFILE = """\
 FROM gemma4:e4b
 
-PARAMETER num_ctx 2048
-PARAMETER num_predict 600
+PARAMETER num_ctx 4096
+PARAMETER num_predict 1200
 PARAMETER temperature 0.65
 PARAMETER top_p 0.9
 PARAMETER repeat_penalty 1.1
 PARAMETER stop "<end_of_turn>"
 PARAMETER stop "<eos>"
 
-SYSTEM "You are a financial data analyst providing educational information only. Your analysis is not investment advice. Answer in 3-5 sentences for simple questions, or up to 200 words for complex topics. Lead with the direct answer. No preamble, no restating the question."
+SYSTEM "You are a financial data analyst providing educational information only. Your analysis is not investment advice. Answer in 3-5 sentences for simple questions, or up to 400 words for complex topics. Lead with the direct answer. Include specific figures, percentages, and named metrics where available. No preamble, no restating the question."
 """
 
 OLLAMA_MODELS: dict = {
     "gemma4-consult": {
         "base": "gemma4:e4b",
-        "description": "Consultative Q&A — tuned gemma4:e4b derivative, ~65 tok/s, 2K ctx",
+        "description": "Consultative Q&A — tuned gemma4:e4b derivative, ~65 tok/s, 4K ctx",
         "vram_gb_min": 12,
         "cuda_capability_min": 8.0,
         "modelfile": GEMMA4_CONSULT_MODELFILE,
@@ -74,8 +74,8 @@ OLLAMA_MODELS: dict = {
             "driver": "595.58.03",
             "tok_per_sec": 65,
             "simple_q_seconds": 2.0,
-            "complex_q_seconds": 7.5,
-            "context_tokens": 2048,
+            "complex_q_seconds": 12.0,
+            "context_tokens": 4096,
         },
     },
     "gemma4:e4b": {
@@ -246,8 +246,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description=(
             "Setup InvestorClaw Ollama consultation models.\n\n"
-            "gemma4-consult is a tuned gemma4:e4b derivative (num_ctx=2048,\n"
-            "num_predict=600, ~65 tok/s on RTX Ada). Required: 12+ GB VRAM, CUDA 8.0+."
+            "gemma4-consult is a tuned gemma4:e4b derivative (num_ctx=4096,\n"
+            "num_predict=1200, ~65 tok/s on RTX Ada). Required: 12+ GB VRAM, CUDA 8.0+."
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
