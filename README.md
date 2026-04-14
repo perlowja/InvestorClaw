@@ -190,6 +190,11 @@ No `.env` consultation keys needed (`INVESTORCLAW_CONSULTATION_ENABLED=false`).
 - You want `is_heuristic=false` provenance on synthesis records
 - You have CERBERUS or equivalent GPU already running (marginal cloud cost is lower)
 
+**When to use Profile 4 (enterprise) instead of Profile 2:**
+- Portfolio exceeds ~200 holdings in non-compact mode (MiniMax-M2.7's 197K context becomes the bottleneck)
+- Portfolio exceeds ~500 total positions in compact mode
+- Extended multi-turn sessions where accumulated history risks context truncation
+
 Alternatives ranked by QC4 (IC-RUN-20260414-003):
 ```
 together/MiniMaxAI/MiniMax-M2.7    QC4=108  QC5=541  $0.30/$1.20/M  ← recommended
@@ -200,6 +205,35 @@ groq/openai/gpt-oss-120b           QC4=17   QC5=376  $0.15/$0.60/M  (low density
 ```
 
 > `xai/grok-4.20-0309-non-reasoning`: hybrid-only — consistently fails cloud-only (WF64, WF86). Do not use without consultation enabled.
+
+---
+
+### Profile 4 — Enterprise / High-context (large portfolios, requires local GPU)
+
+**Operational LLM**: `xai/grok-4-1-fast`  
+**Consultation model**: `gemma4-consult` (Gemma4 E4B) via local Ollama (~10 GB VRAM)
+
+The only model in the 2M context tier — 8–15× the capacity of MiniMax-M2.7 (197K). **The selection reason is context capacity, not synthesis quality.** For standard portfolios, MiniMax-M2.7 (Profile 1/2) outperforms it on synthesis density (QC4=97/108 vs hybrid QC4=52). Use this profile when MiniMax-M2.7's 197K window becomes the binding constraint.
+
+OpenClaw config:
+```json
+{ "agents": { "defaults": { "model": { "primary": "xai/grok-4-1-fast" } } } }
+```
+
+`.env`:
+```bash
+INVESTORCLAW_CONSULTATION_ENABLED=true
+INVESTORCLAW_CONSULTATION_MODEL=gemma4-consult
+INVESTORCLAW_CONSULTATION_ENDPOINT=http://localhost:11434
+```
+
+**When Profile 4 is required:**
+- Non-compact mode with 200+ holdings (raw W-step data ≈ 72K alone, plus session history)
+- Any portfolio with 500+ total positions in compact mode
+- Extended multi-turn sessions where accumulated history risks truncation
+- Full-enrichment runs where context injection volume exhausts smaller-context models
+
+> **Synthesis note**: cloud-only QC4=39 (WF85) is mid-tier and not recommended standalone; consultation is required for acceptable synthesis density (hybrid QC4=52, WF88, +33%).
 
 ---
 

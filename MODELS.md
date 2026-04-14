@@ -90,7 +90,7 @@ Rankings from IC-RUN-20260414-003 re-benchmark with cross-step context injection
 **Value category winner**: `together/MiniMaxAI/MiniMax-M2.7` ($0.30/$1.20/M, 197K ctx — QC4=108 cloud-only, $0.011/QC4-point; use cloud-only, consultation hurts)  
 **Synthesis quality winner (single-model)**: `together/MiniMaxAI/MiniMax-M2.7` (QC4=108, QC5=541 — full account tables, analyst, bond breakdown)  
 **Profile 1 default (hybrid)**: `together/MiniMaxAI/MiniMax-M2.7` + `gemma4-consult` (QC4=97, WF87) — highest absolute hybrid QC4, preferred for audit-compliant deployments. Cloud-only QC4=108 is higher; use Profile 1 when HMAC fingerprint chain or `is_heuristic=false` controls are required.  
-**Not recommended cloud-only**: `xai/grok-4-1-fast` — WF85 QC4=39, below MiniMax-M2.7 (108), GLM-5 (74), Kimi-K2.5 (55). Hybrid adds value: WF88 QC4=52.  
+**Enterprise/high-context LLM (Profile 4)**: `xai/grok-4-1-fast` — 2M context, only model in this tier. Hybrid QC4=52 (WF88). Use for portfolios >500 holdings, non-compact mode >200 holdings, or extended multi-turn sessions. **Not recommended for standard portfolios** (cloud-only QC4=39 is mid-tier; MiniMax-M2.7 hybrid/cloud-only is higher synthesis density at smaller scale).  
 **Not recommended hybrid**: `groq/openai/gpt-oss-120b` — hybrid QC4=8 (WF93) is 53% below cloud-only QC4=17 (WF78). Use cloud-only.  
 **Hybrid-only models**: `xai/grok-4.20-0309-non-reasoning` — consistently fails cloud-only (WF64, WF86); passes only when consultation is enabled (WF74).
 
@@ -308,7 +308,7 @@ Context window capacity is a separate model selection axis from synthesis qualit
 - Multi-turn sessions where accumulated history approaches model limits
 - Maximizing enrichment density without context truncation risk
 
-Combined with its hybrid QC4=52 (WF88) and synthesis quality that improves significantly with consultation (+33% vs cloud-only), grok-4-1-fast is the **recommended operational LLM when context capacity is the primary constraint**, even though its QC4 synthesis ranking is mid-tier under the current injection stack.
+grok-4-1-fast is the **Profile 4 LLM — use it when context capacity is the binding constraint**, not as a general operational default. For standard portfolios (≤200 holdings non-compact, ≤500 compact), MiniMax-M2.7 (Profile 1/2) delivers higher synthesis density at lower cost. When portfolios scale beyond those thresholds, grok-4-1-fast's 2M context window becomes the decisive factor regardless of synthesis score. Consultation is required: hybrid QC4=52 (WF88, +33% vs cloud-only QC4=39 WF85).
 
 ---
 
@@ -318,7 +318,7 @@ Combined with its hybrid QC4=52 (WF88) and synthesis quality that improves signi
 
 | Model | Context | Benchmark | Notes |
 |-------|---------|:---------:|-------|
-| `xai/grok-4-1-fast` | ~2M | ✅ WF39/WF62/WF72/WF85 | **Recommended operational default in hybrid mode.** Cloud-only with injection (WF85): QC4=39, QC5=171 — 6.5× over pre-injection WF72 (QC4=6) but still below top single-model tier. Hybrid (WF39): QC4=113. Requires `/portfolio update-identity` each session for full disclaimer compliance. |
+| `xai/grok-4-1-fast` | ~2M | ✅ WF39/WF62/WF72/WF85/WF88 | **Enterprise/high-context LLM (Profile 4).** The only model in the 2M context tier — use when portfolio exceeds ~200 holdings (non-compact) or ~500 holdings (compact), or when accumulated session history risks truncation. **Context capacity is the selection reason, not synthesis quality.** Hybrid (WF88): QC4=52. Cloud-only (WF85): QC4=39 — mid-tier; consultation required. Not recommended as general default for standard portfolios (use MiniMax-M2.7). |
 | `xai/grok-4.20-0309-non-reasoning` | ~1M | ⚠️ WF74 PASS (hybrid only) / 🚫 WF86 FAIL (cloud-only) | **Hybrid-only.** Cloud-only consistently fails with tool payload rejection (WF64, WF86). Passes only with consultation enabled (WF74: QC3=14, QC4=17, QC5≈200, narrative prose style). Do not use cloud-only. |
 
 ### OpenAI
@@ -337,7 +337,7 @@ Combined with its hybrid QC4=52 (WF88) and synthesis quality that improves signi
 
 | Model | Context | Benchmark | Notes |
 |-------|---------|:---------:|-------|
-| `together/moonshotai/Kimi-K2.5` | 262K | ✅ WF60/WF66/WF76 (single) / ✅ WF71/WF84 (hybrid) | Single WF76: QC3=16, QC4=55, QC5=256. Hybrid WF84: QC3=24, QC4=82, QC5=579 — **top hybrid performer outside of grok-4-1-fast**; 4.6× over WF71. W7 questionnaire loop in both modes. |
+| `together/moonshotai/Kimi-K2.5` | 262K | ✅ WF60/WF66/WF76 (single) / ✅ WF71/WF84 (hybrid) | Single WF76: QC3=16, QC4=55, QC5=256. Hybrid WF84: QC3=24, QC4=82, QC5=579 — **#3 hybrid overall** (WF87–WF94 stack); 4.6× over WF71. 262K context fits large compact-mode sessions. W7 questionnaire loop in both modes. |
 | `together/deepseek-ai/DeepSeek-V3.1` | 131K | ✅ WF68/WF75 | PASS — re-benchmarked WF75: QC3=13, QC4=44, QC5=160. $0.60/$1.70/M. |
 | `together/MiniMaxAI/MiniMax-M2.7` | 197K | ✅ WF69/WF82 | PASS — re-benchmarked WF82: QC3=27, QC4=108, QC5=541. **#1 single-model overall** with context injection. $0.30/$1.20/M — best value of all top performers. |
 | `together/zai-org/GLM-5` | 203K | ✅ WF70/WF83 | PASS — re-benchmarked WF83: QC3=20, QC4=74, QC5=481. Excellent context utilization; rich account breakdown. $1.00/$3.20/M. |
