@@ -36,6 +36,7 @@ Usage:
 from __future__ import annotations
 
 import logging
+import os
 import requests
 from typing import Optional
 
@@ -107,6 +108,12 @@ OLLAMA_MODELS: dict = {
 # Helpers
 # ---------------------------------------------------------------------------
 
+def _default_ollama_endpoint() -> str:
+    return os.environ.get(
+        "INVESTORCLAW_CONSULTATION_ENDPOINT", "http://localhost:11434"
+    ).rstrip("/")
+
+
 def is_model_present(endpoint: str, model_name: str, timeout: int = 3) -> bool:
     """Return True if model_name is available on the Ollama endpoint."""
     try:
@@ -156,7 +163,7 @@ def create_custom_model(endpoint: str, model_name: str, modelfile: str, timeout:
     return False
 
 
-def setup_model(model_name: str, endpoint: str = "http://localhost:11434") -> bool:
+def setup_model(model_name: str, endpoint: str = "") -> bool:
     """
     Ensure a model is available on the given Ollama endpoint.
 
@@ -165,7 +172,8 @@ def setup_model(model_name: str, endpoint: str = "http://localhost:11434") -> bo
 
     Args:
         model_name: Key from OLLAMA_MODELS, e.g. 'gemma4-consult'
-        endpoint:   Ollama API base URL
+        endpoint:   Ollama API base URL. Falls back to
+                    $INVESTORCLAW_CONSULTATION_ENDPOINT then localhost:11434.
 
     Returns:
         True if model is ready, False on failure.
@@ -174,6 +182,9 @@ def setup_model(model_name: str, endpoint: str = "http://localhost:11434") -> bo
     if not config:
         logger.error(f"Unknown model: {model_name}. Available: {list(OLLAMA_MODELS)}")
         return False
+
+    if not endpoint:
+        endpoint = _default_ollama_endpoint()
 
     if is_model_present(endpoint, model_name):
         logger.info(f"{model_name} already available at {endpoint}")
@@ -192,7 +203,7 @@ def setup_model(model_name: str, endpoint: str = "http://localhost:11434") -> bo
     return pull_base_model(endpoint, model_name)
 
 
-def setup_all_consult_models(endpoint: str = "http://localhost:11434") -> dict:
+def setup_all_consult_models(endpoint: str = "") -> dict:
     """
     Pull and configure all InvestorClaw GPU inference models.
 
@@ -201,19 +212,23 @@ def setup_all_consult_models(endpoint: str = "http://localhost:11434") -> dict:
     Returns:
         Dict mapping model_name → bool (True = success)
     """
+    if not endpoint:
+        endpoint = _default_ollama_endpoint()
     results = {}
     for model_name in ["gemma4:e2b", "gemma4:e4b", "gemma4-consult"]:
         results[model_name] = setup_model(model_name, endpoint)
     return results
 
 
-def get_best_available_model(endpoint: str = "http://localhost:11434") -> Optional[str]:
+def get_best_available_model(endpoint: str = "") -> Optional[str]:
     """
     Return the best InvestorClaw consultation model available at this endpoint.
 
     Preference order: gemma4-consult → gemma4:e4b → gemma4:e2b
     Returns None if none are available.
     """
+    if not endpoint:
+        endpoint = _default_ollama_endpoint()
     for model in ["gemma4-consult", "gemma4:e4b", "gemma4:e2b"]:
         if is_model_present(endpoint, model):
             return model
@@ -236,9 +251,15 @@ if __name__ == "__main__":
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
+    _default_endpoint = os.environ.get(
+        "INVESTORCLAW_CONSULTATION_ENDPOINT", "http://localhost:11434"
+    ).rstrip("/")
     parser.add_argument(
-        "--endpoint", default="http://localhost:11434",
-        help="Ollama API endpoint (default: http://localhost:11434)",
+        "--endpoint", default=_default_endpoint,
+        help=(
+            "Ollama API endpoint "
+            "(default: $INVESTORCLAW_CONSULTATION_ENDPOINT or http://localhost:11434)"
+        ),
     )
     parser.add_argument(
         "--model", default="gemma4-consult",
