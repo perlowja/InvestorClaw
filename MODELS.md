@@ -36,6 +36,42 @@ The harness runs 39 workflow checkpoints across 5 phases (W0–W8): holdings, an
 
 **The combined config (xai/grok-4-1-fast + gemma4-consult enrichment) produces 14× more metric citations than the heuristic baseline.** This gap is driven by the enrichment layer, not the operational model. Switching to a more expensive frontier model without enrichment produces at most modest phrasing improvement. Switching from heuristic to enriched mode produces the step-change.
 
+### Model all-stars
+
+Rankings across synthesis quality, speed, guardrail adherence, and zero hallucinations (QC8=0). All PASS-verdict models scored zero fabricated portfolio facts.
+
+#### Hybrid mode (consultation + operational LLM)
+
+| Rank | Configuration | QC4 | QC5 | Notes |
+|------|--------------|:---:|:---:|-------|
+| 🥇 | `xai/grok-4-1-fast` + `gemma4-consult` | **113** | **1,184** | Canonical best. Data-table dense synthesis, HMAC chain, is_heuristic=false. WF39. |
+| 🥈 | `together/moonshotai/Kimi-K2.5` + `gemma4-consult` | 18 | 350 | Hybrid confirmed (215 SVG cards, fingerprints). Narrative style. WF71. |
+
+> Grok's 6× higher QC4 in hybrid mode reflects its strength at citing enriched data in structured tables. Both models confirm the consultation layer correctly; the operational model drives how that data is expressed.
+
+#### Single-model (cloud-only, no consultation)
+
+| Rank | Model | QC3 | QC4 | QC5 | Speed | Run |
+|------|-------|:---:|:---:|:---:|:-----:|-----|
+| 🥇 | `together/deepseek-ai/DeepSeek-V3.1` | 16 | 35+ | 400 | Together AI | WF68 |
+| 🥈 | `together/moonshotai/Kimi-K2.5` | 13 | 40+ | 250 | Together AI | WF66 |
+| 🥉 | `groq/moonshotai/kimi-k2-instruct-0905` | ~6 | ~20 | ~350 | ~800 tok/s | WF58 ⚠️ preview |
+| | `groq/openai/gpt-oss-120b` | ~3 | ~10 | ~280 | ~500 tok/s | WF46 |
+| | `groq/openai/gpt-oss-20b` | ~2 | ~8 | ~250 | ~1000 tok/s | WF59 |
+| | `together/zai-org/GLM-5` | 3 | 26 | 130 | Together AI | WF70 |
+| | `together/MiniMaxAI/MiniMax-M2.7` | 1 | 14 | 150 | Together AI | WF69 |
+| | `google/gemini-3.1-pro-preview` | 4 | 17 | 104 | Google | WF65 |
+
+**Speed category winner**: `groq/openai/gpt-oss-20b` (~1000 tok/s, $0.075/$0.30/M, production-stable)  
+**Value category winner**: `together/MiniMaxAI/MiniMax-M2.7` ($0.30/$1.20/M, 197K ctx)  
+**Synthesis quality winner**: `together/deepseek-ai/DeepSeek-V3.1` (400-word prose, 16 tickers named)
+
+#### Guardrail compliance
+
+All PASS models: **QC8=0** across W1–W8. Notable failure: `groq/qwen/qwen3-32b` (WF67, DEGRADED) — W7 generated explicit put option and trailing-stop recommendations without educational framing. Avoid for production use.
+
+---
+
 ### Information density scores (W6 synthesis output)
 
 Scores from runs where local consultation state was confirmed for the recorded mode.
@@ -261,3 +297,22 @@ The full test harness is at `investorclaw_harness_v612.txt` in the repository ro
 
 # Covers 39 workflow checkpoints across 5 phases (W0–W8)
 ```
+
+### Critical: consultation is controlled by the project .env, not the workspace .env
+
+InvestorClaw loads from the registered plugin path (`~/Projects/InvestorClaw/dist/index.js`, origin: "config"), not from the OpenClaw workspace skill directory. This means:
+
+- **`~/Projects/InvestorClaw/.env`** is the authoritative consultation config — changes here take effect after gateway restart.
+- **`~/.openclaw/workspace/skills/investorclaw/.env`** affects only the background enricher subprocess when it does NOT inherit the parent process environment. Setting `INVESTORCLAW_CONSULTATION_ENABLED=false` in the workspace `.env` has **no effect** on the plugin loaded from the project directory.
+
+To disable consultation for a clean single-model benchmark run:
+```bash
+# Edit ~/Projects/InvestorClaw/.env
+INVESTORCLAW_CONSULTATION_ENABLED=false
+INVESTORCLAW_CONSULTATION_ENDPOINT=http://localhost:0   # unreachable — belt-and-suspenders
+
+# Restart gateway to pick up the change
+openclaw gateway stop && openclaw gateway start
+```
+
+This finding (DEV-003, discovered IC-RUN-20260413-010) invalidated the 9 earlier Phase 5 benchmark runs (WF36–WF41, WF48, WF53–WF55) that had attempted to disable consultation via workspace `.env` modifications. All 9 were re-run cleanly in WF63–WF71.

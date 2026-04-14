@@ -101,6 +101,35 @@ Output files go to `$INVESTOR_CLAW_REPORTS_DIR` (default: `~/portfolio_reports/`
 
 ---
 
+## Model All-Stars
+
+Best performers across synthesis quality, speed, guardrail compliance, and zero hallucinations (QC8=0 across all passing runs). Full benchmark data: [MODELS.md](MODELS.md).
+
+### Hybrid (consultation + operational LLM)
+
+| Rank | Configuration | QC4 | QC5 | Speed | Notes |
+|------|--------------|:---:|:---:|:-----:|-------|
+| 🥇 | `xai/grok-4-1-fast` + `gemma4-consult` | 113 | 1,184 words | ~65 tok/s (local) | **Canonical best.** 14× metric density vs cloud baseline. HMAC fingerprint chain, verbatim attribution, is_heuristic=false. WF39. |
+| 🥈 | `together/moonshotai/Kimi-K2.5` + `gemma4-consult` | 18 | 350 words | ~65 tok/s (local) | Hybrid confirmed (215 SVG cards). Narrative synthesis style vs Grok's data-table density. WF71. |
+
+### Single-model (cloud-only)
+
+| Rank | Model | QC4 | QC5 | Speed | Notes |
+|------|-------|:---:|:---:|:-----:|-------|
+| 🥇 | `together/deepseek-ai/DeepSeek-V3.1` | 35+ | 400 words | Together AI | **Top single-model.** Best synthesis density without enrichment. QC8=0. WF68. |
+| 🥈 | `together/moonshotai/Kimi-K2.5` | 40+ | 250 words | Together AI | Highest metric citation count. Strong analyst coverage prose. QC8=0. WF66. |
+| 🥉 | `groq/moonshotai/kimi-k2-instruct-0905` | ~20 | ~350 words | ~800 tok/s | Best Groq prose quality. ⚠️ Preview tier only — may be discontinued. WF58. |
+| | `groq/openai/gpt-oss-120b` | ~10 | ~280 words | ~500 tok/s | **Best production-stable Groq option.** $0.15/$0.60/M. WF46. |
+| | `groq/openai/gpt-oss-20b` | ~8 | ~250 words | ~1000 tok/s | Fastest option. $0.075/$0.30/M. WF59. |
+| | `openai/gpt-5.4` | — | — | OpenAI | PASS, 272K context (smallest frontier). WF63. |
+| | `google/gemini-3.1-pro-preview` | 17 | 104 words | Google | Thin synthesis; 1M context. WF65. |
+
+### Guardrails & hallucination score
+
+All passing models scored **QC8=0** (zero fabricated portfolio facts across W1–W8). The notable exception is `groq/qwen/qwen3-32b` (DEGRADED, WF67) — W7 generated specific put option and trailing-stop recommendations without educational framing, violating the educational-only guardrail.
+
+---
+
 ## Config Profiles
 
 ### Profile 1 — Hybrid (recommended)
@@ -139,9 +168,12 @@ OpenClaw config:
 
 No `.env` consultation keys needed. Use a premium frontier model for specific high-value sessions:
 ```bash
-openclaw models set xai/grok-4.20-0309-non-reasoning   # best cloud-only synthesis
-openclaw models set together/moonshotai/Kimi-K2.5       # best non-frontier substitute
+openclaw models set together/deepseek-ai/DeepSeek-V3.1   # top single-model synthesis (QC5≈400 words)
+openclaw models set together/moonshotai/Kimi-K2.5         # strong non-frontier alternative (QC5≈250 words)
+openclaw models set groq/openai/gpt-oss-120b              # fastest/cheapest option (Groq, 128K ctx)
 ```
+
+> `xai/grok-4.20-0309-non-reasoning` was tested (WF64) and is **not recommended** — W4 and W5 standalone tool payloads are rejected; W6 synthesize works by running those pipelines inline but the split workflow is unreliable.
 
 ---
 
@@ -309,6 +341,16 @@ The enrichment layer (`internal/tier3_enrichment.py`) is the primary driver of s
 ## Compliance
 
 **NOT INVESTMENT ADVICE.** InvestorClaw provides educational portfolio analysis only. It is not a substitute for professional financial advice and does not assess personal risk tolerance, goals, or investment suitability.
+
+---
+
+## Changelog
+
+**v1.0.0 (2026-04-14)**
+- Phase 5 clean benchmark complete: all 9 DEV-001-contaminated runs (WF36–WF41, WF48, WF53–WF55) re-validated in IC-RUN-20260413-010 (WF63–WF71). Full results in [MODELS.md](MODELS.md).
+- Confirmed new passing models: DeepSeek-V3.1, Kimi-K2.5 (hybrid), Gemini-3.1-pro-preview, GPT-5.4, MiniMax-M2.7, GLM-5.
+- Degraded: grok-4.20-0309-non-reasoning (W4/W5 tool payload rejection), qwen3-32b (update-identity unrecognized, W7 guardrail issue).
+- Session cleanup now part of post-harness RESET protocol.
 
 ## License
 
