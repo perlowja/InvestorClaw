@@ -364,10 +364,12 @@ conversation with your human FA.
 ## Changelog
 
 **v1.0.0 (2026-04-14)**
-- Cross-platform battery: T2–T8 all pass on Raspberry Pi 4 (clawpi, Debian 13, Python 3.13.5, OpenClaw 2026.4.14) with MiniMax-M2.7; pipeline output verified equivalent to Apple Silicon.
-- IC-RUN-20260414-004 Phase 6: FA Dangerous Mode hybrid 5/5; heat trajectory validation (WF95–WF114); BUG-1/2/3 fixes (heat=5 equity cap, disclaimer plumbing, ticker fidelity). See [MODELS.md](MODELS.md).
-- IC-RUN-20260414-003: Full re-benchmark with context injection; MiniMax-M2.7 #1 single-model (QC4=108); GPT-OSS-20B now FAIL. Full results in [MODELS.md](MODELS.md).
-- Phase 5 clean benchmark complete (IC-RUN-20260413-010, WF63–WF71). Session cleanup now part of post-harness RESET protocol.
+- Initial public release
+- Full pipeline: holdings, performance, bonds, analyst, news, synthesis, EOD report
+- Stonkmode entertainment layer — 30 personas, 8 archetypes, foil-pool pairing
+- Anti-fabrication controls: HMAC fingerprint chain, verbatim attribution, synthesis basis audit
+- Raspberry Pi 4 support verified — pipeline output equivalent to Apple Silicon
+- Sealed-computation architecture: all financial math in Python; LLM reads results only
 
 ## License
 
