@@ -24,6 +24,13 @@ Both modes enforce educational-only output via always-on guardrails.
 - No API keys required to start — falls back to `yfinance` automatically.
 - Time to first report: ~5 minutes from `git clone` on an existing OpenClaw install (tested: 50-holding portfolio, yfinance, standard broadband). A sample portfolio is in `docs/samples/sample_portfolio.csv`.
 
+Once you have portfolio data, type `/portfolio stonkmode on` and run any command. Your holdings will be
+reviewed live by 29 fictional cable TV finance personalities — a self-declared King of Markets who rates
+stocks by CEO likability, a Budapest socialite who compares NVDA to her fourth husband Helmut, a
+three-foot-tall goblin with a sacred ledger, a floor trader who has connected your ETF to twelve
+interlocking foundations using red string, cosmic philosophers, doom economists, crypto maximalists,
+and more. It is satire. It is not analysis. → [Stonkmode ↓](#stonkmode)
+
 ---
 
 ## Quick Install
@@ -272,7 +279,7 @@ JSON block to stdout. The block includes:
 - `is_entertainment: true`, `is_satire: true`, `is_investment_advice: false`
 - `satire_disclaimer` — in-character disclaimer woven into the foil's final paragraph
 
-**28 personalities** across 8 archetypes are paired by a foil-pool algorithm that
+**29 personalities** across 8 archetypes are paired by a foil-pool algorithm that
 ensures dramatic tension — complementary archetypes, never echo chambers (digital stays
 off digital; cosmic can foil cosmic for maximum chaos):
 
@@ -282,7 +289,7 @@ off digital; cosmic can foil cosmic for maximum chaos):
 | `serious` | Aldrich Whisperdeal, Prescott Pennington-Smythe III, Dominique Valcourt, Amara Osei, Helena Vance |
 | `mentors` | Big Earl Grumman, Francesca Bellini-Moretti, Skip Contrarian |
 | `policy_veterans` | Senator Reginald Moorhouse (Ret.), Skip Contrarian |
-| `wildcards` | Glorb, Aria-7, Buck Moonshine, Candy Merriweather, **King Donny (The Deal Whisperer)**, **Zsa Zsa Von Portfolio** |
+| `wildcards` | Glorb, Aria-7, Buck Moonshine, Candy Merriweather, **King Donny (The Deal Whisperer)**, **Zsa Zsa Von Portfolio**, **Wendell "The Pattern" Pruitt** |
 | `cosmic` | Chico Reyes, Farout Farley |
 | `digital` | Krystal Kash, Zara Zhao, Priya HODL |
 | `bears` | Victor Voss, Hans-Dieter Braun |
