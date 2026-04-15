@@ -17,10 +17,11 @@ InvestorClaw is an OpenClaw skill with two modes:
 1. **Personal portfolio analysis** — reads broker CSV exports, runs holdings/performance/bond pipelines, and answers follow-up questions in a persistent session.
 2. **Market data tool** — queries live prices, analyst ratings, news, and yield-curve analytics for arbitrary tickers, without portfolio files.
 
-Both modes enforce educational-only output via always-on guardrails. All analysis is strictly
-computational — concentration ratios, yield spreads, consensus ratings, sector weights. It
-surfaces indicators and flags issues worth discussing with your financial advisor; it does not
-tell you what to do, issue fiduciary advice, or assess personal suitability.
+Both modes enforce educational-only output via always-on guardrails. All financial calculations
+are performed by deterministic Python pipelines — concentration ratios, yield spreads, sector
+weights, bond math, performance attribution. **The LLM never performs portfolio math.** It reads
+the computed results and surfaces indicators worth discussing with your financial advisor. It does
+not tell you what to do, issue fiduciary advice, or assess personal suitability.
 
 - Fetches live quotes (Finnhub → Massive → Alpha Vantage → yfinance), analyst consensus, news, and optional local LLM synthesis (tier-3 enrichment).
 - Does **not** execute trades, replace a broker portal, or give investment advice. The goal is to
@@ -461,11 +462,13 @@ The enrichment layer (`internal/tier3_enrichment.py`) is the primary driver of s
 
 ## Compliance
 
-**NOT INVESTMENT ADVICE.** InvestorClaw provides strictly computational portfolio analysis —
-concentration metrics, yield spreads, sector weights, consensus ratings, and related indicators.
-It does not provide fiduciary advice, does not assess personal risk tolerance or investment
-suitability, and is not a substitute for a licensed financial advisor. The intended use is to
-surface data-driven indicators so you can have a more informed conversation with your human FA.
+**NOT INVESTMENT ADVICE.** All portfolio calculations — concentration metrics, yield spreads,
+sector weights, bond math, performance attribution — are performed by deterministic Python
+pipelines. The LLM reads the computed output and provides interpretation; it never performs
+financial calculations. InvestorClaw does not provide fiduciary advice, does not assess personal
+risk tolerance or investment suitability, and is not a substitute for a licensed financial
+advisor. The intended use is to surface data-driven indicators so you can have a more informed
+conversation with your human FA.
 
 ---
 
