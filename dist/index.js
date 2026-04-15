@@ -26,6 +26,7 @@ const ENV_KEYS = [
     "INVESTORCLAW_CONSULTATION_ENDPOINT",
     "INVESTORCLAW_CONSULTATION_MODEL",
     "INVESTORCLAW_CONSULTATION_HMAC_KEY",
+    "INVESTORCLAW_STONKMODE_MODEL",
 ];
 // Generous timeout for analysis commands that hit external APIs (ms).
 const ANALYSIS_TIMEOUT_MS = 120_000;
@@ -92,7 +93,20 @@ export default definePluginEntry({
             }
             catch (err) {
                 const e = err;
-                return (e.stdout || e.stderr || e.message || String(err)).trim();
+                const partial = (e.stdout || "").trim();
+                const errMsg = (e.stderr || e.message || String(err)).trim();
+                // When the subprocess produced partial stdout before crashing, wrap it so
+                // the agent still sees the disclaimer even on error paths.
+                if (partial) {
+                    return JSON.stringify({
+                        disclaimer: "⚠️  EDUCATIONAL ANALYSIS - NOT INVESTMENT ADVICE",
+                        is_investment_advice: false,
+                        error: "subprocess_error",
+                        partial_output: partial,
+                        stderr: errMsg || undefined,
+                    });
+                }
+                return errMsg;
             }
         }
         // ------------------------------------------------------------------
@@ -289,6 +303,51 @@ export default definePluginEntry({
                 if (params.query)
                     args.push("--query", params.query);
                 return tr(await run("guardrails", args, QUICK_TIMEOUT_MS));
+            },
+        });
+        api.registerTool({
+            name: "investorclaw_stonkmode",
+            label: "Stonkmode",
+            description: "Control the Stonkmode entertainment narration layer. " +
+                "'on' activates stonkmode and randomly selects a lead+foil pair from 26 " +
+                "fictional finance personalities across 8 archetypes. Use --lead and --foil " +
+                "to force a specific pair (persona IDs, e.g. chico_reyes / farout_farley). " +
+                "'off' deactivates and removes state. 'status' shows active pair and segment count. " +
+                "Once active, every /portfolio analysis command emits a stonkmode_narration " +
+                "JSON block with satirical in-character commentary. consultation_mode is always " +
+                "'deactivated' in stonkmode output — it is entertainment, not advice.",
+            parameters: Type.Object({
+                action: Type.Optional(Type.Union([
+                    Type.Literal("on"),
+                    Type.Literal("off"),
+                    Type.Literal("status"),
+                ], {
+                    description: "'on' — activate stonkmode (random or forced pair). " +
+                        "'off' — deactivate and clear state. " +
+                        "'status' — show active pair. Omit to show status.",
+                })),
+                lead: Type.Optional(Type.String({
+                    description: "Force a specific lead persona by ID (e.g. 'blitz_thunderbuy'). " +
+                        "Requires action='on'.",
+                })),
+                foil: Type.Optional(Type.String({
+                    description: "Force a specific foil persona by ID (e.g. 'victor_voss'). " +
+                        "Requires action='on'.",
+                })),
+            }),
+            async execute(_id, params) {
+                const args = [];
+                if (params.action)
+                    args.push(params.action);
+                if (params.lead) {
+                    args.push("--lead");
+                    args.push(params.lead);
+                }
+                if (params.foil) {
+                    args.push("--foil");
+                    args.push(params.foil);
+                }
+                return tr(await run("stonkmode", args, QUICK_TIMEOUT_MS));
             },
         });
     },

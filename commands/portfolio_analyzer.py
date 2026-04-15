@@ -23,6 +23,34 @@ from rendering.disclaimer_wrapper import DisclaimerWrapper
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
+# ---------------------------------------------------------------------------
+# ANSI color helpers — inline, no dependency on stonkmode module
+# ---------------------------------------------------------------------------
+_R  = "\033[0m"          # reset
+_B  = "\033[1m"          # bold
+_DIM= "\033[2m"          # dim
+_GN = "\033[92m"         # bright green  — gains, positive
+_RD = "\033[91m"         # bright red    — losses, critical alerts
+_YL = "\033[93m"         # yellow        — medium alerts, warnings
+_CY = "\033[96m"         # bright cyan   — ticker symbols
+_WH = "\033[97m"         # bright white  — dollar values, headers
+_GR = "\033[90m"         # dark grey     — separators, metadata
+
+
+def _gl_color(pct: Optional[float]) -> str:
+    """Return ANSI color for a gain/loss percentage."""
+    if pct is None:
+        return _GR
+    return _GN if pct > 0 else (_RD if pct < 0 else _GR)
+
+
+def _gl_fmt(pct: Optional[float]) -> str:
+    """Format G/L percentage with color."""
+    if pct is None:
+        return ""
+    color = _gl_color(pct)
+    return f"{color}{pct:+.1f}%{_R}"
+
 # Phase 9: Mode and feature enforcement
 try:
     from config.feature_manager import FeatureManager, FeatureNotAvailableError
@@ -791,19 +819,28 @@ if __name__ == '__main__':
     _questions = _data['recommendations']['questions_for_advisor']
 
     # Compact summary (default) — full data is in the JSON output file
-    print(f"Portfolio: ${_data['portfolio_summary']['total_value']:,.2f} | "
-          f"{_data['portfolio_summary']['total_holdings']} holdings | "
-          f"{len(_alerts)} alerts ({_critical} critical, {_medium} medium) | "
+    _crit_str = (f"{_B}{_RD}{_critical} critical{_R}" if _critical
+                 else f"{_GR}0 critical{_R}")
+    _med_str  = (f"{_YL}{_medium} medium{_R}" if _medium
+                 else f"{_GR}0 medium{_R}")
+    print(f"{_B}{_WH}Portfolio:{_R} {_WH}${_data['portfolio_summary']['total_value']:,.2f}{_R} | "
+          f"{_WH}{_data['portfolio_summary']['total_holdings']} holdings{_R} | "
+          f"{len(_alerts)} alerts ({_crit_str}, {_med_str}) | "
           f"{len(_questions)} advisor questions")
-    print(f"Report: {output_file or 'stdout'}")
+    print(f"{_GR}Report: {output_file or 'stdout'}{_R}")
 
     if verbose:
-        print("\nALERTS & RECOMMENDATIONS (educational only — not financial advice)")
+        print(f"\n{_B}ALERTS & RECOMMENDATIONS{_R} {_GR}(educational only — not investment advice){_R}")
         for alert in _alerts:
-            icon = "[CRITICAL]" if alert['severity'] == 'critical' else "[MEDIUM]" if alert['severity'] == 'medium' else "[INFO]"
-            print(f"\n{icon} {alert['category'].upper()}")
+            if alert['severity'] == 'critical':
+                icon = f"{_B}{_RD}[CRITICAL]{_R}"
+            elif alert['severity'] == 'medium':
+                icon = f"{_YL}[MEDIUM]{_R}"
+            else:
+                icon = f"{_GR}[INFO]{_R}"
+            print(f"\n{icon} {_B}{alert['category'].upper()}{_R}")
             print(f"  {alert['message']}")
-            print(f"  -> {alert['educational_consideration']}")
+            print(f"  {_GR}→ {alert['educational_consideration']}{_R}")
         print("\nQUESTIONS FOR YOUR FINANCIAL ADVISER")
         for question in _questions:
             print(f"  * {question}")
@@ -823,18 +860,23 @@ if __name__ == '__main__':
                 _top_eq = _h.get("top_equity", [])
                 _sectors = _h.get("sector_weights", {})
                 if _top_eq:
-                    print("\nSESSION CONTEXT — top holdings (from W1):")
+                    print(f"\n{_B}{_CY}SESSION CONTEXT — top holdings (from W1):{_R}")
                     for p in _top_eq[:7]:
                         sym = p.get("symbol", "?")
                         val = p.get("value", 0)
-                        wt = p.get("weight_pct", 0)
+                        wt  = p.get("weight_pct", 0)
                         sec = p.get("sector", "")
-                        gl = p.get("gl_pct", None)
-                        gl_str = f" GL {gl:+.1f}%" if gl is not None else ""
-                        print(f"  {sym}: ${val:,.0f} ({wt:.1f}%, {sec}){gl_str}")
+                        gl  = p.get("gl_pct", None)
+                        gl_str = f" GL {_gl_fmt(gl)}" if gl is not None else ""
+                        print(f"  {_B}{_CY}{sym}{_R}: {_WH}${val:,.0f}{_R} "
+                              f"{_GR}({wt:.1f}%, {sec}){_R}{gl_str}")
                 if _sectors:
                     top_sectors = sorted(_sectors.items(), key=lambda x: x[1], reverse=True)[:5]
-                    print(f"  Sectors: {' | '.join(f'{s} {w:.0f}%' for s, w in top_sectors)}")
+                    sector_parts = []
+                    for s, w in top_sectors:
+                        color = _YL if w >= 30 else (_GR if w < 10 else _WH)
+                        sector_parts.append(f"{color}{s} {w:.0f}%{_R}")
+                    print(f"  {_GR}Sectors:{_R} {' | '.join(sector_parts)}")
 
             # Top/bottom performers from W2 — compact summary is always at base reports dir root
             import os as _os
@@ -848,14 +890,19 @@ if __name__ == '__main__':
                 _bot_p = _p.get("bottom_performers", [])
                 _ps = _p.get("portfolio_summary", {})
                 if _top_p:
-                    print("\nSESSION CONTEXT — performance (from W2):")
+                    print(f"\n{_B}{_CY}SESSION CONTEXT — performance (from W2):{_R}")
                     sharpe_wtd = _ps.get("weighted_sharpe", None)
                     if sharpe_wtd:
-                        print(f"  Portfolio Sharpe (wtd): {sharpe_wtd:.2f}")
-                    _top_str = ", ".join(f"{x['symbol']} {x['return_pct']:+.0f}%" for x in _top_p[:3])
-                    _bot_str = ", ".join(f"{x['symbol']} {x['return_pct']:+.0f}%" for x in _bot_p[:3])
-                    print(f"  Top performers: {_top_str}")
-                    print(f"  Bottom performers: {_bot_str}")
+                        sharpe_color = _GN if sharpe_wtd >= 1.0 else (_YL if sharpe_wtd >= 0.5 else _RD)
+                        print(f"  Portfolio Sharpe (wtd): {sharpe_color}{sharpe_wtd:.2f}{_R}")
+                    _top_str = ", ".join(
+                        f"{_GN}{x['symbol']} {x['return_pct']:+.0f}%{_R}" for x in _top_p[:3]
+                    )
+                    _bot_str = ", ".join(
+                        f"{_RD}{x['symbol']} {x['return_pct']:+.0f}%{_R}" for x in _bot_p[:3]
+                    )
+                    print(f"  {_GR}Top performers:{_R} {_top_str}")
+                    print(f"  {_GR}Bottom performers:{_R} {_bot_str}")
 
             # Top analyst ratings from W4 (analyst_data.json — full 215-symbol dataset)
             _a_file = _rdir / "analyst_data.json"
@@ -874,20 +921,24 @@ if __name__ == '__main__':
                     reverse=True
                 )
                 if _buys:
-                    print("\nSESSION CONTEXT — analyst consensus, top upside (from W4):")
-                    print("  TICKER_FIDELITY: reproduce each symbol EXACTLY as shown — do not alter spelling.")
+                    print(f"\n{_B}{_CY}SESSION CONTEXT — analyst consensus, top upside (from W4):{_R}")
+                    print(f"  {_GR}TICKER_FIDELITY: reproduce each symbol EXACTLY as shown — do not alter spelling.{_R}")
                     for sym, r in _buys[:5]:
                         rating = r.get("consensus", "?")
                         pt = r.get("target_price_mean", 0)
                         cp = r.get("current_price", 0)
                         upside = ((pt - cp) / cp * 100) if cp else 0
                         n = r.get("analyst_count", "?")
-                        print(f'  {{"symbol":"{sym}","consensus":"{rating}","analysts":{n},"pt":{pt:.0f},"upside_pct":{upside:.0f}}}')
+                        upside_color = _GN if upside >= 15 else (_YL if upside >= 5 else _GR)
+                        print(f'  {_B}{_CY}{sym}{_R} {_GR}|{_R} '
+                              f'{rating} | {n} analysts | '
+                              f'PT {_WH}${pt:.0f}{_R} | '
+                              f'upside {upside_color}{upside:.0f}%{_R}')
         except Exception:
             pass  # Cross-step context is best-effort; never block the main output
 
-        print("\nSYNTHESIS GUIDANCE (for the presenting agent)")
-        print("  Cite specific holdings, sector percentages, and dollar amounts in your response.")
-        print("  Reference top performers and analyst consensus for named positions where relevant.")
-        print("  Reproduce ALL ticker symbols EXACTLY as provided in SESSION CONTEXT — never alter spelling.")
-        print("  Present all findings in educational framing. Target 150-250 words.")
+        print(f"\n{_B}SYNTHESIS GUIDANCE{_R} {_GR}(for the presenting agent){_R}")
+        print(f"  {_GR}Cite specific holdings, sector percentages, and dollar amounts.{_R}")
+        print(f"  {_GR}Reference top performers and analyst consensus for named positions.{_R}")
+        print(f"  {_GR}Reproduce ALL ticker symbols EXACTLY as shown above — do not alter spelling.{_R}")
+        print(f"  {_GR}Present all findings in educational framing. Target 150-250 words.{_R}")

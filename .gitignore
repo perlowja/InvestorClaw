@@ -1,5 +1,6 @@
 # Portfolio and holdings data (sensitive)
 holdings.json
+holdings_summary.json
 *.holdings.json
 benchmark_results.json
 data/fetch_output/
@@ -9,6 +10,7 @@ portfolios/
 *.csv
 !examples/**/*.csv
 !tests/**/*.csv
+!docs/samples/*.csv
 
 # Environment and local config
 .env
