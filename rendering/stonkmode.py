@@ -874,7 +874,10 @@ def build_foil_user_prompt(
     """User prompt for the foil persona."""
     # Cap lead_commentary to prevent context overflow when input is long
     # (single-LLM mode produces longer lead text; uncapped it eats foil token budget)
-    lead_excerpt = lead_commentary[:800] if len(lead_commentary) > 800 else lead_commentary
+    # Flatten newlines — multi-line lead text breaks gemma4:e4b's turn-structure parsing,
+    # causing it to burn all num_predict tokens on internal formatting and return empty output.
+    lead_flat = " ".join(lead_commentary.split())
+    lead_excerpt = lead_flat[:800] if len(lead_flat) > 800 else lead_flat
 
     parts = [
         f"{lead['name']} just said:",
@@ -1003,13 +1006,24 @@ def _narrate_ollama(
         method="POST",
     )
 
-    try:
-        with urllib.request.urlopen(req, timeout=60) as resp:
-            body = json.loads(resp.read())
-        return body.get("response", "").strip()
-    except Exception as exc:
-        logger.debug("Stonkmode Ollama call failed: %s", exc)
-        return ""
+    for attempt in range(2):
+        try:
+            with urllib.request.urlopen(req, timeout=60) as resp:
+                body = json.loads(resp.read())
+            result = body.get("response", "").strip()
+            if result:
+                return result
+            # Empty response: gemma4-series models occasionally burn all num_predict
+            # tokens on non-visible formatting tokens under rapid sequential inference.
+            # One retry is sufficient to recover.
+            if attempt == 0:
+                logger.debug("Stonkmode Ollama returned empty response, retrying once")
+                import time as _time
+                _time.sleep(1)
+        except Exception as exc:
+            logger.debug("Stonkmode Ollama call failed: %s", exc)
+            return ""
+    return ""
 
 
 def _narrate_openai(
