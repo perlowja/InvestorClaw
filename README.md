@@ -262,6 +262,10 @@ Run `/portfolio ollama-setup` to auto-detect available models on your endpoint. 
 
 ## Stonkmode
 
+> **A silly feature for a serious skill.** The holdings data is real. The analysis
+> runs normally. The commentary is delivered by 30 fictional cable TV finance
+> personalities who have no idea what fiduciary means. It works because the data works.
+
 Stonkmode is an entertainment-layer toggle that wraps every `/portfolio` command's
 output in live commentary from a randomly selected pair of fictional cable TV finance
 personalities. It is satire. It is not analysis.
