@@ -32,12 +32,13 @@ does not tell you what to do, issue fiduciary advice, or assess personal suitabi
 - No API keys required to start — falls back to `yfinance` automatically.
 - Time to first report: ~5 minutes from `git clone` on an existing OpenClaw install (tested: 50-holding portfolio, yfinance, standard broadband). A sample portfolio is in `docs/samples/sample_portfolio.csv`.
 
-After you've run your serious portfolio analysis, there's one more thing: `/portfolio stonkmode on`
+After the serious analysis runs, there's one more thing: `/portfolio stonkmode on`
 wraps every subsequent command in live commentary from 30 fictional cable TV finance personalities —
 a self-declared King of Markets, a Budapest socialite, a three-foot-tall goblin with a sacred ledger,
 a floor trader who has connected your ETF to twelve interlocking foundations using red string, a time
 traveler from the future who already knows how this ends and cannot say, and more. The analysis still
-runs normally. The entertainment layer is optional. It is satire. → [Stonkmode ↓](#stonkmode)
+runs normally. Stonkmode is entertainment — and its existence is the clearest possible signal that
+this is not institutional financial software. → [Stonkmode ↓](#stonkmode)
 
 ---
 
@@ -184,13 +185,21 @@ Run `/portfolio ollama-setup` to auto-detect available models. Full hardware spe
 
 ## Stonkmode
 
-> **A silly feature for a serious skill.** The holdings data is real. The analysis
-> runs normally. The commentary is delivered by 30 fictional cable TV finance
-> personalities who have no idea what fiduciary means. It works because the data works.
+> **A silly feature for a serious skill — and that's the point.** The holdings data is
+> real. The analysis runs normally. The commentary is delivered by 30 fictional cable TV
+> finance personalities who have no idea what fiduciary means. It works because the
+> data works.
 
-Stonkmode is an entertainment-layer toggle that wraps every `/portfolio` command's
-output in live commentary from a randomly selected pair of fictional cable TV finance
-personalities. It is satire. It is not analysis.
+Stonkmode is an entertainment-layer toggle, but its existence is also a deliberate
+positioning statement: **a tool that ships with 30 satirical cable TV personalities
+cannot credibly be mistaken for institutional financial software.** If you are looking
+for a Bloomberg terminal or a fiduciary-grade advisory system, this is not it.
+InvestorClaw computes indicators and surfaces issues for discussion with your human
+financial advisor — stonkmode makes that boundary impossible to miss.
+
+Every `/portfolio` command's output is wrapped in live commentary from a randomly
+selected pair of fictional cable TV finance personalities. It is satire. It is not
+analysis.
 
 ```bash
 /portfolio stonkmode on      # activate — selects a random host pair for the session
