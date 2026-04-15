@@ -19,9 +19,12 @@ InvestorClaw is an OpenClaw skill with two modes:
 
 Both modes enforce educational-only output via always-on guardrails. All financial calculations
 are performed by deterministic Python pipelines — concentration ratios, yield spreads, sector
-weights, bond math, performance attribution. **The LLM never performs portfolio math.** It reads
-the computed results and surfaces indicators worth discussing with your financial advisor. It does
-not tell you what to do, issue fiduciary advice, or assess personal suitability.
+weights, bond math, performance attribution. **The LLM never performs portfolio math, and the
+computational surface is never exposed to it.** The pipelines run as sealed subprocesses; the
+LLM receives only compact serialized summaries of the results. This also preserves context
+window space — a 270-position portfolio doesn't flood the agent with raw data. The LLM reads
+the computed results and surfaces indicators worth discussing with your financial advisor. It
+does not tell you what to do, issue fiduciary advice, or assess personal suitability.
 
 - Fetches live quotes (Finnhub → Massive → Alpha Vantage → yfinance), analyst consensus, news, and optional local LLM synthesis (tier-3 enrichment).
 - Does **not** execute trades, replace a broker portal, or give investment advice. The goal is to
@@ -372,7 +375,7 @@ python3 eod_scheduler.py --install
 
 - **PII scrubbing**: credit card numbers, SSNs, and account IDs are redacted from CSV columns on load
 - **Prompt injection defense**: portfolio text columns are scanned before passing to any LLM
-- **Math verification**: all financial calculations are deterministic Python — the LLM never does portfolio math
+- **Sealed computation**: all financial calculations run in deterministic Python subprocesses — the computational surface is never exposed to the LLM, which receives only compact serialized summaries; this also preserves context window space across large portfolios
 - **Data locality**: raw CSV data is never sent to external APIs; only computed summaries reach the cloud operational model
 - **Guardrails**: `data/guardrails.yaml` enforces educational-only output, blocks suitability assessments
 
@@ -455,6 +458,11 @@ Full model testing results, hybrid vs single-model mode definitions, harness ben
 ## Design Intent
 
 InvestorClaw is a reference design for a **data-intensive, stateful agentic skill**. It demonstrates compact agent-facing outputs with raw artifact preservation, deterministic downstream processing, optional local consultative LLMs, financial guardrails, and multi-step setup and report-generation flows.
+
+The architecture has two deliberate properties beyond correctness:
+
+- **Sealed computation**: Python pipelines handle all financial math and run as subprocesses. The LLM never has access to the computational surface — it cannot invoke or influence the calculations, only read their output. This makes the math auditable and tamper-resistant.
+- **Token preservation**: pipelines emit compact serialized JSON summaries, not raw data. A 270-position portfolio with bonds, news, and analyst data fits in a fraction of the context a naive dump would consume, leaving room for multi-turn follow-ups without truncation.
 
 The enrichment layer (`internal/tier3_enrichment.py`) is the primary driver of synthesis quality — not the operational model. Switching from heuristic to enriched mode produces a 10–15× step-change in information density. Switching operational models has modest effect by comparison.
 
