@@ -354,7 +354,7 @@ python3 investorclaw.py eod --email-to you@example.com            # SMTP
 python3 investorclaw.py eod --no-email                            # file only
 ```
 
-![InvestorClaw EOD report — synthetic portfolio sample](assets/eod-report-sample.png)
+![InvestorClaw EOD report — synthetic portfolio sample](https://raw.githubusercontent.com/perlowja/InvestorClaw/main/assets/eod-report-sample.png)
 
 Install scheduled delivery:
 ```bash
