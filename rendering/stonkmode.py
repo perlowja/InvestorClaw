@@ -613,6 +613,35 @@ _SUMMARIZERS: dict[str, Any] = {
 }
 
 
+_TICKER_RE = _re.compile(r'\b([A-Z]{2,5})\b')   # 2+ chars — drops G/L single-letter noise
+_TICKER_STOPWORDS = {
+    # Common all-caps financial abbreviations that are not tickers
+    "ETF", "YTD", "BUY", "SELL", "HOLD", "STRONG", "DATA", "TOP", "GL",
+    "THE", "AND", "FOR", "NOT", "ALL", "NEW", "NET", "AVG", "MAX", "MIN",
+    "USD", "NAV", "AUM", "IPO", "CEO", "CFO", "EPS", "ROE", "ROA", "PE",
+    "TIPS", "YTM", "OAS", "WAL", "DV01", "CUSIP", "PNL",
+    "TOTAL", "SECTOR", "EQUITY", "BONDS", "CASH", "BOND",
+    "BREAKDOWN", "POSITIONS", "PORTFOLIO", "HOLDINGS", "VALUE",
+    "ANALYST", "CONSENSUS", "TARGET", "RATING", "COUNT",
+    "TECHNOLOGY", "HEALTHCARE", "INDUSTRIALS", "FINANCIAL", "SERVICES",
+    "CONSUMER", "MATERIALS", "ENERGY", "UTILITIES", "REAL", "ESTATE",
+}
+
+def extract_tickers_from_summary(data_summary: str) -> list:
+    """Extract likely ticker symbols from a narration data summary string.
+
+    Requires 2+ uppercase characters to drop G/L noise. Uses a stopword
+    blocklist for common financial abbreviations. Returns a deduplicated
+    list in order of first appearance.
+    """
+    seen: dict = {}
+    for m in _TICKER_RE.finditer(data_summary):
+        t = m.group(1)
+        if t not in _TICKER_STOPWORDS and t not in seen:
+            seen[t] = None
+    return list(seen.keys())
+
+
 def summarize_for_narration(command: str, reports_dir: Path) -> Optional[str]:
     """Load compact output and produce a text summary for LLM narration.
 
@@ -748,6 +777,7 @@ def build_lead_system_prompt(
     command: str,
     cohost_mode: str,
     previous_foil_message: Optional[str],
+    ticker_allowlist: Optional[list] = None,
 ) -> str:
     """System prompt for the lead persona."""
     canonical = _ALIAS_TO_CANONICAL.get(command, command)
@@ -766,9 +796,18 @@ def build_lead_system_prompt(
         "- Keep your response to 3-5 sentences maximum.",
         "- Do NOT give actual investment advice.",
         "- Reference specific numbers from the data summary.",
+        "- ONLY reference tickers, securities, and figures that appear in the DATA "
+          "section. Do NOT invent or introduce any ticker, fund, or holding not "
+          "present in the data — not as an example, not as a comparison, not at all.",
         "- Do NOT use markdown formatting. Plain text only.",
         "- Keep lines under 60 characters for mobile display.",
     ]
+
+    if ticker_allowlist:
+        parts.append(
+            f"- PERMITTED TICKERS (the complete list — no others exist in this portfolio): "
+            f"{', '.join(ticker_allowlist)}. Any ticker not on this list is fabricated and MUST NOT appear."
+        )
 
     if cohost_mode == "clap-back" and previous_foil_message:
         parts.append(f"\nYour co-host {foil['name']} just said:")
@@ -839,7 +878,12 @@ def build_lead_user_prompt(
     return "\n".join(parts)
 
 
-def build_foil_system_prompt(lead: dict, foil: dict, command: str) -> str:
+def build_foil_system_prompt(
+    lead: dict,
+    foil: dict,
+    command: str,
+    ticker_allowlist: Optional[list] = None,
+) -> str:
     """System prompt for the foil persona."""
     parts = [
         f"You are {foil['name']}, a cable financial television personality.",
@@ -854,6 +898,9 @@ def build_foil_system_prompt(lead: dict, foil: dict, command: str) -> str:
           "specific claims, mock their logic in character, then deliver your own angle.",
         "- Be entertaining, witty, and escalating. Each paragraph should land harder.",
         "- Reference the actual holdings, numbers, and arguments your co-host made.",
+        "- ONLY reference tickers and securities your co-host mentioned or that appear "
+          "in the original data. Do NOT invent, add, or compare against any ticker, "
+          "fund, or holding not already in play — not as an example, not at all.",
         "- Write 2-3 full paragraphs. Plain prose only — no bullet points, no lists.",
         "- In your FINAL paragraph, weave in the disclaimer that this is entertainment "
           "satire and not financial advice — but deliver it ENTIRELY in your own voice. "
@@ -861,6 +908,12 @@ def build_foil_system_prompt(lead: dict, foil: dict, command: str) -> str:
         "- Do NOT give actual investment advice.",
         "- Do NOT use markdown formatting.",
     ]
+
+    if ticker_allowlist:
+        parts.append(
+            f"- PERMITTED TICKERS (the complete list — no others exist in this portfolio): "
+            f"{', '.join(ticker_allowlist)}. Any ticker not on this list is fabricated and MUST NOT appear."
+        )
 
     return "\n".join(parts)
 
@@ -910,6 +963,7 @@ def build_closer_system_prompt(lead: dict, foil: dict) -> str:
         "- Deliver a 2-3 sentence show closer / sign-off.",
         "- Reference the day's key takeaway from the exchange.",
         "- Stay in character. Be memorable.",
+        "- Do NOT introduce any ticker or holding not discussed on the show today.",
         "- Do NOT use markdown. Plain text only.",
         "- Keep lines under 60 characters.",
     ])
@@ -936,6 +990,7 @@ def build_reaction_system_prompt(lead: dict, foil: dict) -> str:
         "RULES:",
         "- One sentence reaction or quip to the sign-off.",
         "- Stay in character.",
+        "- Do NOT introduce any ticker or holding not discussed on the show today.",
         "- Do NOT use markdown. Plain text only.",
     ])
 
@@ -1138,8 +1193,8 @@ def render_stonkmode_output(
 
     # Footer
     print(f"{border}{'─' * width}{R}")
-    print(f"{_C['footer']}  ⚠  Raw data: ~/portfolio_reports/{R}")
-    print(f"{_C['footer']}  ⚠  ENTERTAINMENT ONLY — NOT INVESTMENT ADVICE{R}")
+    print(f"{_C['footer']}  ⚠  Seriously silly. The math is real. The people are not.{R}")
+    print(f"{_C['footer']}  ⚠  Not your FA. Not a substitute for your FA. Talk to your FA.{R}")
     print()
 
 
@@ -1240,7 +1295,12 @@ def maybe_narrate(command: str, skill_dir: Path) -> None:
     import time as _time
     t0 = _time.monotonic()
 
-    lead_sys = build_lead_system_prompt(lead, foil, command, cohost_mode, previous_foil)
+    # Extract tickers present in this data to enforce data-grounding in both prompts.
+    # Injected as an explicit positive allowlist — "do not invent" alone is insufficient;
+    # models hallucinate well-known tickers (e.g. NVDA) from persona priors.
+    ticker_allowlist = extract_tickers_from_summary(data_summary)
+
+    lead_sys = build_lead_system_prompt(lead, foil, command, cohost_mode, previous_foil, ticker_allowlist)
     lead_user = build_lead_user_prompt(
         lead, foil, command, data_summary, cohost_mode, previous_foil, message_history,
     )
@@ -1259,7 +1319,7 @@ def maybe_narrate(command: str, skill_dir: Path) -> None:
         return
 
     # Generate foil response
-    foil_sys = build_foil_system_prompt(lead, foil, command)
+    foil_sys = build_foil_system_prompt(lead, foil, command, ticker_allowlist)
     foil_user = build_foil_user_prompt(lead, foil, lead_commentary, foil_history)
     foil_response = generate_narration(foil_sys, foil_user, max_tokens=900)
     if not foil_response:
@@ -1307,10 +1367,12 @@ def maybe_narrate(command: str, skill_dir: Path) -> None:
             "is_investment_advice": False,
             "consultation_mode": "deactivated",
             "satire_disclaimer": (
-                "STONKMODE \u2014 AI-generated entertainment satire. "
-                "Fictional characters only. Not financial analysis. "
-                "Not a substitute for professional advice. "
-                "Do not make investment decisions based on this content."
+                "STONKMODE \u2014 Seriously silly. "
+                "The math is real. The analysis is real. The people are not. "
+                "Fictional cable TV characters only. "
+                "Not financial advice. Not a substitute for your actual financial advisor, "
+                "who went to school for this and does not have a catchphrase. "
+                "Do not YOLO your retirement account based on anything said above."
             ),
             "lead": {
                 "id": lead_id,
