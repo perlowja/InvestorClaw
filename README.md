@@ -371,4 +371,4 @@ conversation with your human FA.
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT-0 — see [LICENSE](LICENSE).

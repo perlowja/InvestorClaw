@@ -13,7 +13,7 @@ keywords = ["portfolio", "finance", "openai", "openclaw", "finos"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Financial and Insurance Industry",
-    "License :: OSI Approved",
+    "License :: OSI Approved :: MIT No Attribution License (MIT-0)",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",

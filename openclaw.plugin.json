@@ -5,7 +5,7 @@
   "version": "1.0.0",
   "homepage": "https://github.com/perlowja/InvestorClaw",
   "repository": "https://github.com/perlowja/InvestorClaw",
-  "license": "MIT",
+  "license": "MIT-0",
   "configSchema": {
     "FINNHUB_KEY": {
       "type": "string",
