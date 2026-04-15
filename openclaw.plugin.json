@@ -84,6 +84,42 @@
       "secret": true,
       "required": false,
       "default": ""
+    },
+    "INVESTORCLAW_CARD_FORMAT": {
+      "type": "string",
+      "label": "Consultation Card Format",
+      "description": "Artifact format for local consultation output: json, svg, or both. Use json for mobile/text-only channels.",
+      "required": false,
+      "default": "both"
+    },
+    "INVESTORCLAW_STONKMODE_PROVIDER": {
+      "type": "string",
+      "label": "Stonkmode Provider",
+      "description": "Narration provider for stonkmode: ollama or openai_compat.",
+      "required": false,
+      "default": "ollama"
+    },
+    "INVESTORCLAW_STONKMODE_ENDPOINT": {
+      "type": "string",
+      "label": "Stonkmode Cloud Endpoint",
+      "description": "OpenAI-compatible chat/completions base URL for stonkmode when provider is openai_compat.",
+      "required": false,
+      "default": "https://api.openai.com/v1"
+    },
+    "INVESTORCLAW_STONKMODE_API_KEY": {
+      "type": "string",
+      "label": "Stonkmode Cloud API Key",
+      "description": "Bearer token for the OpenAI-compatible stonkmode provider.",
+      "secret": true,
+      "required": false,
+      "default": ""
+    },
+    "INVESTORCLAW_STONKMODE_MODEL": {
+      "type": "string",
+      "label": "Stonkmode Model",
+      "description": "Model used for stonkmode narration. Defaults to gemma4:e4b for Ollama or grok-3-fast for openai_compat.",
+      "required": false,
+      "default": ""
     }
   },
   "openclaw": {

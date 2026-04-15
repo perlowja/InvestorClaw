@@ -25,7 +25,7 @@ Portfolio analysis for OpenClaw agents. **v1.0.0** | FINOS CDM 5.x | Educational
 
 | Command | Aliases | Agent-readable output |
 |---------|---------|----------------------|
-| `/portfolio holdings` | `snapshot`, `prices` | `holdings.json` |
+| `/portfolio holdings` | `snapshot`, `prices` | `holdings_summary.json` |
 | `/portfolio performance` | `analyze`, `returns` | `performance.json` |
 | `/portfolio bonds` | `bond-analysis`, `analyze-bonds` | `bond_analysis.json` |
 | `/portfolio analyst` | `analysts`, `ratings` | `analyst_data.json` |
@@ -72,7 +72,7 @@ Every verified script invocation emits a terminal JSON envelope as the last stdo
 
 ```
 ~/portfolio_reports/                  ← agent-readable compact files ONLY
-    holdings.json
+    holdings_summary.json
     performance.json
     bond_analysis.json
     analyst_data.json
@@ -83,6 +83,7 @@ Every verified script invocation emits a terminal JSON envelope as the last stdo
     portfolio_report.xlsx / *.csv
 
 ~/portfolio_reports/.raw/             ← optional internal/enrichment artifacts
+    holdings.json
     analyst_recommendations_tier1_immediate.json
     analyst_recommendations_tier2_background.json
     analyst_recommendations_tier3_enriched.json
@@ -109,7 +110,7 @@ All outputs use the mandatory disclaimer wrapper:
 
 ### Compact vs Full Output
 
-**Holdings, performance, and analyst commands emit compact JSON to stdout** (~1–5K tokens) and write a compact summary file to `portfolio_reports/`. The full data is written to `portfolio_reports/.raw/` for downstream script use only.
+**Holdings, performance, and analyst commands emit compact JSON to stdout** (~1–5K tokens). Holdings also writes `portfolio_reports/holdings_summary.json` as the agent-readable compact file. The full data is written to `portfolio_reports/.raw/` for downstream script use only.
 
 **NEVER read files from `.raw/` directly.** Work exclusively from compact stdout output or the summary files in `portfolio_reports/`. If a user asks for a specific symbol or detail not in the compact output, use the lookup command:
 
@@ -160,7 +161,7 @@ When a `quote` block is present in any output JSON with `verbatim_required: true
 }
 ```
 
-The consultation model is **user-configured** via `INVESTORCLAW_CONSULTATION_MODEL`. Default: `gemma4-consult` — a tuned Ollama derivative of `gemma4:e4b` (num_ctx=2048, num_predict=600, ~65 tok/s on RTX Ada). Other tested models: `gemma4:e4b`, `nemotron-3-nano`, `qwen2.5:14b`. Run `/portfolio setup` to auto-detect available models on your endpoint.
+The consultation model is **user-configured** via `INVESTORCLAW_CONSULTATION_MODEL`. Default: `gemma4-consult` — a tuned Ollama derivative of `gemma4:e4b` (num_ctx=4096, num_predict=1200, ~65 tok/s on RTX Ada). Other tested models: `gemma4:e4b`, `nemotron-3-nano`, `qwen2.5:14b`. Run `/portfolio setup` to auto-detect available models on your endpoint.
 
 ### synthesis_basis Confidence Tiers
 

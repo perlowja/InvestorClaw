@@ -1,6 +1,6 @@
 [build-system]
 requires = ["setuptools>=70", "wheel"]
-build-backend = "setuptools.backends.legacy:build"
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "investorclaw"
@@ -66,3 +66,6 @@ python_files = ["test_*.py"]
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["commands*", "config*", "internal*", "models*", "providers*", "rendering*", "runtime*", "services*", "setup*", "workers*"]
+
+[tool.setuptools]
+py-modules = ["investorclaw"]

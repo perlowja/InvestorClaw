@@ -26,6 +26,10 @@ const ENV_KEYS = [
     "INVESTORCLAW_CONSULTATION_ENDPOINT",
     "INVESTORCLAW_CONSULTATION_MODEL",
     "INVESTORCLAW_CONSULTATION_HMAC_KEY",
+    "INVESTORCLAW_CARD_FORMAT",
+    "INVESTORCLAW_STONKMODE_PROVIDER",
+    "INVESTORCLAW_STONKMODE_ENDPOINT",
+    "INVESTORCLAW_STONKMODE_API_KEY",
     "INVESTORCLAW_STONKMODE_MODEL",
 ];
 // Generous timeout for analysis commands that hit external APIs (ms).
@@ -135,8 +139,8 @@ export default definePluginEntry({
             label: "Portfolio Holdings",
             description: "Get a portfolio snapshot with current prices for every holding in " +
                 "master_portfolio.csv. Fetches live quotes via Finnhub → Massive → " +
-                "Alpha Vantage → yfinance (first available). Returns JSON saved to " +
-                "portfolio_reports/holdings.json.",
+                "Alpha Vantage → yfinance (first available). Emits compact JSON and " +
+                "saves portfolio_reports/holdings_summary.json plus full data in .raw/holdings.json.",
             parameters: Type.Object({}),
             async execute(_id, _p) {
                 return tr(await run("holdings"));
@@ -146,7 +150,7 @@ export default definePluginEntry({
             name: "investorclaw_performance",
             label: "Portfolio Performance",
             description: "Analyze portfolio performance: YTD and 12-month returns, Sharpe ratio, " +
-                "beta, volatility, max drawdown. Requires holdings.json from " +
+                "beta, volatility, max drawdown. Requires the holdings snapshot from " +
                 "investorclaw_holdings. Returns JSON saved to portfolio_reports/performance.json.",
             parameters: Type.Object({}),
             async execute(_id, _p) {
@@ -157,7 +161,7 @@ export default definePluginEntry({
             name: "investorclaw_analysis",
             label: "Portfolio Analysis",
             description: "Run a full portfolio analysis combining the holdings snapshot with " +
-                "performance metrics. Requires holdings.json from investorclaw_holdings. " +
+                "performance metrics. Requires investorclaw_holdings first. " +
                 "Returns JSON saved to portfolio_reports/portfolio_analysis.json.",
             parameters: Type.Object({}),
             async execute(_id, _p) {
@@ -191,7 +195,7 @@ export default definePluginEntry({
             name: "investorclaw_news",
             label: "Portfolio News",
             description: "Fetch and summarize recent news correlated to portfolio holdings. " +
-                "Requires NEWSAPI_KEY and holdings.json from investorclaw_holdings. " +
+                "Requires NEWSAPI_KEY and investorclaw_holdings first. " +
                 "Returns JSON saved to portfolio_reports/portfolio_news.json.",
             parameters: Type.Object({}),
             async execute(_id, _p) {
@@ -202,7 +206,7 @@ export default definePluginEntry({
             name: "investorclaw_analyst",
             label: "Analyst Ratings",
             description: "Get analyst consensus ratings and price targets for portfolio holdings. " +
-                "Uses Finnhub and/or Massive. Requires holdings.json from " +
+                "Uses Finnhub and/or Massive. Requires the holdings snapshot from " +
                 "investorclaw_holdings. Returns JSON saved to portfolio_reports/analyst_data.json.",
             parameters: Type.Object({}),
             async execute(_id, _p) {
@@ -212,7 +216,7 @@ export default definePluginEntry({
         api.registerTool({
             name: "investorclaw_report",
             label: "Export Report",
-            description: "Export portfolio data to CSV or Excel. Requires holdings.json from " +
+            description: "Export portfolio data to CSV or Excel. Requires the holdings snapshot from " +
                 "investorclaw_holdings. Returns the path of the generated report file.",
             parameters: Type.Object({
                 format: Type.Optional(Type.Union([Type.Literal("csv"), Type.Literal("excel")], { description: "Export format. Defaults to csv." })),

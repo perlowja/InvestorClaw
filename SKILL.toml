@@ -11,115 +11,115 @@ Never generate portfolio data from memory or prior sessions — always execute t
 All output is EDUCATIONAL ANALYSIS - NOT INVESTMENT ADVICE.
 
 /portfolio setup:
-  shell: PYTHONPATH=/home/pi/investorclaw python3 /home/pi/investorclaw/commands/auto_setup.py
+  shell: python3 investorclaw.py setup
 
 /portfolio holdings:
-  shell: python3 /home/pi/investorclaw/commands/ic_holdings_run.py
+  shell: python3 investorclaw.py holdings
 
 /portfolio performance:
-  shell: PYTHONPATH=/home/pi/investorclaw python3 /home/pi/investorclaw/commands/analyze_performance_polars.py /home/pi/portfolio_reports/.raw/holdings.json /home/pi/portfolio_reports/performance.json
+  shell: python3 investorclaw.py performance
 
 /portfolio bonds:
-  shell: PYTHONPATH=/home/pi/investorclaw python3 /home/pi/investorclaw/commands/fixed_income_analysis.py /home/pi/portfolio_reports/.raw/holdings.json /home/pi/portfolio_reports/bonds.json
+  shell: python3 investorclaw.py bonds
 
 /portfolio analyst:
-  shell: PYTHONPATH=/home/pi/investorclaw python3 /home/pi/investorclaw/commands/fetch_analyst_recommendations_parallel.py /home/pi/portfolio_reports/.raw/holdings.json /home/pi/portfolio_reports/analyst_data.json
+  shell: python3 investorclaw.py analyst
 
 /portfolio news:
-  shell: PYTHONPATH=/home/pi/investorclaw python3 /home/pi/investorclaw/commands/fetch_portfolio_news.py /home/pi/portfolio_reports/.raw/holdings.json /home/pi/portfolio_reports/news.json
+  shell: python3 investorclaw.py news
 
 /portfolio synthesize:
-  shell: PYTHONPATH=/home/pi/investorclaw python3 /home/pi/investorclaw/commands/portfolio_analyzer.py /home/pi/portfolio_reports/.raw/holdings.json /home/pi/portfolio_reports/synthesis_report.json
+  shell: python3 investorclaw.py synthesize
 
 /portfolio session:
-  shell: PYTHONPATH=/home/pi/investorclaw python3 /home/pi/investorclaw/commands/session_init.py
+  shell: python3 investorclaw.py session
 
 /portfolio report:
-  shell: PYTHONPATH=/home/pi/investorclaw python3 /home/pi/investorclaw/commands/eod_report.py /home/pi/portfolio_reports/.raw/holdings.json /home/pi/portfolio_reports/eod_report.json
+  shell: python3 investorclaw.py eod-report
 
 /portfolio update-identity:
-  shell: PYTHONPATH=/home/pi/investorclaw python3 /home/pi/investorclaw/commands/model_guardrails.py update-identity
+  shell: python3 investorclaw.py update-identity
 
 /portfolio guardrails:
-  shell: PYTHONPATH=/home/pi/investorclaw python3 /home/pi/investorclaw/commands/model_guardrails.py guardrails
+  shell: python3 investorclaw.py guardrails
 
 /portfolio lookup --accounts:
-  shell: PYTHONPATH=/home/pi/investorclaw python3 /home/pi/investorclaw/commands/lookup.py /home/pi/portfolio_reports --accounts
+  shell: python3 investorclaw.py lookup --accounts
 
 /portfolio lookup --symbol TICKER:
-  shell: PYTHONPATH=/home/pi/investorclaw python3 /home/pi/investorclaw/commands/lookup.py /home/pi/portfolio_reports --symbol TICKER
+  shell: python3 investorclaw.py lookup --symbol TICKER
 
 If a command fails, report the exact error. Do not fabricate success responses.
 """]
 
 [[tools]]
 name = "portfolio_setup"
-description = "Detect portfolio CSVs and initialize environment. Command: PYTHONPATH=/home/pi/investorclaw python3 /home/pi/investorclaw/commands/auto_setup.py"
+description = "Detect portfolio CSVs and initialize environment. Command: python3 investorclaw.py setup"
 kind = "shell"
-command = "PYTHONPATH=/home/pi/investorclaw python3 /home/pi/investorclaw/commands/auto_setup.py"
+command = "python3 investorclaw.py setup"
 
 [[tools]]
 name = "portfolio_holdings"
-description = "Fetch live prices and build holdings snapshot. Command: python3 /home/pi/investorclaw/commands/ic_holdings_run.py"
+description = "Fetch live prices and build holdings snapshot. Command: python3 investorclaw.py holdings"
 kind = "shell"
-command = "python3 /home/pi/investorclaw/commands/ic_holdings_run.py"
+command = "python3 investorclaw.py holdings"
 
 [[tools]]
 name = "portfolio_performance"
-description = "Analyze performance metrics. Command: PYTHONPATH=/home/pi/investorclaw python3 /home/pi/investorclaw/commands/analyze_performance_polars.py /home/pi/portfolio_reports/.raw/holdings.json /home/pi/portfolio_reports/performance.json"
+description = "Analyze performance metrics. Command: python3 investorclaw.py performance"
 kind = "shell"
-command = "PYTHONPATH=/home/pi/investorclaw python3 /home/pi/investorclaw/commands/analyze_performance_polars.py /home/pi/portfolio_reports/.raw/holdings.json /home/pi/portfolio_reports/performance.json"
+command = "python3 investorclaw.py performance"
 
 [[tools]]
 name = "portfolio_bonds"
-description = "Fixed income analysis. Command: PYTHONPATH=/home/pi/investorclaw python3 /home/pi/investorclaw/commands/fixed_income_analysis.py /home/pi/portfolio_reports/.raw/holdings.json /home/pi/portfolio_reports/bonds.json"
+description = "Fixed income analysis. Command: python3 investorclaw.py bonds"
 kind = "shell"
-command = "PYTHONPATH=/home/pi/investorclaw python3 /home/pi/investorclaw/commands/fixed_income_analysis.py /home/pi/portfolio_reports/.raw/holdings.json /home/pi/portfolio_reports/bonds.json"
+command = "python3 investorclaw.py bonds"
 
 [[tools]]
 name = "portfolio_analyst"
-description = "Fetch analyst consensus ratings. Command: PYTHONPATH=/home/pi/investorclaw python3 /home/pi/investorclaw/commands/fetch_analyst_recommendations_parallel.py /home/pi/portfolio_reports/.raw/holdings.json /home/pi/portfolio_reports/analyst_data.json"
+description = "Fetch analyst consensus ratings. Command: python3 investorclaw.py analyst"
 kind = "shell"
-command = "PYTHONPATH=/home/pi/investorclaw python3 /home/pi/investorclaw/commands/fetch_analyst_recommendations_parallel.py /home/pi/portfolio_reports/.raw/holdings.json /home/pi/portfolio_reports/analyst_data.json"
+command = "python3 investorclaw.py analyst"
 
 [[tools]]
 name = "portfolio_news"
-description = "Fetch portfolio news by ticker. Command: PYTHONPATH=/home/pi/investorclaw python3 /home/pi/investorclaw/commands/fetch_portfolio_news.py /home/pi/portfolio_reports/.raw/holdings.json /home/pi/portfolio_reports/news.json"
+description = "Fetch portfolio news by ticker. Command: python3 investorclaw.py news"
 kind = "shell"
-command = "PYTHONPATH=/home/pi/investorclaw python3 /home/pi/investorclaw/commands/fetch_portfolio_news.py /home/pi/portfolio_reports/.raw/holdings.json /home/pi/portfolio_reports/news.json"
+command = "python3 investorclaw.py news"
 
 [[tools]]
 name = "portfolio_synthesize"
-description = "Generate portfolio synthesis report. Command: PYTHONPATH=/home/pi/investorclaw python3 /home/pi/investorclaw/commands/portfolio_analyzer.py /home/pi/portfolio_reports/.raw/holdings.json /home/pi/portfolio_reports/synthesis_report.json"
+description = "Generate portfolio synthesis report. Command: python3 investorclaw.py synthesize"
 kind = "shell"
-command = "PYTHONPATH=/home/pi/investorclaw python3 /home/pi/investorclaw/commands/portfolio_analyzer.py /home/pi/portfolio_reports/.raw/holdings.json /home/pi/portfolio_reports/synthesis_report.json"
+command = "python3 investorclaw.py synthesize"
 
 [[tools]]
 name = "portfolio_session"
-description = "Initialize CDM session. Command: PYTHONPATH=/home/pi/investorclaw python3 /home/pi/investorclaw/commands/session_init.py"
+description = "Initialize CDM session. Command: python3 investorclaw.py session"
 kind = "shell"
-command = "PYTHONPATH=/home/pi/investorclaw python3 /home/pi/investorclaw/commands/session_init.py"
+command = "python3 investorclaw.py session"
 
 [[tools]]
 name = "portfolio_report"
-description = "Generate end-of-day report. Command: PYTHONPATH=/home/pi/investorclaw python3 /home/pi/investorclaw/commands/eod_report.py /home/pi/portfolio_reports/.raw/holdings.json /home/pi/portfolio_reports/eod_report.json"
+description = "Generate end-of-day report. Command: python3 investorclaw.py eod-report"
 kind = "shell"
-command = "PYTHONPATH=/home/pi/investorclaw python3 /home/pi/investorclaw/commands/eod_report.py /home/pi/portfolio_reports/.raw/holdings.json /home/pi/portfolio_reports/eod_report.json"
+command = "python3 investorclaw.py eod-report"
 
 [[tools]]
 name = "portfolio_update_identity"
-description = "Apply model identity and guardrails. Command: PYTHONPATH=/home/pi/investorclaw python3 /home/pi/investorclaw/commands/model_guardrails.py update-identity"
+description = "Apply model identity and guardrails. Command: python3 investorclaw.py update-identity"
 kind = "shell"
-command = "PYTHONPATH=/home/pi/investorclaw python3 /home/pi/investorclaw/commands/model_guardrails.py update-identity"
+command = "python3 investorclaw.py update-identity"
 
 [[tools]]
 name = "portfolio_guardrails"
-description = "Check guardrails compliance. Command: PYTHONPATH=/home/pi/investorclaw python3 /home/pi/investorclaw/commands/model_guardrails.py guardrails"
+description = "Check guardrails compliance. Command: python3 investorclaw.py guardrails"
 kind = "shell"
-command = "PYTHONPATH=/home/pi/investorclaw python3 /home/pi/investorclaw/commands/model_guardrails.py guardrails"
+command = "python3 investorclaw.py guardrails"
 
 [[tools]]
 name = "portfolio_lookup"
-description = "Lookup ticker or account details. Command: PYTHONPATH=/home/pi/investorclaw python3 /home/pi/investorclaw/commands/lookup.py /home/pi/portfolio_reports [--accounts|--symbol TICKER]"
+description = "Lookup ticker or account details. Command: python3 investorclaw.py lookup [--accounts|--symbol TICKER]"
 kind = "shell"
-command = "PYTHONPATH=/home/pi/investorclaw python3 /home/pi/investorclaw/commands/lookup.py /home/pi/portfolio_reports"
+command = "python3 investorclaw.py lookup"
