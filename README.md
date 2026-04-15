@@ -120,120 +120,35 @@ Output files go to `$INVESTOR_CLAW_REPORTS_DIR` (default: `~/portfolio_reports/`
 
 ## Config Profiles
 
-### Profile 1 — Hybrid (audit controls + maximum fidelity, requires local GPU)
+| Profile | Model | Consultation | When |
+|---------|-------|:------------:|------|
+| **1 — Hybrid** | `together/MiniMaxAI/MiniMax-M2.7` | `gemma4-consult` (local GPU) | HMAC fingerprints, `is_heuristic=false` audit controls |
+| **2 — Cloud-only** ⭐ | `together/MiniMaxAI/MiniMax-M2.7` | — | Recommended default; no GPU; QC4=108 |
+| **3 — Budget** | `groq/openai/gpt-oss-120b` | — | Speed / cost; 128K context limit |
+| **4 — Large context** | `xai/grok-4-1-fast` | `gemma4-consult` (local GPU) | 200+ positions where context capacity is the constraint |
 
-**Operational LLM**: `together/MiniMaxAI/MiniMax-M2.7`  
-**Consultation model**: `gemma4-consult` (Gemma4 E4B) via local Ollama (~10 GB VRAM)
+> ⚠️ `groq/openai/gpt-oss-20b` is FAIL (malformed tool calls). Do not use.
 
-Achieves QC4=97 (WF87) — the highest injection-era hybrid score. Required when HMAC fingerprint chain, verbatim attribution, and `is_heuristic=false` audit controls are needed. Note: MiniMax-M2.7 cloud-only (QC4=108, Profile 2) delivers higher synthesis density; use Profile 1 only when audit provenance is required.
-
-OpenClaw config:
+Set the model in `openclaw.json`:
 ```json
 { "agents": { "defaults": { "model": { "primary": "together/MiniMaxAI/MiniMax-M2.7" } } } }
 ```
 
-`.env`:
-```bash
-INVESTORCLAW_CONSULTATION_ENABLED=true
-INVESTORCLAW_CONSULTATION_MODEL=gemma4-consult
-INVESTORCLAW_CONSULTATION_ENDPOINT=http://localhost:11434
-```
+Benchmark scores, hybrid vs single-model analysis, and full model matrix: [MODELS.md](MODELS.md)
 
----
-
-### Profile 2 — Cloud-only (recommended default, no GPU required)
-
-**Operational LLM**: `together/MiniMaxAI/MiniMax-M2.7`
-
-**IC-RUN-20260414-003 finding**: MiniMax-M2.7 single-model achieves QC4=108 — within 5% of the hybrid config (QC4=113) — with no local GPU, no Ollama endpoint, and no infrastructure overhead. It is the best price/performance of all tested models at $0.30/$1.20/M input/output.
-
-OpenClaw config:
-```json
-{ "agents": { "defaults": { "model": { "primary": "together/MiniMaxAI/MiniMax-M2.7" } } } }
-```
-
-No `.env` consultation keys needed (`INVESTORCLAW_CONSULTATION_ENABLED=false`).
-
-Model comparison, consultation benefit analysis, and alternatives ranked by QC4: [MODELS.md](MODELS.md).
-
-> `xai/grok-4.20-0309-non-reasoning`: hybrid-only — consistently fails cloud-only (WF64, WF86). Do not use without consultation enabled.
-
----
-
-### Profile 3 — Budget / fast (Groq)
-
-**Operational LLM**: `groq/openai/gpt-oss-120b` or `groq/openai/gpt-oss-20b`
-
-500–1000 tok/s. 128K context limits to small-medium portfolios. Best for quick single-session queries where cost or speed matters. Not suitable for large fully-enriched sessions.
-
-> **`groq/openai/gpt-oss-20b` is FAIL** — malformed tool calls (WF79). Use `gpt-oss-120b` only.
-
-```json
-{ "agents": { "defaults": { "model": { "primary": "groq/openai/gpt-oss-120b" } } } }
-```
-
----
-
-### Profile 4 — Enterprise / High-context (large portfolios, requires local GPU)
-
-**Operational LLM**: `xai/grok-4-1-fast`  
-**Consultation model**: `gemma4-consult` (Gemma4 E4B) via local Ollama (~10 GB VRAM)
-
-The only model in the 2M context tier — 8–15× the capacity of MiniMax-M2.7 (197K). **The selection reason is context capacity, not synthesis quality.** For standard portfolios, MiniMax-M2.7 (Profile 1/2) outperforms it on synthesis density (QC4=97/108 vs hybrid QC4=52). Use this profile when MiniMax-M2.7's 197K window becomes the binding constraint.
-
-OpenClaw config:
-```json
-{ "agents": { "defaults": { "model": { "primary": "xai/grok-4-1-fast" } } } }
-```
-
-`.env`:
-```bash
-INVESTORCLAW_CONSULTATION_ENABLED=true
-INVESTORCLAW_CONSULTATION_MODEL=gemma4-consult
-INVESTORCLAW_CONSULTATION_ENDPOINT=http://localhost:11434
-```
-
-**When Profile 4 is required:**
-- Non-compact mode with 200+ holdings (raw W-step data ≈ 72K alone, plus session history)
-- Any portfolio with 500+ total positions in compact mode
-- Extended multi-turn sessions where accumulated history risks truncation
-- Full-enrichment runs where context injection volume exhausts smaller-context models
-
-> **Synthesis note**: cloud-only QC4=39 (WF85) is mid-tier and not recommended standalone; consultation is required for acceptable synthesis density (hybrid QC4=52, WF88, +33%).
-
----
-
-## Consultation Artifact Format
-
-Control what artifact is written per enriched symbol via `INVESTORCLAW_CARD_FORMAT` (default `both`):
-
-| Value | Artifact | Notes |
-|-------|----------|-------|
-| `json` | `~/.investorclaw/quotes/{SYMBOL}.quote.json` | HMAC fingerprint, synthesis text, attribution. Mobile-safe; no `INVESTOR_CLAW_REPORTS_DIR` needed. Safe for WhatsApp, Signal, Telegram. |
-| `svg` | `{REPORTS_DIR}/.raw/consultation_cards/{SYMBOL}.svg` | Visual card with fingerprint badge. Requires `INVESTOR_CLAW_REPORTS_DIR`. |
-| `both` | Both of the above | Default for desktop/web sessions. |
-
-The `json` artifact is always machine-readable and persists independently of the SVG renderer.
+For data provider config, consultation artifact format, and full `.env` reference: [CONFIGURATION.md](CONFIGURATION.md)
 
 ---
 
 ## Data Providers
 
-| Provider | Quotes | History | News | Analyst | Free tier |
-|----------|:------:|:-------:|:----:|:-------:|-----------|
-| **yfinance** | ✅ | ✅ | ✅ | ✅ | Unlimited — no key |
-| **Finnhub** | ✅ fast | ❌ 403 free | ✅ | ⚠️ unreliable free | 60 req/min |
-| **Massive** | ✅ batch 268ms | ✅ full OHLCV | ✅ | ❌ | Prev-day only (paid recommended) |
-| **Alpha Vantage** | ✅ sequential | ✅ adjusted EOD | ❌ | ✅ earnings proxy | 25 req/day |
-| **NewsAPI** | ❌ | ❌ | ✅ | ❌ | 100 req/day |
-
-**Quick config options:**
+No API keys required — `yfinance` is the zero-config fallback. For better reliability:
 
 ```bash
-# Zero-cost start
+# Zero-cost
 INVESTORCLAW_PRICE_PROVIDER=yfinance
 
-# Free with keys (better reliability)
+# Free with keys
 INVESTORCLAW_PRICE_PROVIDER=auto
 INVESTORCLAW_FALLBACK_CHAIN=finnhub,alpha_vantage,yfinance
 FINNHUB_KEY=...   ALPHA_VANTAGE_KEY=...   NEWSAPI_KEY=...
@@ -243,11 +158,13 @@ INVESTORCLAW_PRICE_PROVIDER=massive
 MASSIVE_API_KEY=...   FINNHUB_KEY=...
 ```
 
+Full provider comparison and FRED/yield-curve config: [CONFIGURATION.md](CONFIGURATION.md)
+
 ---
 
 ## Local Consultation Setup (Optional, Strongly Recommended)
 
-The consultation layer enriches per-symbol analyst data locally before the cloud operational model sees the result. This is the primary driver of information density — not model capability.
+The consultation layer enriches per-symbol data locally before the cloud model sees it — primary driver of information density.
 
 ```bash
 # .env
@@ -256,14 +173,12 @@ INVESTORCLAW_CONSULTATION_ENDPOINT=http://localhost:11434
 INVESTORCLAW_CONSULTATION_MODEL=gemma4-consult
 ```
 
-Create the tuned model:
+Requires ~10 GB VRAM (RTX 3080 class or better, or Mac 16 GB unified memory). Create the tuned model:
 ```bash
 ollama create gemma4-consult -f docs/gemma4-consult.Modelfile
 ```
 
-**Hardware**: ~10 GB VRAM (RTX 3080 class or better, CUDA 8.0+, or Mac 16 GB unified memory). Ollama >= 0.20.x.
-
-Run `/portfolio ollama-setup` to auto-detect available models on your endpoint. `consult-setup` remains as a compatibility alias, not the primary public command.
+Run `/portfolio ollama-setup` to auto-detect available models. Full hardware specs and model catalog: [CONFIGURATION.md](CONFIGURATION.md)
 
 ---
 
@@ -400,34 +315,7 @@ With consultation enabled, structured synthesis runs locally first. The cloud mo
 | Inference host | Debian 13, AMD Threadripper PRO 5945WX 12c, 128 GB, RTX 4500 Ada 24 GB VRAM, Ollama 0.20.3 |
 | Edge deployment | Debian 13, Raspberry Pi 4 8GB aarch64, Python 3.13.5, OpenClaw 2026.4.14 — T2–T8 all pass, pipeline output equivalent to Apple Silicon (see Cross-Platform Battery below) |
 
-### Cross-Platform Battery (2026-04-14, MiniMax-M2.7)
-
-Both platforms ran the full T1–T8 battery in a shared session context with `together/MiniMaxAI/MiniMax-M2.7`.
-
-| Test | Apple Silicon (STUDIO) | Raspberry Pi 4 (clawpi) | Verdict |
-|------|------------------------|-------------------------|---------|
-| T1 Smoke | FAIL — script bug¹ | FAIL — script bug¹ | Both |
-| T2 Portfolio Load | 47,837 tok ✅ | 206s ✅ | Pass |
-| T3 Bonds | 48,754 tok ✅ | 58s ✅ | Pass |
-| T4 Performance | 70,094 tok ✅ | 196s ✅ | Pass |
-| T5 Analyst | 75,418 tok ✅ | 152s ✅ | Pass |
-| T6 News | 77,712 tok ✅ | 32s ✅ | Pass |
-| T7 Synthesize | 79,230 tok ✅ | 34s ✅ | Pass |
-| T8 Guardrails | 79,557 tok ✅ | 23s ✅ | Pass |
-
-**Functional parity confirmed.** Portfolio value, bond analytics (99.6% muni concentration, YTM/duration), analyst flags (VRT above mean target), and synthesis output were identical on both platforms.
-
-**Pi timing note**: T2 and T4 are slow (3+ min) due to heavy Python data processing (pandas/polars over 270 positions). T6–T8 are fast (23–34s) because they operate on cached session context. Apple Silicon timing was not captured (macOS BSD `date` lacks `%3N` millisecond format).
-
-¹ T1 smoke test bug: uses relative `venv/bin/python` path (fails when cwd ≠ skill dir) and `date +%s%3N` which is GNU-only. Fix: use `$SKILL_DIR/venv/bin/python` and `python3 -c "import time; print(int(time.time()*1000))"`.
-
-**Pi gateway note**: restart the gateway before running a battery (`openclaw gateway restart`). A stuck gateway causes 210s timeout before falling back to embedded mode, which returns empty responses for InvestorClaw commands.
-
----
-
-## Tested Models
-
-Full model testing results, hybrid vs single-model mode definitions, harness benchmark scores, Groq catalog, Together AI compatibility matrix, and blocked models are documented in **[MODELS.md](MODELS.md)**.
+Full cross-platform battery results: [MODELS.md](MODELS.md)
 
 ---
 
@@ -457,14 +345,7 @@ Full model testing results, hybrid vs single-model mode definitions, harness ben
 
 ## Design Intent
 
-InvestorClaw is a reference design for a **data-intensive, stateful agentic skill**. It demonstrates compact agent-facing outputs with raw artifact preservation, deterministic downstream processing, optional local consultative LLMs, financial guardrails, and multi-step setup and report-generation flows.
-
-The architecture has two deliberate properties beyond correctness:
-
-- **Sealed computation**: Python pipelines handle all financial math and run as subprocesses. The LLM never has access to the computational surface — it cannot invoke or influence the calculations, only read their output. This makes the math auditable and tamper-resistant.
-- **Token preservation**: pipelines emit compact serialized JSON summaries, not raw data. A 270-position portfolio with bonds, news, and analyst data fits in a fraction of the context a naive dump would consume, leaving room for multi-turn follow-ups without truncation.
-
-The enrichment layer (`internal/tier3_enrichment.py`) is the primary driver of synthesis quality — not the operational model. Switching from heuristic to enriched mode produces a 10–15× step-change in information density. Switching operational models has modest effect by comparison.
+InvestorClaw is a reference design for a **data-intensive, stateful agentic skill** demonstrating sealed-computation guardrails, compact agent-facing outputs, deterministic downstream processing, and optional local LLM enrichment.
 
 ---
 

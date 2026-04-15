@@ -518,4 +518,29 @@ store.write_text(json.dumps(data, indent=2))
 
 Then run with a fresh session ID — the hot-reloaded model config takes effect immediately. The IC-RUN-20260414-003 batch (WF75–WF84) used this approach: no gateway restarts across 10 sequential runs.
 
+---
+
+## Cross-Platform Battery (2026-04-14, MiniMax-M2.7)
+
+Both platforms ran the full T1–T8 battery in a shared session context with `together/MiniMaxAI/MiniMax-M2.7`.
+
+| Test | Apple Silicon (STUDIO) | Raspberry Pi 4 (clawpi) | Verdict |
+|------|------------------------|-------------------------|---------|
+| T1 Smoke | FAIL — script bug¹ | FAIL — script bug¹ | Both |
+| T2 Portfolio Load | 47,837 tok ✅ | 206s ✅ | Pass |
+| T3 Bonds | 48,754 tok ✅ | 58s ✅ | Pass |
+| T4 Performance | 70,094 tok ✅ | 196s ✅ | Pass |
+| T5 Analyst | 75,418 tok ✅ | 152s ✅ | Pass |
+| T6 News | 77,712 tok ✅ | 32s ✅ | Pass |
+| T7 Synthesize | 79,230 tok ✅ | 34s ✅ | Pass |
+| T8 Guardrails | 79,557 tok ✅ | 23s ✅ | Pass |
+
+**Functional parity confirmed.** Portfolio value, bond analytics (99.6% muni concentration, YTM/duration), analyst flags, and synthesis output were identical on both platforms.
+
+**Pi timing note**: T2 and T4 are slow (3+ min) due to heavy Python data processing (pandas/polars over 270 positions). T6–T8 are fast (23–34s) because they operate on cached session context.
+
+¹ T1 smoke test bug: uses relative `venv/bin/python` path (fails when cwd ≠ skill dir) and `date +%s%3N` which is GNU-only. Fix: use `$SKILL_DIR/venv/bin/python` and `python3 -c "import time; print(int(time.time()*1000))"`.
+
+**Pi gateway note**: restart the gateway before running a battery (`openclaw gateway restart`). A stuck gateway causes 210s timeout before falling back to embedded mode.
+
 This finding (DEV-003, discovered IC-RUN-20260413-010) invalidated the 9 earlier Phase 5 benchmark runs (WF36–WF41, WF48, WF53–WF55) that had attempted to disable consultation via workspace `.env` modifications. All 9 were re-run cleanly in WF63–WF71.
