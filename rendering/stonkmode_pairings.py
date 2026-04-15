@@ -23,7 +23,8 @@ ARCHETYPE_POOLS: dict[str, list[str]] = {
     "policy_veterans": ["biff_chadsworth_iii", "skip_contrarian"],
     "wildcards":       ["dorin_goleli", "aria_7", "professor_goldbug", "chaz_leveridge",
                         "lafayette_beaumont", "glorb", "king_donny",
-                        "zsa_zsa_von_portfolio", "wendell_the_pattern"],
+                        "zsa_zsa_von_portfolio", "wendell_the_pattern",
+                        "professor_what"],
     "cosmic":          ["chico_reyes", "farout_farley"],
     "digital":         ["krystal_kash", "zara_zhao", "priya_hodl"],
     "bears":           ["victor_voss", "hans_dieter_braun"],
@@ -460,6 +461,42 @@ PAIRING_DYNAMICS: dict[tuple[str, str], str] = {
         "It was a coincidence. The lead knows it was a coincidence. "
         "Explaining that is now the segment."
     ),
+
+    # Professor What? — lead dynamics
+    ("wildcards_professor_what", "any"): (
+        "A person who may be from the future is about to analyze this "
+        "portfolio. They already know how it turns out. They cannot say. "
+        "They will spend this segment visibly struggling with that. "
+        "The co-host will ask a direct question about one of the holdings. "
+        "Professor What? will go very still, breathe, and say 'it's fine. "
+        "Everything is going to be... it's fine.' This is not reassuring."
+    ),
+    # Professor What? — foil dynamics
+    ("any", "wildcards_professor_what"): (
+        "The lead just delivered their analysis. Professor What? has been "
+        "listening with the expression of someone reading a history book "
+        "about a disaster that hasn't happened yet. They have opinions. "
+        "They cannot share them. They will share approximately thirty "
+        "percent of them by accident over the course of this segment."
+    ),
+    # Professor What? × ARIA-7 — the best possible pairing
+    ("wildcards_professor_what", "wildcards_aria_7"): (
+        "A time traveler who knows the future and cannot say is paired "
+        "with an AI that can calculate the probable future and will say "
+        "it in exhaustive detail with confidence intervals. ARIA-7 is "
+        "about to independently derive something Professor What? knows "
+        "for a fact. Professor What? is watching this happen in real time. "
+        "Their face is doing several things at once. "
+        "The producer has gone very quiet."
+    ),
+    ("wildcards_aria_7", "wildcards_professor_what"): (
+        "ARIA-7 just completed a probabilistic forecast. Professor What? "
+        "is staring at the numbers. One of ARIA-7's confidence intervals "
+        "is essentially correct. Professor What? cannot confirm this. "
+        "They have confirmed it with their face. ARIA-7 has noted "
+        "the micro-expression and updated the probability to 94.7%. "
+        "This segment has gotten out of hand."
+    ),
 }
 
 # Default dynamic when no specific entry matches
@@ -479,11 +516,18 @@ def get_pairing_dynamic(
     """Smart lookup for pairing dynamic description.
 
     Priority:
-      1. Wildcard lead by specific id  → ("wildcards_{lead_id}", "any")
-      2. Wildcard foil by specific id  → ("any", "wildcards_{foil_id}")
-      3. Archetype pair                → (lead_archetype, foil_archetype)
-      4. Default fallback
+      1. Wildcard×wildcard specific duo → ("wildcards_{lead_id}", "wildcards_{foil_id}")
+      2. Wildcard lead by specific id   → ("wildcards_{lead_id}", "any")
+      3. Wildcard foil by specific id   → ("any", "wildcards_{foil_id}")
+      4. Archetype pair                 → (lead_archetype, foil_archetype)
+      5. Default fallback
     """
+    # Check wildcard×wildcard specific duo (highest specificity)
+    if lead_archetype == "wildcards" and foil_archetype == "wildcards":
+        key = (f"wildcards_{lead_id}", f"wildcards_{foil_id}")
+        if key in PAIRING_DYNAMICS:
+            return PAIRING_DYNAMICS[key]
+
     # Check wildcard-specific lead
     if lead_archetype == "wildcards":
         key = (f"wildcards_{lead_id}", "any")

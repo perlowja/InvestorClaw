@@ -38,7 +38,7 @@ VALID_ARCHETYPES = {"high_energy", "serious", "mentors", "policy_veterans",
 
 
 def test_persona_count():
-    assert len(PERSONAS) == 29, f"Expected 29 personas, got {len(PERSONAS)}"
+    assert len(PERSONAS) == 30, f"Expected 30 personas, got {len(PERSONAS)}"
 
 
 def test_all_personas_have_required_fields():
@@ -92,11 +92,12 @@ def test_get_personas_by_archetype_cosmic():
 
 def test_list_all_ids_complete():
     ids = list_all_ids()
-    assert len(ids) == 29
+    assert len(ids) == 30
     assert "glorb" in ids
     assert "krystal_kash" in ids
     assert "victor_voss" in ids
     assert "wendell_the_pattern" in ids
+    assert "professor_what" in ids
 
 
 def test_archetype_counts():
@@ -106,7 +107,7 @@ def test_archetype_counts():
     assert counts["serious"] == 5
     assert counts["mentors"] == 3
     assert counts["policy_veterans"] == 2
-    assert counts["wildcards"] == 9
+    assert counts["wildcards"] == 10
     assert counts["cosmic"] == 2
     assert counts["digital"] == 3
     assert counts["bears"] == 2

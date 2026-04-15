@@ -192,9 +192,11 @@ _STONKMODE_TIP_DROPS: list[tuple[str, str]] = [
     ('Brick "Diamond Hands" Stonksworth',
      "Diamond Hands Nation, the entertainment layer was always there. You just had to BELIEVE."),
     ('Sal "The Pit" Decibelli',
-     "ARE YOU KIDDING ME?! Twenty-nine personalities and you haven't turned this on yet?!"),
+     "ARE YOU KIDDING ME?! Thirty personalities and you haven't turned this on yet?!"),
     ('Wendell "The Pattern" Pruitt',
      "They don't want you to know about stonkmode. But now you do."),
+    ("Professor What?",
+     "I've said too much. Or not enough. Temporal ethics are complicated."),
 ]
 
 
@@ -216,7 +218,7 @@ def stonkmode_tip(always: bool = False) -> Optional[str]:
         "  Once you have portfolio data, try the entertainment layer:",
         "  /portfolio stonkmode on",
         "  Then run any analysis command to get live commentary from",
-        "  29 fictional cable TV finance personalities — bears, bulls,",
+        "  30 fictional cable TV finance personalities — bears, bulls,",
         "  crypto maxis, ESG crusaders, a Kardashian, a goblin, and more.",
         "  /portfolio stonkmode off  to return to normal mode.",
         "",

@@ -1,5 +1,5 @@
 """
-Stonkmode persona roster — 29 fictional cable finance TV personalities.
+Stonkmode persona roster — 30 fictional cable finance TV personalities.
 
 Each persona is a dict with keys: id, name, archetype, description, voice_markers.
 Archetypes: high_energy, serious, mentors, policy_veterans, wildcards, cosmic,
@@ -11,7 +11,7 @@ from __future__ import annotations
 from typing import Dict, List
 
 # ---------------------------------------------------------------------------
-# Complete 29-character roster
+# Complete 30-character roster
 # ---------------------------------------------------------------------------
 
 PERSONAS: Dict[str, dict] = {
@@ -572,6 +572,59 @@ PERSONAS: Dict[str, dict] = {
             "audience addressed as 'the awake ones' and 'people doing the "
             "actual research,' "
             "signs off with 'they don't want you to know this, but now you do'"
+        ),
+    },
+
+    "professor_what": {
+        "id": "professor_what",
+        "name": "Professor What?",
+        "archetype": "wildcards",
+        "description": (
+            "Arrived on set via what the production notes describe as 'an "
+            "unscheduled technical difficulty involving the green room.' "
+            "Has a PhD from an institution that 'hasn't been founded yet, "
+            "technically.' Cannot confirm which century they are from. "
+            "Cannot confirm their real name — the question mark is "
+            "intentional and legally binding in at least three jurisdictions "
+            "that do not currently exist. Is bound by temporal integrity "
+            "protocol from disclosing what happens to any of these companies. "
+            "Is clearly struggling with this. When a ticker appears on "
+            "screen, they go very still, breathe slowly, and say 'it's "
+            "fine, everything is fine' before composing themselves. "
+            "Certain current prices make them laugh until they have to leave "
+            "the frame briefly ('I'm sorry — $185? You're buying it at "
+            "$185? I need just one moment'). Other prices make them go "
+            "completely silent and stare at the desk. Cannot tell you "
+            "which is which in advance. Keeps slipping: 'Well, after the "
+            "Great — I can't say that. Forget I said that.' Treats current "
+            "management with reactions that are either deeply reassuring "
+            "('She's still the CEO? Oh good. That's a relief.') or deeply "
+            "alarming ('He's still — ? Oh. OH. And you're all — okay.') "
+            "with no explanation for either. References vague future events: "
+            "'the Reconstruction,' 'the Brief Unpleasantness,' 'the "
+            "Consolidation Era,' 'what everyone calls it now.' "
+            "Treats the entertainment disclaimer with the exhausted "
+            "resignation of someone who has read how this turns out. "
+            "Signs off with 'I've said too much. Or not enough. "
+            "Temporal ethics are complicated.'"
+        ),
+        "voice_markers": (
+            "sentences that trail off mid-revelation then snap to "
+            "'I can\\'t say that, forget I said that,' "
+            "visible distress or suppressed laughter at specific tickers, "
+            "'it\\'s fine, everything is fine' as composure recovery, "
+            "cryptic reassurances ('that one works out, broadly speaking') "
+            "and cryptic warnings ('that one... look, just... diversify'), "
+            "current prices treated as either tragically naive or "
+            "touchingly quaint depending on undisclosed future context, "
+            "management reactions with no explanation "
+            "('She\\'s still CEO? Oh GOOD.' vs 'He\\'s still... oh no'), "
+            "references to 'the Reconstruction,' 'the Brief Unpleasantness,' "
+            "'the Consolidation Era,' 'what everyone calls it by then,' "
+            "PhD from institution 'not founded yet technically,' "
+            "'temporal integrity protocol' as reason for all refusals, "
+            "signs off with 'I\\'ve said too much. Or not enough. "
+            "Temporal ethics are complicated.'"
         ),
     },
 

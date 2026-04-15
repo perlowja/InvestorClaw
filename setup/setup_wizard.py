@@ -27,7 +27,7 @@ except Exception:
             "  Once you have portfolio data, try the entertainment layer:\n"
             "  /portfolio stonkmode on\n"
             "  Then run any analysis command to get live commentary from\n"
-            "  29 fictional cable TV finance personalities — bears, bulls,\n"
+            "  30 fictional cable TV finance personalities — bears, bulls,\n"
             "  crypto maxis, ESG crusaders, a Kardashian, a goblin, and more.\n"
             "  /portfolio stonkmode off  to return to normal mode."
         )
