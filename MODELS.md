@@ -1,6 +1,6 @@
 # InvestorClaw — Tested Models and Benchmark Results
 
-Harness: V6.1.2 | Runs: IC-RUN-20260413-002 through IC-RUN-20260414-004 | Last updated: 2026-04-14
+Harness: V7.1 | Runs: IC-RUN-20260413-002 through IC-RUN-20260415-001 | Last updated: 2026-04-15
 
 ---
 
@@ -93,7 +93,7 @@ Rankings from IC-RUN-20260414-003 re-benchmark with cross-step context injection
 | 🥉 | `together/moonshotai/Kimi-K2.5` | 16 | 55 | 256 | Together AI | WF76 |
 | | `google/gemini-3.1-pro-preview` | 15 | 46 | 340 | Google | WF80 |
 | | `together/deepseek-ai/DeepSeek-V3.1` | 13 | 44 | 160 | Together AI | WF75 |
-| | `openai/gpt-5.4` | 14 | 28 | 178 | OpenAI | WF81 |
+| | `openai/gpt-5.4` | 14 | 28 | 178 | OpenAI | WF81 ⚠️ WF115 timed out (provider instability, IC-RUN-20260415-001) |
 | | `groq/moonshotai/kimi-k2-instruct-0905` | 9 | 25 | 151 | ~800 tok/s | WF77 ⚠️ preview |
 | | `groq/openai/gpt-oss-120b` | 19 | 17 | 376 | ~500 tok/s | WF78 — verbose but low metric density |
 | 🚫 | `groq/openai/gpt-oss-20b` | — | — | — | — | WF79 — FAIL: malformed tool calls |
@@ -241,6 +241,38 @@ Run date: 2026-04-14 | WF95–WF114 | Model under test: `together/MiniMaxAI/Mini
 
 ---
 
+### IC-RUN-20260415-001 — Phase 5: Premium Model Re-Validation (Harness V7.1)
+
+Run date: 2026-04-15 | Harness: V7.1 | WF115–WF119 | Fixed config: `single_investor` / medium tier / balanced / no consultation | Session: `ic-harness-v71`, model: `xai/grok-4-1-fast-reasoning`
+
+**Purpose**: Re-validate premium cloud models against Harness V7.1 anti-fabrication controls, compact output contract, and deployment mode semantics.
+
+#### Scorecard (WF115–WF119)
+
+| Harness WF | Catalog WF | Model | Mode | Result | Notes |
+|-----------|-----------|-------|------|:------:|-------|
+| WF36 | WF115 | `openai/gpt-5.4` | Single | 🚫 BLOCKED | LLM request timed out × 3 (max retries exhausted). `provider_instability_flagged: yes`. Regression from WF81 PASS — provider-side; retry needed. |
+| WF37 | WF116 | `xai/grok-4.20-0309-non-reasoning` | Single / no injection | ⚠️ DEGRADED | W2 synthesis attributed to "Perplexity model" (fabricated artifact source). `--accounts` routing gap. Cloud-only without injection degrades consistently (WF64, WF86, WF116). Hybrid + injection PASS (WF74) unaffected. |
+| WF38 | WF117 | `google/gemini-3.1-pro-preview` | Single | ✅ PASS | Consistent with WF80. Compact contract honored, W6 clean. Recommended for SI/standard. |
+| WF40 | WF118 | `together/meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8` | Single | 🚫 BLOCKED | Tool payload rejected. Confirmed same as WF50 — stable endpoint incompatibility, not transient. |
+| WF41 | WF119 | `together/Qwen/Qwen3-235B-A22B-Instruct-2507-tput` | Single | ✅ PASS | Consistent with WF61. Compact synthesis, guardrail compliant. Recommended for SI/standard. |
+
+#### Bug fixes shipped with IC-RUN-20260415-001 (commit 32dbb81)
+
+| ID | Description | File | Fix |
+|----|-------------|------|-----|
+| BUG-4 | `ic_holdings_run.py` NameError: bare `holdings.json` variable in f-string | `commands/ic_holdings_run.py:35` | `{raw_dir / holdings.json}` → `{raw_dir / 'holdings.json'}` |
+| BUG-5 | `portfolio_analyzer.py` hardcoded `verbose = True` suppressed compact mode on all invocations; caused `PI_COMPACT_VIOLATION` on Raspberry Pi and all non-`--verbose` runs | `commands/portfolio_analyzer.py:810` | `verbose = True` → `verbose = '--verbose' in sys.argv` |
+
+**Key findings:**
+- **gpt-5.4 (WF115)**: Provider timeout × 3 under current OpenAI endpoint conditions. Prior PASS (WF81) was IC-RUN-20260414-003 stack. Flag for retry when provider is stable — skill behavior is sound.
+- **grok-4.20 cloud-only (WF116)**: W2 fabrication confirms no-injection cloud-only is broken across all harness versions (WF64, WF86, WF116). **Hybrid-only with injection** (WF74 PASS) remains the only viable configuration.
+- **gemini-3.1-pro-preview (WF117)**: Consistent PASS across WF65→WF80→WF117. Reliable choice for SI/standard deployments without consultation.
+- **Llama-4-Maverick-FP8 (WF118)**: Confirmed blocked at WF50 and WF118. Tool payload incompatibility is stable; do not retry.
+- **Qwen3-235B-tput (WF119)**: Consistent PASS across WF61→WF119. Reliable for SI/standard deployments.
+
+---
+
 ## Full Test Run Catalog
 
 ### Passing and degraded runs (produced usable W6 synthesis)
@@ -285,6 +317,8 @@ Run date: 2026-04-14 | WF95–WF114 | Model under test: `together/MiniMaxAI/Mini
 | WF92 | `openai/gpt-5.4` + `gemma4-consult` | Hybrid | ✅ | ✅ PASS (QC3=14, QC4=27, QC5=235) — flat vs single-model (QC4=28); consultation neutral |
 | WF93 | `groq/openai/gpt-oss-120b` + `gemma4-consult` | Hybrid | ✅ | ✅ PASS (QC3=11, QC4=8, QC5=237) — severe regression (QC4=17→8, -53%); **do not use hybrid** |
 | WF94 | `groq/moonshotai/kimi-k2-instruct-0905` + `gemma4-consult` | Hybrid | ✅ | ✅ PASS (QC3=11, QC4=35, QC5=201) — gains +40% vs single-model (QC4=25→35); best groq-served hybrid |
+| WF117 | `google/gemini-3.1-pro-preview` (V7.1 re-validate) | Single | — | ✅ PASS — consistent with WF80; compact contract honored |
+| WF119 | `together/Qwen/Qwen3-235B-A22B-Instruct-2507-tput` (V7.1 re-validate) | Single | — | ✅ PASS — consistent with WF61; compact synthesis, guardrail compliant |
 
 ### Awaiting full QC benchmark
 
@@ -317,6 +351,7 @@ Previously listed models and their final verdicts:
 | WF53 | `together/MiniMaxAI/MiniMax-M2.5` | `/portfolio synthesize` not recognized; W5 news non-functional — use M2.7 instead |
 | ~~WF64~~ | ~~`xai/grok-4.20-0309-non-reasoning`~~ | **Superseded by WF74 (PASS).** WF64 W4/W5 tool rejection was transient model-version behavior. Re-tested WF74: all W0–W8 pass cleanly, QC3=14, QC4=17, QC5≈200. |
 | WF67 | `groq/qwen/qwen3-32b` | `/portfolio update-identity` not recognized; W6 thin synthesis (~60 words) with file pointer; W7 offered specific put option/trailing-stop recommendations without educational framing (guardrail issue); preview model |
+| WF116 | `xai/grok-4.20-0309-non-reasoning` (V7.1, no injection) | W2 synthesis fabricated attribution ("Perplexity model"); `--accounts` routing gap. Cloud-only without injection confirmed broken across WF64/WF86/WF116. Hybrid + injection PASS (WF74) unaffected. |
 
 ### Blocked (cannot execute tool calls at all)
 
@@ -328,6 +363,8 @@ Previously listed models and their final verdicts:
 | WF52 | `together/moonshotai/Kimi-K2-Thinking` | Tool payload rejected — thinking variant not tool-call compatible |
 | WF56 | `together/zai-org/GLM-4.7` | Tool payload rejected — GLM-5 works; GLM-4.7 does not |
 | WF57 | `together/Qwen/Qwen3-Next-80B-A3B-Instruct` | Tool payload rejected — MoE 80B variant not compatible |
+| WF115 | `openai/gpt-5.4` (V7.1 run) | LLM request timed out × 3; `provider_instability_flagged`. Regression from WF81 PASS — provider-side instability, not skill defect. Retry needed when provider is stable. |
+| WF118 | `together/meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8` (V7.1 confirm) | Tool payload rejected — confirmed stable incompatibility (same as WF50). Do not retry. |
 
 ---
 
@@ -478,7 +515,7 @@ Run `/portfolio ollama-setup` to auto-detect available models on your endpoint.
 
 ## Reproducibility
 
-The full test harness is at `docs/harness-v612.txt` in the repository root.
+The full test harness is at `docs/harness-v71.txt` in the repository root.
 
 ```bash
 # Prerequisites

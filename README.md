@@ -349,7 +349,7 @@ Full cross-platform battery results: [MODELS.md](MODELS.md)
 | `data/` | Guardrails and symbol/reference data |
 | `tests/` | Unit and contract tests |
 | `pipeline.py` | Full pipeline entry |
-| `docs/harness-v612.txt` | Test harness |
+| `docs/harness-v71.txt` | Test harness |
 | `MODELS.md` | Full model testing catalog and benchmark results |
 
 **Never committed**: `.env`, `~/portfolios/*`, `~/portfolio_reports/`
@@ -375,6 +375,10 @@ conversation with your human FA.
 ---
 
 ## Changelog
+
+**v1.0.1 (2026-04-15)**
+- Fix `ic_holdings_run.py` NameError: bare `holdings.json` variable in print (commit 32dbb81)
+- Fix `portfolio_analyzer.py` hardcoded `verbose = True` that suppressed compact mode on all runs (commit 32dbb81); resolves `PI_COMPACT_VIOLATION` on Raspberry Pi and any non-`--verbose` invocation
 
 **v1.0.0 (2026-04-14)**
 - Initial public release
