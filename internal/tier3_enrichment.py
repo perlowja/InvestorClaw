@@ -154,7 +154,14 @@ class ConsultationClient:
             return False
 
     def consult(self, prompt: str, timeout: int = 120) -> ConsultationResult:
-        """POST to /api/generate and return ConsultationResult."""
+        """POST to /api/generate and return ConsultationResult.
+
+        Retries once (1 s backoff) on empty response — gemma4-series models
+        occasionally burn all num_predict tokens on non-visible formatting tokens
+        under rapid sequential inference, returning an empty response field with
+        done_reason=length. One retry recovers reliably. Mirrors the fix applied
+        to the stonkmode narration path.
+        """
         payload = json.dumps({
             "model": self.model,
             "prompt": prompt,
@@ -167,27 +174,45 @@ class ConsultationClient:
             method="POST",
         )
         t0 = time.time()
-        try:
-            with urllib.request.urlopen(req, timeout=timeout) as resp:
-                body = json.loads(resp.read())
-            inference_ms = int((time.time() - t0) * 1000)
-            return ConsultationResult(
-                response=body.get("response", ""),
-                model=self.model,
-                endpoint=self.endpoint,
-                inference_ms=inference_ms,
-                is_heuristic=False,
-            )
-        except Exception as exc:
-            inference_ms = int((time.time() - t0) * 1000)
-            logger.warning("local-inference inference failed: %s", exc)
-            return ConsultationResult(
-                response="",
-                model=self.model,
-                endpoint=self.endpoint,
-                inference_ms=inference_ms,
-                is_heuristic=True,
-            )
+        for attempt in range(2):
+            try:
+                with urllib.request.urlopen(req, timeout=timeout) as resp:
+                    body = json.loads(resp.read())
+                inference_ms = int((time.time() - t0) * 1000)
+                response = body.get("response", "")
+                if response:
+                    return ConsultationResult(
+                        response=response,
+                        model=self.model,
+                        endpoint=self.endpoint,
+                        inference_ms=inference_ms,
+                        is_heuristic=False,
+                    )
+                if attempt == 0:
+                    logger.warning(
+                        "local-inference returned empty response for %s, retrying (attempt 1/2)",
+                        self.model,
+                    )
+                    time.sleep(1.0)
+            except Exception as exc:
+                inference_ms = int((time.time() - t0) * 1000)
+                logger.warning("local-inference inference failed: %s", exc)
+                return ConsultationResult(
+                    response="",
+                    model=self.model,
+                    endpoint=self.endpoint,
+                    inference_ms=inference_ms,
+                    is_heuristic=True,
+                )
+        inference_ms = int((time.time() - t0) * 1000)
+        logger.warning("local-inference returned empty response after retry, falling back to heuristic")
+        return ConsultationResult(
+            response="",
+            model=self.model,
+            endpoint=self.endpoint,
+            inference_ms=inference_ms,
+            is_heuristic=True,
+        )
 
 
 # ---------------------------------------------------------------------------

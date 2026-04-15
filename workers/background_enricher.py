@@ -297,7 +297,9 @@ def main() -> int:
             progress["estimated_remaining_s"] = int(remaining_count * avg_s)
             _atomic_write(progress_file, progress)
 
-            time.sleep(0.1)
+            time.sleep(0.5)  # 0.5 s between symbols — gives gemma4-series time to clear
+            # internal state between sequential inference calls. 0.1 s was insufficient
+            # and caused empty-response failures (done_reason=length, 0-char output).
 
         # Final: mark complete
         progress["in_progress"] = False
