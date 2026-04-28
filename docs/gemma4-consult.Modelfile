@@ -1,0 +1,42 @@
+# gemma4-consult Modelfile
+#
+# PRODUCTION BACKEND (recommended): llama-server (llama.cpp build ≥ 1144)
+#   Model:   google_gemma-4-E4B-it-Q6_K.gguf  (bartowski, 5.9 GB)
+#   Context: 131072 tokens (128K) — 32× vs previous 4K Ollama config
+#   VRAM:    ~6.1 GB active (model 3.8 GB + KV q8_0 at 128K ~2.1 GB)
+#   Speed:   ~64 tok/s on RTX 4500 Ada 24 GB
+#
+#   gpu-host setup (one-time):
+#     huggingface-cli download bartowski/google_gemma-4-E4B-it-GGUF \
+#       google_gemma-4-E4B-it-Q6_K.gguf --local-dir /data/models/gguf/
+#     sudo systemctl enable --now llama-gemma4
+#
+#   Point InvestorClaw at the new backend:
+#     export INVESTORCLAW_CONSULTATION_ENDPOINT=http://192.0.2.96:8080
+#
+#   Service unit: /etc/systemd/system/llama-gemma4.service
+#   Logs: sudo journalctl -u llama-gemma4 -f
+#
+# LEGACY BACKEND: Ollama (still supported, context limited to Ollama settings)
+#   Requirements:
+#     - Ollama >= 0.20.x with Flash Attention
+#     - >= 12 GB VRAM, CUDA compute capability >= 8.0
+#   Setup:
+#     ollama pull gemma4:e4b
+#     ollama create gemma4-consult -f docs/gemma4-consult.Modelfile
+#   Verify:
+#     ollama list | grep gemma4-consult
+#     python3 scripts/ollama_model_config.py --check \
+#         --endpoint http://your-ollama-host:11434
+
+FROM gemma4:e4b
+
+PARAMETER num_ctx 4096
+PARAMETER num_predict 1200
+PARAMETER temperature 0.65
+PARAMETER top_p 0.9
+PARAMETER repeat_penalty 1.1
+PARAMETER stop "<end_of_turn>"
+PARAMETER stop "<eos>"
+
+SYSTEM "You are a financial data analyst providing educational information only. Your analysis is not investment advice. Answer in 3-5 sentences for simple questions, or up to 400 words for complex topics. Lead with the direct answer. Include specific figures, percentages, and named metrics where available. No preamble, no restating the question."

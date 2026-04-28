@@ -1,0 +1,223 @@
+{
+  "cdmVersion": "5.x",
+  "portfolio": {
+    "aggregationParameters": {
+      "asOfDate": "2026-04-19T15:05:29.112486"
+    },
+    "portfolioState": {
+      "timestamp": "2026-04-19T15:05:29.112481",
+      "positions": [
+        {
+          "product": {
+            "productIdentifier": {
+              "identifierType": "TICKER",
+              "identifier": "AAPL"
+            }
+          },
+          "asset": {
+            "productIdentifier": {
+              "identifierType": "TICKER",
+              "identifier": "AAPL"
+            },
+            "securityType": "Equity",
+            "assetClass": "Stocks",
+            "securityName": "AAPL",
+            "sector": "Technology",
+            "cusip": null,
+            "isin": null
+          },
+          "priceQuantity": {
+            "quantity": {
+              "amount": 50.0,
+              "unit": "shares"
+            },
+            "currentPrice": {
+              "amount": 270.2300109863281,
+              "currency": "USD"
+            },
+            "costBasisPrice": {
+              "amount": 185.5,
+              "currency": "USD"
+            }
+          },
+          "marketValue": 13511.500549316406,
+          "costBasis": 9275.0,
+          "unrealizedGainLoss": 4236.500549316406,
+          "unrealizedGainLossPct": 0.45676555787777967
+        },
+        {
+          "product": {
+            "productIdentifier": {
+              "identifierType": "TICKER",
+              "identifier": "MSFT"
+            }
+          },
+          "asset": {
+            "productIdentifier": {
+              "identifierType": "TICKER",
+              "identifier": "MSFT"
+            },
+            "securityType": "Equity",
+            "assetClass": "Stocks",
+            "securityName": "MSFT",
+            "sector": "Technology",
+            "cusip": null,
+            "isin": null
+          },
+          "priceQuantity": {
+            "quantity": {
+              "amount": 30.0,
+              "unit": "shares"
+            },
+            "currentPrice": {
+              "amount": 422.7900085449219,
+              "currency": "USD"
+            },
+            "costBasisPrice": {
+              "amount": 420.0,
+              "currency": "USD"
+            }
+          },
+          "marketValue": 12683.700256347656,
+          "costBasis": 12600.0,
+          "unrealizedGainLoss": 83.70025634765625,
+          "unrealizedGainLossPct": 0.006642877487909226
+        },
+        {
+          "product": {
+            "productIdentifier": {
+              "identifierType": "TICKER",
+              "identifier": "GOOGL"
+            }
+          },
+          "asset": {
+            "productIdentifier": {
+              "identifierType": "TICKER",
+              "identifier": "GOOGL"
+            },
+            "securityType": "Equity",
+            "assetClass": "Stocks",
+            "securityName": "GOOGL",
+            "sector": "Communication Services",
+            "cusip": null,
+            "isin": null
+          },
+          "priceQuantity": {
+            "quantity": {
+              "amount": 10.0,
+              "unit": "shares"
+            },
+            "currentPrice": {
+              "amount": 341.67999267578125,
+              "currency": "USD"
+            },
+            "costBasisPrice": {
+              "amount": 175.0,
+              "currency": "USD"
+            }
+          },
+          "marketValue": 3416.7999267578125,
+          "costBasis": 1750.0,
+          "unrealizedGainLoss": 1666.7999267578125,
+          "unrealizedGainLossPct": 0.9524571010044642
+        },
+        {
+          "product": {
+            "productIdentifier": {
+              "identifierType": "CUSIP",
+              "identifier": "T 4.750 05/15/2030"
+            }
+          },
+          "asset": {
+            "productIdentifier": {
+              "identifierType": "CUSIP",
+              "identifier": "T 4.750 05/15/2030"
+            },
+            "securityType": "Bond",
+            "assetClass": "Bonds",
+            "securityName": "T 4.750 05/15/2030",
+            "sector": "Municipal Bonds",
+            "cusip": "T 4.750 05/15/2030",
+            "isin": null
+          },
+          "priceQuantity": {
+            "quantity": {
+              "amount": 10000.0,
+              "unit": "units"
+            },
+            "currentPrice": {
+              "amount": 98.5,
+              "currency": "USD"
+            },
+            "costBasisPrice": {
+              "amount": 98.5,
+              "currency": "USD"
+            }
+          },
+          "marketValue": 9850.0,
+          "costBasis": 9850.0,
+          "unrealizedGainLoss": 0.0,
+          "unrealizedGainLossPct": 0.0
+        },
+        {
+          "product": {
+            "productIdentifier": {
+              "identifierType": "ACCOUNT",
+              "identifier": "CASH"
+            }
+          },
+          "asset": {
+            "productIdentifier": {
+              "identifierType": "ACCOUNT",
+              "identifier": "CASH"
+            },
+            "securityType": "Cash",
+            "assetClass": "Cash",
+            "securityName": "Cash: CASH",
+            "sector": null,
+            "cusip": null,
+            "isin": null
+          },
+          "priceQuantity": {
+            "quantity": {
+              "amount": 1.0,
+              "unit": "USD"
+            },
+            "currentPrice": {
+              "amount": 1.0,
+              "currency": "USD"
+            },
+            "costBasisPrice": {
+              "amount": 1.0,
+              "currency": "USD"
+            }
+          },
+          "marketValue": 0.0,
+          "costBasis": 0.0,
+          "unrealizedGainLoss": 0.0,
+          "unrealizedGainLossPct": 0.0
+        }
+      ]
+    },
+    "summary": {
+      "totalPortfolioValue": 39462.000732421875,
+      "totalCostBasis": 33475.0,
+      "totalUnrealizedGainLoss": 5987.000732421875,
+      "totalUnrealizedGainLossPct": 17.884990985576923,
+      "equityValue": 29612.000732421875,
+      "bondValue": 9850.0,
+      "cashValue": 0.0,
+      "equityPct": 75.03927875631692,
+      "bondPct": 24.960721243683082,
+      "cashPct": 0.0
+    }
+  },
+  "metadata": {
+    "analysisType": "Portfolio Holdings Snapshot",
+    "isInvestmentAdvice": false,
+    "disclaimer": "\u26a0\ufe0f EDUCATIONAL ANALYSIS - NOT INVESTMENT ADVICE",
+    "consultProfessional": "This analysis is educational only. Consult a qualified financial professional before making investment decisions.",
+    "source": "investorclaw",
+    "version": "1.0.0-cdm"
+  }
+}

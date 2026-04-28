@@ -1,0 +1,84 @@
+{
+  "cdmVersion": "5.x",
+  "portfolio": {
+    "aggregationParameters": {
+      "asOfDate": "2025-04-19T12:00:00.000000"
+    },
+    "portfolioState": {
+      "timestamp": "2025-04-19T12:00:00.000000",
+      "positions": [
+        {
+          "product": {
+            "productIdentifier": {
+              "identifierType": "TICKER",
+              "identifier": "AAPL"
+            }
+          },
+          "asset": {
+            "productIdentifier": {
+              "identifierType": "TICKER",
+              "identifier": "AAPL"
+            },
+            "securityType": "Equity",
+            "assetClass": "Stocks",
+            "securityName": "AAPL",
+            "sector": "Technology"
+          },
+          "priceQuantity": {
+            "quantity": {
+              "amount": 100.0,
+              "unit": "shares"
+            },
+            "currentPrice": {
+              "amount": 150.0,
+              "currency": "USD"
+            },
+            "costBasisPrice": {
+              "amount": 100.0,
+              "currency": "USD"
+            }
+          },
+          "marketValue": 15000.0,
+          "costBasis": 10000.0,
+          "unrealizedGainLoss": 5000.0,
+          "unrealizedGainLossPct": 0.5
+        },
+        {
+          "product": {
+            "productIdentifier": {
+              "identifierType": "ISIN",
+              "identifier": "US0123456789"
+            }
+          },
+          "asset": {
+            "productIdentifier": {
+              "identifierType": "ISIN",
+              "identifier": "US0123456789"
+            },
+            "securityType": "Bond",
+            "assetClass": "Bonds",
+            "securityName": "Test Bond"
+          },
+          "priceQuantity": {
+            "quantity": {
+              "amount": 50.0,
+              "unit": "shares"
+            },
+            "currentPrice": {
+              "amount": 100.0,
+              "currency": "USD"
+            },
+            "costBasisPrice": {
+              "amount": 100.0,
+              "currency": "USD"
+            }
+          },
+          "marketValue": 5000.0,
+          "costBasis": 5000.0,
+          "unrealizedGainLoss": 0.0,
+          "unrealizedGainLossPct": 0.0
+        }
+      ]
+    }
+  }
+}

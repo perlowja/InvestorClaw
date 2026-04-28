@@ -1,0 +1,44 @@
+{
+  "name": "@argonautsystems/investorclaw",
+  "version": "2.5.0",
+  "description": "Portfolio analysis skill for OpenClaw agents",
+  "license": "SEE LICENSE IN LICENSE",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit"
+  },
+  "openclaw": {
+    "extensions": [
+      "./dist/index.js"
+    ],
+    "compat": {
+      "pluginApi": ">=2026.0.0"
+    }
+  },
+  "peerDependencies": {
+    "openclaw": "*"
+  },
+  "peerDependenciesMeta": {
+    "openclaw": {
+      "optional": true
+    }
+  },
+  "overrides": {
+    "@discordjs/node-pre-gyp": {
+      "tar": "7.5.13"
+    },
+    "axios": "1.15.0",
+    "basic-ftp": "5.3.0",
+    "hono": "4.12.14",
+    "protobufjs": "7.5.5",
+    "tar": "7.5.13"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.39",
+    "typescript": "^5.4.0"
+  },
+  "dependencies": {
+    "@sinclair/typebox": "^0.34.49"
+  }
+}

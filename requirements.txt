@@ -1,0 +1,23 @@
+# InvestorClaw — runtime dependencies (legacy pip path).
+#
+# Phase 2 of IC_DECOMPOSITION (v2.3.0): InvestorClaw is now an adapter
+# package. The Python engine lives in ic-engine; foundation primitives
+# (vision, schema_map, normalize, track, drift) live in clio. This file
+# pulls both as git+ pins so `pip install -r requirements.txt` matches the
+# canonical `uv sync` path documented in pyproject.toml.
+#
+# Use `uv sync` (reads pyproject.toml) when possible; this requirements.txt
+# is the fallback for environments without uv.
+
+# Install the adapter package itself so the investorclaw.py shim (which sets
+# INVESTORCLAW_SKILL_DIR + loads the skill-checkout .env before delegating to
+# ic_engine.cli) lands on PATH. Without this line, `pip install -r
+# requirements.txt` would only install the engine + foundation, and the
+# transitive `investorclaw` console script from ic-engine would skip the shim.
+.
+
+# Engine + foundation are also pulled transitively via pyproject.toml; pinning
+# them explicitly here documents the version expectations for readers of this
+# fallback path.
+ic-engine @ git+https://gitlab.com/argonautsystems/ic-engine.git@v2.5.1
+clio @ git+https://gitlab.com/argonautsystems/clio.git@v0.1.0

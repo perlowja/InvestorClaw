@@ -1,0 +1,96 @@
+[build-system]
+requires = ["setuptools>=70", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "investorclaw"
+version = "2.5.0"
+description = "Adapter package for the InvestorClaw skill: install scripts, manifests, and slash-command contracts for OpenClaw / Hermes / ZeroClaw / standalone runtimes. Engine + foundation primitives live in ic-engine and clio respectively."
+license = { text = "Apache 2.0 Dual License" }
+requires-python = ">=3.10"
+readme = "README.md"
+keywords = ["portfolio", "finance", "openai", "openclaw", "finos", "claws-runtime"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Financial and Insurance Industry",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Office/Business :: Financial",
+]
+
+# Phase 2 of IC_DECOMPOSITION: InvestorClaw is now an adapter package. The
+# Python engine (analyzers, providers, runtime, models, services, rendering,
+# workers, commands, internal, setup, config) lives in ic-engine. AI-driven
+# foundation primitives (vision extraction, schema mapping, normalization,
+# tracking, drift) live in clio. InvestorClaw declares both as deps;
+# `pip install .` here drags the substrate in transitively.
+dependencies = [
+    "ic-engine @ git+https://gitlab.com/argonautsystems/ic-engine.git@v2.5.1",
+    "clio @ git+https://gitlab.com/argonautsystems/clio.git@v0.1.0",
+]
+
+# Adapter-side `investorclaw` entry. Codex review of the v2.3.0 cut flagged
+# this: ic-engine also ships an `investorclaw` console script ("ic_engine.cli:
+# main"), which would skip our shim. The shim is the only place the adapter
+# checkout's INVESTORCLAW_SKILL_DIR + .env loading happens. Pip installs
+# transitive deps first and then the top-level project, so this entry wins
+# on PATH after `pip install .` / `uv sync` and routes the binary through the
+# shim. Result: `investorclaw foo` from terminal goes through the adapter shim
+# -> ic_engine.cli.main, with SKILL_DIR/.env correctly set up.
+[project.scripts]
+investorclaw = "investorclaw:main"
+
+[project.urls]
+Homepage = "https://gitlab.com/argonautsystems/InvestorClaw"
+Repository = "https://gitlab.com/argonautsystems/InvestorClaw"
+Issues = "https://gitlab.com/argonautsystems/InvestorClaw"
+Spec = "https://gitlab.com/argonautsystems/InvestorClaw/-/blob/main/docs/IC_DECOMPOSITION_SPEC.md"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+
+# Adapter scaffolding (openclaw/, hermes/, zeroclaw/, standalone/,
+# contract/, harness/) is shell scripts, manifests, and Markdown — not
+# importable Python. The only Python module shipped is investorclaw.py at
+# the repo root: the back-compat shim that sets INVESTORCLAW_SKILL_DIR,
+# loads .env, and delegates to ic_engine.cli.main. Declared as a top-level
+# py-module so `[project.scripts] investorclaw = "investorclaw:main"`
+# resolves on PATH after install.
+[tool.setuptools]
+packages = []
+py-modules = ["investorclaw"]
+
+[tool.uv]
+python-preference = "managed"
+required-version = ">=0.5"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=5.0",
+    "black>=23.0",
+    "ruff>=0.1.0",
+]
+
+[tool.black]
+line-length = 100
+target-version = ["py310", "py311", "py312", "py313"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+ignore = [
+    "E501",
+    "E402",
+    "E741",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*.py" = ["F811", "F401"]

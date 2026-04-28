@@ -1,0 +1,219 @@
+{
+  "blitz_thunderbuy.png": {
+    "filename": "blitz_thunderbuy.png",
+    "key": "blitz_thunderbuy",
+    "display_name": "Blitz Thunderbuy",
+    "archetype": "high_energy",
+    "cue": "lightning desk-slap energy"
+  },
+  "brick_stonksworth.png": {
+    "filename": "brick_stonksworth.png",
+    "key": "brick_stonksworth",
+    "display_name": "Brick \"Diamond Hands\" Stonksworth",
+    "archetype": "high_energy",
+    "cue": "diamond hands conviction"
+  },
+  "sal_decibelli.png": {
+    "filename": "sal_decibelli.png",
+    "key": "sal_decibelli",
+    "display_name": "Sal \"The Pit\" Decibelli",
+    "archetype": "high_energy",
+    "cue": "trading pit volume"
+  },
+  "aldrich_whisperdeal.png": {
+    "filename": "aldrich_whisperdeal.png",
+    "key": "aldrich_whisperdeal",
+    "display_name": "Aldrich Whisperdeal",
+    "archetype": "serious",
+    "cue": "quiet deal sources"
+  },
+  "prescott_pennington_smythe.png": {
+    "filename": "prescott_pennington_smythe.png",
+    "key": "prescott_pennington_smythe",
+    "display_name": "Prescott Pennington-Smythe",
+    "archetype": "serious",
+    "cue": "macro interview gravitas"
+  },
+  "dominique_valcourt.png": {
+    "filename": "dominique_valcourt.png",
+    "key": "dominique_valcourt",
+    "display_name": "Dominique \"Closing Bell\" Valcourt",
+    "archetype": "serious",
+    "cue": "closing bell authority"
+  },
+  "big_jim_cashonly.png": {
+    "filename": "big_jim_cashonly.png",
+    "key": "big_jim_cashonly",
+    "display_name": "Big Jim Cashonly",
+    "archetype": "mentors",
+    "cue": "coach-like tough love"
+  },
+  "sunny_rainyday_fund.png": {
+    "filename": "sunny_rainyday_fund.png",
+    "key": "sunny_rainyday_fund",
+    "display_name": "Sunny Rainyday-Fund",
+    "archetype": "mentors",
+    "cue": "rainy day fund calm"
+  },
+  "baron_von_cashflow.png": {
+    "filename": "baron_von_cashflow.png",
+    "key": "baron_von_cashflow",
+    "display_name": "Baron Von Cashflow",
+    "archetype": "mentors",
+    "cue": "cash-flow obsession"
+  },
+  "biff_chadsworth_iii.png": {
+    "filename": "biff_chadsworth_iii.png",
+    "key": "biff_chadsworth_iii",
+    "display_name": "Biff Chadsworth III",
+    "archetype": "policy_veterans",
+    "cue": "policy optimism"
+  },
+  "skip_contrarian.png": {
+    "filename": "skip_contrarian.png",
+    "key": "skip_contrarian",
+    "display_name": "Skip \"Well, Actually\" Contrarian",
+    "archetype": "policy_veterans",
+    "cue": "well-actually skepticism"
+  },
+  "dorin_goleli.png": {
+    "filename": "dorin_goleli.png",
+    "key": "dorin_goleli",
+    "display_name": "Dorin Goleli, Keeper of the Eternal Ledger",
+    "archetype": "wildcards",
+    "cue": "eternal ledger magic"
+  },
+  "aria_7.png": {
+    "filename": "aria_7.png",
+    "key": "aria_7",
+    "display_name": "ARIA-7",
+    "archetype": "wildcards",
+    "cue": "sentient analysis unit"
+  },
+  "professor_goldbug.png": {
+    "filename": "professor_goldbug.png",
+    "key": "professor_goldbug",
+    "display_name": "Professor Digby Goldbug",
+    "archetype": "wildcards",
+    "cue": "goldbug scholarship"
+  },
+  "chaz_leveridge.png": {
+    "filename": "chaz_leveridge.png",
+    "key": "chaz_leveridge",
+    "display_name": "Chaz \"The Razor\" Leveridge",
+    "archetype": "wildcards",
+    "cue": "leveraged razor edge"
+  },
+  "lafayette_beaumont.png": {
+    "filename": "lafayette_beaumont.png",
+    "key": "lafayette_beaumont",
+    "display_name": "Lafayette \"$tacks\" Beaumont, MBA",
+    "archetype": "wildcards",
+    "cue": "MBA stacks"
+  },
+  "glorb.png": {
+    "filename": "glorb.png",
+    "key": "glorb",
+    "display_name": "Glorb, Senior Ledger-Keeper of the Seventh Vault",
+    "archetype": "wildcards",
+    "cue": "seventh vault ledger"
+  },
+  "king_donny.png": {
+    "filename": "king_donny.png",
+    "key": "king_donny",
+    "display_name": "King Donny (The Deal Whisperer)",
+    "archetype": "wildcards",
+    "cue": "deal-whispering monarch"
+  },
+  "zsa_zsa_von_portfolio.png": {
+    "filename": "zsa_zsa_von_portfolio.png",
+    "key": "zsa_zsa_von_portfolio",
+    "display_name": "Zsa Zsa Von Portfolio",
+    "archetype": "wildcards",
+    "cue": "glamorous portfolio theater"
+  },
+  "wendell_the_pattern.png": {
+    "filename": "wendell_the_pattern.png",
+    "key": "wendell_the_pattern",
+    "display_name": "Wendell \"The Pattern\" Pruitt",
+    "archetype": "wildcards",
+    "cue": "hidden pattern hunter"
+  },
+  "professor_what.png": {
+    "filename": "professor_what.png",
+    "key": "professor_what",
+    "display_name": "Professor What?",
+    "archetype": "wildcards",
+    "cue": "temporal market confusion"
+  },
+  "chico_reyes.png": {
+    "filename": "chico_reyes.png",
+    "key": "chico_reyes",
+    "display_name": "Chico \"The Vibe\" Reyes",
+    "archetype": "cosmic",
+    "cue": "market vibe reader"
+  },
+  "farout_farley.png": {
+    "filename": "farout_farley.png",
+    "key": "farout_farley",
+    "display_name": "\"Far Out\" Farley McGee",
+    "archetype": "cosmic",
+    "cue": "cosmic market drift"
+  },
+  "krystal_kash.png": {
+    "filename": "krystal_kash.png",
+    "key": "krystal_kash",
+    "display_name": "Krystal \"The Receipt\" Kash",
+    "archetype": "digital",
+    "cue": "receipt-driven social proof"
+  },
+  "zara_zhao.png": {
+    "filename": "zara_zhao.png",
+    "key": "zara_zhao",
+    "display_name": "Zara \"Viral\" Zhao",
+    "archetype": "digital",
+    "cue": "viral algorithm energy"
+  },
+  "priya_hodl.png": {
+    "filename": "priya_hodl.png",
+    "key": "priya_hodl",
+    "display_name": "Priya \"HODL\" Sharma",
+    "archetype": "digital",
+    "cue": "HODL conviction"
+  },
+  "victor_voss.png": {
+    "filename": "victor_voss.png",
+    "key": "victor_voss",
+    "display_name": "Victor \"The Vulture\" Voss",
+    "archetype": "bears",
+    "cue": "vulture bear thesis"
+  },
+  "hans_dieter_braun.png": {
+    "filename": "hans_dieter_braun.png",
+    "key": "hans_dieter_braun",
+    "display_name": "Hans-Dieter Braun",
+    "archetype": "bears",
+    "cue": "disciplined doom spiral"
+  },
+  "amara_osei.png": {
+    "filename": "amara_osei.png",
+    "key": "amara_osei",
+    "display_name": "Dr. Amara Osei-Bonsu",
+    "archetype": "serious",
+    "cue": "risk-control authority"
+  },
+  "carmen_torres.png": {
+    "filename": "carmen_torres.png",
+    "key": "carmen_torres",
+    "display_name": "Carmen \"Fib\" Torres",
+    "archetype": "serious",
+    "cue": "technical pattern analysis"
+  },
+  "dr_stonk.png": {
+    "filename": "dr_stonk.png",
+    "key": "dr_stonk",
+    "display_name": "Dr. Stonk",
+    "archetype": "educators",
+    "cue": "logical financial education"
+  }
+}

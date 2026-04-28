@@ -1,0 +1,167 @@
+{
+  "id": "investorclaw",
+  "name": "InvestorClaw",
+  "description": "Portfolio analysis skill for OpenClaw agents. Ask natural-language portfolio questions through ic-engine v2.5.0; InvestorClaw eagerly runs the deterministic pipeline, stores HMAC-signed JSON envelopes, and narrates verbatim from authoritative outputs. Built-in financial advice guardrails enforce educational-only output.",
+  "version": "2.5.0",
+  "homepage": "https://gitlab.com/argonautsystems/InvestorClaw",
+  "repository": "https://gitlab.com/argonautsystems/InvestorClaw",
+  "license": "Apache 2.0 Dual License",
+  "commands": [
+    "investorclaw ask",
+    "investorclaw refresh"
+  ],
+  "configSchema": {
+    "FINNHUB_KEY": {
+      "type": "string",
+      "label": "Finnhub API Key",
+      "description": "Real-time quotes and analyst ratings. Free key at https://finnhub.io/register",
+      "secret": true,
+      "required": false
+    },
+    "NEWSAPI_KEY": {
+      "type": "string",
+      "label": "NewsAPI Key",
+      "description": "News correlation for portfolio holdings. Free key at https://newsapi.org/register",
+      "secret": true,
+      "required": false
+    },
+    "MASSIVE_API_KEY": {
+      "type": "string",
+      "label": "Massive API Key",
+      "description": "Market data via Massive (polygon.io-compatible). Sign up at https://polygon.io/dashboard/signup",
+      "secret": true,
+      "required": false
+    },
+    "ALPHA_VANTAGE_KEY": {
+      "type": "string",
+      "label": "Alpha Vantage API Key",
+      "description": "Supplemental price data. Free key at https://www.alphavantage.co/support/#api-key",
+      "secret": true,
+      "required": false
+    },
+    "FRED_API_KEY": {
+      "type": "string",
+      "label": "FRED API Key",
+      "description": "Treasury & TIPS benchmark yields (St. Louis Fed). Free key at https://fred.stlouisfed.org/docs/api/api_key.html",
+      "secret": true,
+      "required": false
+    },
+    "INVESTOR_CLAW_REPORTS_DIR": {
+      "type": "string",
+      "label": "Reports Output Directory",
+      "description": "Where analysis JSON, CSV, and Excel reports are saved. Defaults to ~/portfolio_reports/",
+      "required": false,
+      "default": "~/portfolio_reports"
+    },
+    "INVESTOR_CLAW_PORTFOLIO_DIR": {
+      "type": "string",
+      "label": "Portfolio Files Directory",
+      "description": "Directory containing your portfolio CSV/Excel files. Defaults to the skill's portfolios/ subdirectory.",
+      "required": false,
+      "default": ""
+    },
+    "INVESTORCLAW_CONSULTATION_ENABLED": {
+      "type": "boolean",
+      "label": "Enable Local LLM Consultation",
+      "description": "Offload heavy portfolio synthesis to a local llama-server (recommended) or Ollama model. When disabled, InvestorClaw uses keyword heuristics (still fully functional, less nuanced).",
+      "required": false,
+      "default": false
+    },
+    "INVESTORCLAW_CONSULTATION_ENDPOINT": {
+      "type": "string",
+      "label": "llama-server / Ollama Endpoint",
+      "description": "URL of your llama-server (recommended, port 8080, 131K context) or Ollama server (legacy, port 11434, 4K context). Examples: http://localhost:8080 (local llama-server) or http://your-gpu-host:8080 (remote llama-server) or http://localhost:11434 (local Ollama). Ask InvestorClaw to configure models after install.",
+      "required": false,
+      "default": ""
+    },
+    "INVESTORCLAW_CONSULTATION_MODEL": {
+      "type": "string",
+      "label": "Consultation Model",
+      "description": "Model name for portfolio synthesis. Recommended: gemma4-consult (llama-server with 131K context, ~73 tok/s). For Ollama: gemma4:e4b (~4K context, ~66 tok/s). Also tested: nemotron-3-nano, qwen2.5:14b. Ask InvestorClaw to auto-detect available models after install.",
+      "required": false,
+      "default": "gemma4-consult"
+    },
+    "INVESTORCLAW_CONSULTATION_HMAC_KEY": {
+      "type": "string",
+      "label": "Consultation HMAC Key",
+      "description": "HMAC-SHA256 signing key for synthesis fingerprints. Auto-generated on first run if not set. Used to verify that consultation output has not been fabricated or modified.",
+      "secret": true,
+      "required": false,
+      "default": ""
+    },
+    "INVESTORCLAW_CARD_FORMAT": {
+      "type": "string",
+      "label": "Consultation Card Format",
+      "description": "Artifact format for local consultation output: json, svg, or both. Use json for mobile/text-only channels.",
+      "required": false,
+      "default": "both"
+    },
+    "INVESTORCLAW_STONKMODE_PROVIDER": {
+      "type": "string",
+      "label": "Stonkmode Provider",
+      "description": "Narration provider for stonkmode: ollama or openai_compat.",
+      "required": false,
+      "default": "ollama"
+    },
+    "INVESTORCLAW_STONKMODE_ENDPOINT": {
+      "type": "string",
+      "label": "Stonkmode Cloud Endpoint",
+      "description": "OpenAI-compatible chat/completions base URL for stonkmode when provider is openai_compat.",
+      "required": false,
+      "default": "https://api.openai.com/v1"
+    },
+    "INVESTORCLAW_STONKMODE_API_KEY": {
+      "type": "string",
+      "label": "Stonkmode Cloud API Key",
+      "description": "Bearer token for the OpenAI-compatible stonkmode provider.",
+      "secret": true,
+      "required": false,
+      "default": ""
+    },
+    "INVESTORCLAW_STONKMODE_MODEL": {
+      "type": "string",
+      "label": "Stonkmode Model",
+      "description": "Model used for stonkmode narration. Defaults to gemma4:e4b for Ollama or grok-3-fast for openai_compat.",
+      "required": false,
+      "default": ""
+    },
+    "INVESTORCLAW_NARRATIVE_PROVIDER": {
+      "type": "string",
+      "label": "Narrative Provider",
+      "description": "Provider for narration generation: ollama (local default) or openai_compat (cloud providers like Together.ai, xAI, OpenAI).",
+      "required": false,
+      "default": "ollama"
+    },
+    "INVESTORCLAW_NARRATIVE_ENDPOINT": {
+      "type": "string",
+      "label": "Narrative Endpoint",
+      "description": "Base URL for narration provider. Examples: http://localhost:11434 (local Ollama), http://192.0.2.96:8080 (remote llama-server), https://api.together.xyz/v1 (Together.ai), https://api.x.ai/v1 (xAI).",
+      "required": false,
+      "default": ""
+    },
+    "INVESTORCLAW_NARRATIVE_API_KEY": {
+      "type": "string",
+      "label": "Narrative API Key",
+      "description": "Bearer token for cloud-based narration providers (Together.ai, xAI, OpenAI). Not needed for local Ollama/llama-server.",
+      "secret": true,
+      "required": false,
+      "default": ""
+    },
+    "INVESTORCLAW_NARRATIVE_MODEL": {
+      "type": "string",
+      "label": "Narrative Model",
+      "description": "Model for stonkmode narration. Cloud examples: MiniMaxAI/MiniMax-M2.7 (Together.ai), grok-4-1-fast (xAI), gpt-4o (OpenAI). Local: gemma4:e4b (Ollama), gemma4-consult (llama-server).",
+      "required": false,
+      "default": "gemma4:e4b"
+    }
+  },
+  "openclaw": {
+    "compat": {
+      "pluginApi": ">=2026.0.0"
+    },
+    "extensions": [
+      "./dist/index.js"
+    ],
+    "emoji": "\ud83d\udcca"
+  }
+}

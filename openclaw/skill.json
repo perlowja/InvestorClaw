@@ -1,0 +1,32 @@
+{
+  "name": "investorclaw",
+  "version": "2.5.0",
+  "type": "skill",
+  "description": "Deterministic-first portfolio analysis and market intelligence. Ask natural-language questions through ic-engine v2.5.0; InvestorClaw eagerly runs the pipeline, stores HMAC-signed JSON envelopes, and narrates verbatim from authoritative outputs.",
+  "author": {
+    "name": "Jason Perlow",
+    "url": "https://github.com/argonautsystems"
+  },
+  "license": "Apache-2.0",
+  "homepage": "https://gitlab.com/argonautsystems/InvestorClaw",
+  "repository": {
+    "type": "git",
+    "url": "https://gitlab.com/argonautsystems/InvestorClaw.git"
+  },
+  "keywords": [
+    "portfolio",
+    "finance",
+    "investing",
+    "bonds",
+    "analysis",
+    "optimization",
+    "vision"
+  ],
+  "commands": [
+    "investorclaw ask",
+    "investorclaw refresh"
+  ],
+  "entrypoint": "investorclaw",
+  "requirements": "requirements.txt",
+  "python_version": ">=3.10"
+}

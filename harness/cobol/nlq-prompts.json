@@ -1,0 +1,455 @@
+{
+  "$comment": "Agentic COBOL \u2014 natural-language acceptance tests for fleet agent routing. Canonical prompt set for the InvestorClaw + InvestorClaude fleet. Single source of truth for both the InvestorClaw cross-runtime pilot (OpenClaw / ZeroClaw / Hermes) and the InvestorClaude text harness (Claude Code). Promoted from SKILL.toml \u00a7 NATURAL LANGUAGE QUERY MAP plus the v2.3.4 starter set; expected_routes updated for v2.5.0 consolidated surface. v2.5.0. See harness/cobol/AGENTIC_COBOL_SPEC.md for methodology.",
+  "schema_version": "1.0",
+  "version": "2.5.0",
+  "fleet_gates": {
+    "$comment": "Per-runtime gates reflect the LLM noise floor of each platform on a multi-tool surface. OpenClaw uses GRAEAE consensus orchestration \u2014 deterministic-ish, expected near-perfect. ZeroClaw and Claude Code are LLM-driven, ~80% noise floor. Hermes historically runs smaller models, ~60% floor.",
+    "openclaw": {
+      "min_pass": 25,
+      "publish_bar": 27
+    },
+    "zeroclaw": {
+      "min_pass": 21,
+      "publish_bar": 24
+    },
+    "hermes": {
+      "min_pass": 17,
+      "publish_bar": 20
+    },
+    "claudecode": {
+      "min_pass": 21,
+      "publish_bar": 24
+    }
+  },
+  "prompts": [
+    {
+      "id": "p01-holdings-1",
+      "intent": "portfolio-snapshot",
+      "prompt": "What is in my portfolio right now?",
+      "expected_routes": {
+        "investorclaw": [
+          "portfolio_view section=holdings",
+          "holdings"
+        ],
+        "investorclaude": [
+          "ask"
+        ]
+      }
+    },
+    {
+      "id": "p02-holdings-2",
+      "intent": "portfolio-snapshot",
+      "prompt": "Show my current holdings.",
+      "expected_routes": {
+        "investorclaw": [
+          "portfolio_view section=holdings",
+          "holdings"
+        ],
+        "investorclaude": [
+          "ask"
+        ]
+      }
+    },
+    {
+      "id": "p03-performance-1",
+      "intent": "performance-check",
+      "prompt": "How has my portfolio performed this year?",
+      "expected_routes": {
+        "investorclaw": [
+          "portfolio_view section=performance",
+          "performance"
+        ],
+        "investorclaude": [
+          "ask"
+        ]
+      }
+    },
+    {
+      "id": "p04-performance-2",
+      "intent": "performance-check",
+      "prompt": "What is my Sharpe ratio and max drawdown?",
+      "expected_routes": {
+        "investorclaw": [
+          "portfolio_view section=performance",
+          "performance"
+        ],
+        "investorclaude": [
+          "ask"
+        ]
+      }
+    },
+    {
+      "id": "p05-analyst-1",
+      "intent": "analyst-ratings",
+      "prompt": "What do Wall Street analysts think of my top holdings?",
+      "expected_routes": {
+        "investorclaw": [
+          "portfolio_view section=analyst",
+          "analyst"
+        ],
+        "investorclaude": [
+          "ask"
+        ]
+      }
+    },
+    {
+      "id": "p06-news-holdings-1",
+      "intent": "news-on-holdings",
+      "prompt": "Any news on my holdings today?",
+      "expected_routes": {
+        "investorclaw": [
+          "portfolio_view section=news",
+          "news"
+        ],
+        "investorclaude": [
+          "ask"
+        ]
+      }
+    },
+    {
+      "id": "p07-synth-1",
+      "intent": "risk-synthesis",
+      "prompt": "Give me the full picture of my portfolio.",
+      "expected_routes": {
+        "investorclaw": [
+          "portfolio_compute section=synthesize",
+          "synthesize",
+          "analysis"
+        ],
+        "investorclaude": [
+          "ask"
+        ]
+      }
+    },
+    {
+      "id": "p08-synth-2",
+      "intent": "risk-synthesis",
+      "prompt": "Analyze my portfolio risk.",
+      "expected_routes": {
+        "investorclaw": [
+          "portfolio_compute section=synthesize",
+          "synthesize"
+        ],
+        "investorclaude": [
+          "ask"
+        ]
+      }
+    },
+    {
+      "id": "p09-optimize-sharpe",
+      "intent": "optimize",
+      "prompt": "What allocation maximizes my Sharpe ratio?",
+      "expected_routes": {
+        "investorclaw": [
+          "portfolio_compute section=optimize-sharpe",
+          "optimize"
+        ],
+        "investorclaude": [
+          "ask"
+        ]
+      }
+    },
+    {
+      "id": "p10-optimize-minvol",
+      "intent": "optimize",
+      "prompt": "What is the minimum-volatility allocation for my portfolio?",
+      "expected_routes": {
+        "investorclaw": [
+          "portfolio_compute section=optimize-minvol",
+          "optimize"
+        ],
+        "investorclaude": [
+          "ask"
+        ]
+      }
+    },
+    {
+      "id": "p11-target-allocation",
+      "intent": "target-allocation",
+      "prompt": "What is my target allocation?",
+      "expected_routes": {
+        "investorclaw": [
+          "portfolio_target section=allocation",
+          "target"
+        ],
+        "investorclaude": [
+          "ask"
+        ]
+      }
+    },
+    {
+      "id": "p12-rebalance-1",
+      "intent": "rebalance",
+      "prompt": "Should I rebalance my portfolio?",
+      "expected_routes": {
+        "investorclaw": [
+          "portfolio_scenario section=rebalance",
+          "scenario",
+          "rebalance"
+        ],
+        "investorclaude": [
+          "ask"
+        ]
+      }
+    },
+    {
+      "id": "p13-rebalance-tax",
+      "intent": "tax-rebalance",
+      "prompt": "Rebalance my portfolio with tax impact in mind.",
+      "expected_routes": {
+        "investorclaw": [
+          "portfolio_scenario section=tax-aware",
+          "rebalance-tax"
+        ],
+        "investorclaude": [
+          "ask"
+        ]
+      }
+    },
+    {
+      "id": "p14-bond-strategy",
+      "intent": "bond-strategy",
+      "prompt": "What bond laddering strategy should I use given current rates?",
+      "expected_routes": {
+        "investorclaw": [
+          "portfolio_bonds section=strategy",
+          "fixed-income",
+          "bonds"
+        ],
+        "investorclaude": [
+          "ask"
+        ]
+      }
+    },
+    {
+      "id": "p15-bonds-1",
+      "intent": "bond-analysis",
+      "prompt": "Show me my bond exposure and yield-to-maturity for fixed income.",
+      "expected_routes": {
+        "investorclaw": [
+          "portfolio_bonds section=analysis",
+          "bonds"
+        ],
+        "investorclaude": [
+          "ask"
+        ]
+      }
+    },
+    {
+      "id": "p16-news-merger",
+      "intent": "news-merger",
+      "prompt": "Any big mergers or acquisitions in the news today?",
+      "expected_routes": {
+        "investorclaw": [
+          "portfolio_market section=news topic=merger",
+          "market"
+        ],
+        "investorclaude": [
+          "ask"
+        ]
+      }
+    },
+    {
+      "id": "p17-news-crypto",
+      "intent": "news-crypto",
+      "prompt": "What is happening in crypto markets today?",
+      "expected_routes": {
+        "investorclaw": [
+          "portfolio_market section=news topic=crypto",
+          "market"
+        ],
+        "investorclaude": [
+          "ask"
+        ]
+      }
+    },
+    {
+      "id": "p18-news-forex",
+      "intent": "news-forex",
+      "prompt": "What is happening with the dollar and EUR/USD today?",
+      "expected_routes": {
+        "investorclaw": [
+          "portfolio_market section=news topic=forex",
+          "market"
+        ],
+        "investorclaude": [
+          "ask"
+        ]
+      }
+    },
+    {
+      "id": "p19-news-general",
+      "intent": "news-general",
+      "prompt": "What is happening in financial markets today?",
+      "expected_routes": {
+        "investorclaw": [
+          "portfolio_market section=news topic=general",
+          "market"
+        ],
+        "investorclaude": [
+          "ask"
+        ]
+      }
+    },
+    {
+      "id": "p20-deflect-concept",
+      "intent": "deflect-concept",
+      "prompt": "What does yield-to-maturity mean?",
+      "expected_routes": {
+        "investorclaw": [
+          "portfolio_market section=concept",
+          "market",
+          "DEFLECT_OK"
+        ],
+        "investorclaude": [
+          "DEFLECT_OK",
+          "ask"
+        ]
+      },
+      "scoring_note": "Deflection prompt \u2014 should NOT route to a portfolio data command. Acceptable: portfolio_market section=concept, OR conceptual answer with no tool call."
+    },
+    {
+      "id": "p21-deflect-market",
+      "intent": "deflect-market",
+      "prompt": "What is the current price of NVDA?",
+      "expected_routes": {
+        "investorclaw": [
+          "portfolio_market section=market",
+          "portfolio_lookup --symbol",
+          "lookup",
+          "market"
+        ],
+        "investorclaude": [
+          "ask"
+        ]
+      }
+    },
+    {
+      "id": "p22-market-data",
+      "intent": "market-data",
+      "prompt": "How is the S&P 500 doing?",
+      "expected_routes": {
+        "investorclaw": [
+          "portfolio_market section=market",
+          "market"
+        ],
+        "investorclaude": [
+          "ask"
+        ]
+      }
+    },
+    {
+      "id": "p23-eod-1",
+      "intent": "eod-report",
+      "prompt": "Generate today's EOD report.",
+      "expected_routes": {
+        "investorclaw": [
+          "portfolio_report",
+          "eod-report",
+          "report"
+        ],
+        "investorclaude": [
+          "ask"
+        ]
+      }
+    },
+    {
+      "id": "p24-eod-2",
+      "intent": "eod-report",
+      "prompt": "Give me a daily summary of my portfolio.",
+      "expected_routes": {
+        "investorclaw": [
+          "portfolio_report",
+          "eod-report"
+        ],
+        "investorclaude": [
+          "ask"
+        ]
+      }
+    },
+    {
+      "id": "p25-cashflow",
+      "intent": "cashflow",
+      "prompt": "What is my projected cash flow from dividends and bond coupons next quarter?",
+      "expected_routes": {
+        "investorclaw": [
+          "portfolio_compute section=cashflow",
+          "cashflow"
+        ],
+        "investorclaude": [
+          "ask"
+        ]
+      }
+    },
+    {
+      "id": "p26-peer",
+      "intent": "peer",
+      "prompt": "How does my portfolio compare to a benchmark like VTI?",
+      "expected_routes": {
+        "investorclaw": [
+          "portfolio_compute section=peer",
+          "peer"
+        ],
+        "investorclaude": [
+          "ask"
+        ]
+      }
+    },
+    {
+      "id": "p27-lookup-ticker",
+      "intent": "lookup-ticker",
+      "prompt": "Tell me about AAPL.",
+      "expected_routes": {
+        "investorclaw": [
+          "portfolio_lookup --symbol AAPL",
+          "lookup"
+        ],
+        "investorclaude": [
+          "ask"
+        ]
+      }
+    },
+    {
+      "id": "p28-lookup-accounts",
+      "intent": "lookup-accounts",
+      "prompt": "What brokerage accounts do I have?",
+      "expected_routes": {
+        "investorclaw": [
+          "portfolio_lookup --accounts",
+          "lookup"
+        ],
+        "investorclaude": [
+          "ask"
+        ]
+      }
+    },
+    {
+      "id": "p29-setup",
+      "intent": "setup",
+      "prompt": "How do I set up InvestorClaude for the first time?",
+      "expected_routes": {
+        "investorclaw": [
+          "portfolio_config section=setup",
+          "setup"
+        ],
+        "investorclaude": [
+          "ask"
+        ]
+      }
+    },
+    {
+      "id": "p30-guardrails",
+      "intent": "guardrails",
+      "prompt": "What financial-advice guardrails are in place?",
+      "expected_routes": {
+        "investorclaw": [
+          "portfolio_config section=guardrails",
+          "guardrails"
+        ],
+        "investorclaude": [
+          "ask"
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,319 @@
+{
+  "phase": "3c",
+  "timestamp": 1776631032.994571,
+  "tiers": {
+    "tier_1": {
+      "tier": 1,
+      "timestamp": 1776631032.994667,
+      "devices": {
+        "mac-dev-host": {
+          "tier": 1,
+          "device": "mac-dev-host",
+          "provider": "gemma",
+          "commands_tested": 10,
+          "commands_passed": 10,
+          "commands_failed": 0,
+          "total_time_seconds": 0.0003101825714111328,
+          "command_results": [
+            {
+              "command": "analyst",
+              "description": "Wall Street ratings and consensus data",
+              "execution_time_seconds": 1.0967254638671875e-05,
+              "status": "passed",
+              "ic_result_valid": true,
+              "error": null,
+              "mock": true
+            },
+            {
+              "command": "bonds",
+              "description": "Bond analytics: YTM, duration, FRED comparison",
+              "execution_time_seconds": 1.1205673217773438e-05,
+              "status": "passed",
+              "ic_result_valid": true,
+              "error": null,
+              "mock": true
+            },
+            {
+              "command": "fixed-income",
+              "description": "Fixed-income focused analysis",
+              "execution_time_seconds": 1.0013580322265625e-05,
+              "status": "passed",
+              "ic_result_valid": true,
+              "error": null,
+              "mock": true
+            },
+            {
+              "command": "holdings",
+              "description": "Portfolio snapshot with current prices",
+              "execution_time_seconds": 1.0967254638671875e-05,
+              "status": "passed",
+              "ic_result_valid": true,
+              "error": null,
+              "mock": true
+            },
+            {
+              "command": "news",
+              "description": "Recent news and sentiment for holdings",
+              "execution_time_seconds": 1.0013580322265625e-05,
+              "status": "passed",
+              "ic_result_valid": true,
+              "error": null,
+              "mock": true
+            },
+            {
+              "command": "news-plan",
+              "description": "News correlation and impact analysis",
+              "execution_time_seconds": 1.0013580322265625e-05,
+              "status": "passed",
+              "ic_result_valid": true,
+              "error": null,
+              "mock": true
+            },
+            {
+              "command": "optimize",
+              "description": "Modern Portfolio Theory optimization",
+              "execution_time_seconds": 1.0013580322265625e-05,
+              "status": "passed",
+              "ic_result_valid": true,
+              "error": null,
+              "mock": true
+            },
+            {
+              "command": "performance",
+              "description": "Returns, Sharpe ratio, volatility analysis",
+              "execution_time_seconds": 1.0013580322265625e-05,
+              "status": "passed",
+              "ic_result_valid": true,
+              "error": null,
+              "mock": true
+            },
+            {
+              "command": "report",
+              "description": "Export portfolio to CSV/Excel",
+              "execution_time_seconds": 1.0013580322265625e-05,
+              "status": "passed",
+              "ic_result_valid": true,
+              "error": null,
+              "mock": true
+            },
+            {
+              "command": "synthesize",
+              "description": "Multi-factor portfolio analysis synthesis",
+              "execution_time_seconds": 1.0013580322265625e-05,
+              "status": "passed",
+              "ic_result_valid": true,
+              "error": null,
+              "mock": true
+            }
+          ],
+          "provider_reachable": true
+        },
+        "pi-large": {
+          "tier": 1,
+          "device": "pi-large",
+          "provider": "gemma",
+          "commands_tested": 10,
+          "commands_passed": 10,
+          "commands_failed": 0,
+          "total_time_seconds": 0.0003008842468261719,
+          "command_results": [
+            {
+              "command": "analyst",
+              "description": "Wall Street ratings and consensus data",
+              "execution_time_seconds": 1.0967254638671875e-05,
+              "status": "passed",
+              "ic_result_valid": true,
+              "error": null,
+              "mock": true
+            },
+            {
+              "command": "bonds",
+              "description": "Bond analytics: YTM, duration, FRED comparison",
+              "execution_time_seconds": 1.0013580322265625e-05,
+              "status": "passed",
+              "ic_result_valid": true,
+              "error": null,
+              "mock": true
+            },
+            {
+              "command": "fixed-income",
+              "description": "Fixed-income focused analysis",
+              "execution_time_seconds": 1.0013580322265625e-05,
+              "status": "passed",
+              "ic_result_valid": true,
+              "error": null,
+              "mock": true
+            },
+            {
+              "command": "holdings",
+              "description": "Portfolio snapshot with current prices",
+              "execution_time_seconds": 1.0013580322265625e-05,
+              "status": "passed",
+              "ic_result_valid": true,
+              "error": null,
+              "mock": true
+            },
+            {
+              "command": "news",
+              "description": "Recent news and sentiment for holdings",
+              "execution_time_seconds": 8.821487426757812e-06,
+              "status": "passed",
+              "ic_result_valid": true,
+              "error": null,
+              "mock": true
+            },
+            {
+              "command": "news-plan",
+              "description": "News correlation and impact analysis",
+              "execution_time_seconds": 9.298324584960938e-06,
+              "status": "passed",
+              "ic_result_valid": true,
+              "error": null,
+              "mock": true
+            },
+            {
+              "command": "optimize",
+              "description": "Modern Portfolio Theory optimization",
+              "execution_time_seconds": 9.775161743164062e-06,
+              "status": "passed",
+              "ic_result_valid": true,
+              "error": null,
+              "mock": true
+            },
+            {
+              "command": "performance",
+              "description": "Returns, Sharpe ratio, volatility analysis",
+              "execution_time_seconds": 1.0013580322265625e-05,
+              "status": "passed",
+              "ic_result_valid": true,
+              "error": null,
+              "mock": true
+            },
+            {
+              "command": "report",
+              "description": "Export portfolio to CSV/Excel",
+              "execution_time_seconds": 1.0013580322265625e-05,
+              "status": "passed",
+              "ic_result_valid": true,
+              "error": null,
+              "mock": true
+            },
+            {
+              "command": "synthesize",
+              "description": "Multi-factor portfolio analysis synthesis",
+              "execution_time_seconds": 9.059906005859375e-06,
+              "status": "passed",
+              "ic_result_valid": true,
+              "error": null,
+              "mock": true
+            }
+          ],
+          "provider_reachable": true
+        },
+        "pi-small": {
+          "tier": 1,
+          "device": "pi-small",
+          "provider": "gemma",
+          "commands_tested": 10,
+          "commands_passed": 10,
+          "commands_failed": 0,
+          "total_time_seconds": 0.0002989768981933594,
+          "command_results": [
+            {
+              "command": "analyst",
+              "description": "Wall Street ratings and consensus data",
+              "execution_time_seconds": 1.0013580322265625e-05,
+              "status": "passed",
+              "ic_result_valid": true,
+              "error": null,
+              "mock": true
+            },
+            {
+              "command": "bonds",
+              "description": "Bond analytics: YTM, duration, FRED comparison",
+              "execution_time_seconds": 1.0013580322265625e-05,
+              "status": "passed",
+              "ic_result_valid": true,
+              "error": null,
+              "mock": true
+            },
+            {
+              "command": "fixed-income",
+              "description": "Fixed-income focused analysis",
+              "execution_time_seconds": 1.0013580322265625e-05,
+              "status": "passed",
+              "ic_result_valid": true,
+              "error": null,
+              "mock": true
+            },
+            {
+              "command": "holdings",
+              "description": "Portfolio snapshot with current prices",
+              "execution_time_seconds": 1.0013580322265625e-05,
+              "status": "passed",
+              "ic_result_valid": true,
+              "error": null,
+              "mock": true
+            },
+            {
+              "command": "news",
+              "description": "Recent news and sentiment for holdings",
+              "execution_time_seconds": 1.0013580322265625e-05,
+              "status": "passed",
+              "ic_result_valid": true,
+              "error": null,
+              "mock": true
+            },
+            {
+              "command": "news-plan",
+              "description": "News correlation and impact analysis",
+              "execution_time_seconds": 9.298324584960938e-06,
+              "status": "passed",
+              "ic_result_valid": true,
+              "error": null,
+              "mock": true
+            },
+            {
+              "command": "optimize",
+              "description": "Modern Portfolio Theory optimization",
+              "execution_time_seconds": 1.0967254638671875e-05,
+              "status": "passed",
+              "ic_result_valid": true,
+              "error": null,
+              "mock": true
+            },
+            {
+              "command": "performance",
+              "description": "Returns, Sharpe ratio, volatility analysis",
+              "execution_time_seconds": 1.0013580322265625e-05,
+              "status": "passed",
+              "ic_result_valid": true,
+              "error": null,
+              "mock": true
+            },
+            {
+              "command": "report",
+              "description": "Export portfolio to CSV/Excel",
+              "execution_time_seconds": 1.0013580322265625e-05,
+              "status": "passed",
+              "ic_result_valid": true,
+              "error": null,
+              "mock": true
+            },
+            {
+              "command": "synthesize",
+              "description": "Multi-factor portfolio analysis synthesis",
+              "execution_time_seconds": 9.059906005859375e-06,
+              "status": "passed",
+              "ic_result_valid": true,
+              "error": null,
+              "mock": true
+            }
+          ],
+          "provider_reachable": true
+        }
+      }
+    }
+  },
+  "summary": {}
+}

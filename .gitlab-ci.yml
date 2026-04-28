@@ -1,0 +1,132 @@
+# GitLab CI/CD for InvestorClaw
+#
+# Per fleet policy (2026-04-25): nas = source of truth, gitlab = CI/CD,
+# github = OSS surface. This pipeline is the canonical CI surface; the
+# .github/workflows/ files exist for public visibility on github.com/argonautsystems
+# but the authoritative test runs live here.
+#
+# Uses `uv` as the canonical install path (per project CLAUDE.md):
+# `uv sync` reads pyproject.toml and uv.lock for reproducible builds.
+
+# Trigger fleet alignment (2026-04-27): every fleet repo (clio, ic-engine,
+# InvestorClaude) opts into push + merge_request_event + tag triggers. Apply
+# the same canonical workflow gate here so MR pipelines actually fire — prior
+# to this all jobs ran on the implicit GitLab default and merge_request_event
+# was never selected.
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_TAG'
+
+stages:
+  - lint
+  - smoke
+  - build
+
+# ---------------------------------------------------------------------------
+# Lint gate (ruff) — runs first, fails fast
+# ---------------------------------------------------------------------------
+lint:
+  stage: lint
+  image: ghcr.io/astral-sh/uv:python3.12-bookworm-slim
+  variables:
+    UV_LINK_MODE: copy
+    UV_CACHE_DIR: .uv-cache
+  before_script:
+    # Astral's uv slim images don't ship git or a C toolchain. Both are
+    # needed:
+    #   git — pyproject.toml pins ic-engine + clio to git URLs (no PyPI
+    #   release yet), so `uv sync` fails with "Git executable not found."
+    #   build-essential — .python-version pins 3.13, but transitive deps
+    #   like numpy 1.26.4 ship no cp313 wheel; uv falls back to building
+    #   from sdist and needs gcc.
+    - apt-get update -qq && apt-get install -y -qq --no-install-recommends git build-essential
+    - uv sync --frozen --group dev
+  script:
+    - uv run ruff check .
+    - uv run ruff format --check .
+  cache:
+    key:
+      files:
+        - uv.lock
+    paths:
+      - .uv-cache
+
+# ---------------------------------------------------------------------------
+# Smoke matrix — verifies the slim adapter installs cleanly and the shim
+# delegates to ic-engine across the supported Python versions.
+#
+# Phase 2 of IC_DECOMPOSITION (v2.3.0) deleted InvestorClaw's Python tests/
+# directory; the engine tests live in the ic-engine repo and run under its
+# own CI. The adapter has no Python source today beyond the shim, so this
+# stage only smoke-checks the install and CLI dispatch.
+# ---------------------------------------------------------------------------
+smoke:
+  stage: smoke
+  image: ghcr.io/astral-sh/uv:python${PYTHON_VERSION}-bookworm-slim
+  parallel:
+    matrix:
+      - PYTHON_VERSION: ["3.10", "3.11", "3.12", "3.13"]
+  variables:
+    UV_LINK_MODE: copy
+    UV_CACHE_DIR: .uv-cache
+  before_script:
+    # Same toolchain deps as the lint stage — see lint:before_script.
+    - apt-get update -qq && apt-get install -y -qq --no-install-recommends git build-essential
+    - uv --version
+    - uv sync --frozen --group dev
+  script:
+    # Shim imports clean and exposes the back-compat surface
+    - uv run python -c "from investorclaw import get_version, main; print(f'shim get_version() = {get_version()}')"
+    # CLI delegates to ic-engine and reports the engine version
+    - uv run investorclaw --version
+    # `python3 investorclaw.py help` path used by server/ + index.ts dispatch.
+    # No pipe to head — gitlab shell reports the rightmost exit status, so a
+    # piped truncation would mask CLI failure. Let the help output flow.
+    - uv run python3 investorclaw.py help
+  cache:
+    key:
+      files:
+        - uv.lock
+    paths:
+      - .uv-cache
+
+# ---------------------------------------------------------------------------
+# TypeScript / OpenClaw plugin build + manifest consistency
+# ---------------------------------------------------------------------------
+plugin-build:
+  stage: build
+  image: node:22-bookworm
+  before_script:
+    - apt-get update -qq && apt-get install -y -qq python3
+  script:
+    - npm ci
+    - node_modules/.bin/tsc --noEmit
+    - node_modules/.bin/tsc
+    - git diff --exit-code dist/ || (echo "dist/ is stale — run 'npm run build' and commit" && exit 1)
+    - |
+      python3 - <<'EOF'
+      import json, sys
+      pkg  = json.load(open("package.json"))
+      plug = json.load(open("openclaw.plugin.json"))
+      pkg_ext  = (pkg.get("openclaw",{}).get("extensions") or [""])[0]
+      plug_ext = (plug.get("openclaw",{}).get("extensions") or [""])[0]
+      pkg_ver  = pkg.get("version")
+      plug_ver = plug.get("version")
+      errors = []
+      if pkg_ext != plug_ext:
+          errors.append(f"extension mismatch: package.json={pkg_ext!r} openclaw.plugin.json={plug_ext!r}")
+      if pkg_ver != plug_ver:
+          errors.append(f"version mismatch: package.json={pkg_ver!r} openclaw.plugin.json={plug_ver!r}")
+      if errors:
+          for e in errors: print("ERROR:", e)
+          sys.exit(1)
+      print("OK: manifests consistent")
+      EOF
+  cache:
+    key:
+      files:
+        - package-lock.json
+    paths:
+      - node_modules/

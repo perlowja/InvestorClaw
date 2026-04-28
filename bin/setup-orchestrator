@@ -1,0 +1,173 @@
+#!/bin/bash
+# InvestorClaw Automated Setup Orchestrator
+#
+# Handles full environment setup when invoked by Claude Code skill:
+# 1. Detect/install uv
+# 2. Create virtual environment
+# 3. Install dependencies
+# 4. Run portfolio setup wizard
+#
+# Exit codes:
+#   0: Success
+#   1: uv installation failed
+#   2: Git clone failed
+#   3: uv sync failed
+#   4: Setup wizard failed
+
+set -e
+
+# Color codes for output
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+YELLOW='\033[1;33m'
+RED='\033[0;31m'
+NC='\033[0m' # No Color
+
+# Helper functions
+log_step() {
+    echo -e "${BLUE}→${NC} $1"
+}
+
+log_success() {
+    echo -e "${GREEN}✓${NC} $1"
+}
+
+log_warning() {
+    echo -e "${YELLOW}⚠${NC} $1"
+}
+
+log_error() {
+    echo -e "${RED}✗${NC} $1"
+}
+
+# Detect OS
+OS=$(uname -s)
+if [[ "$OS" == "Darwin" ]]; then
+    OS="macOS"
+elif [[ "$OS" == "Linux" ]]; then
+    OS="Linux"
+elif [[ "$OS" == *"MINGW"* ]] || [[ "$OS" == *"CYGWIN"* ]]; then
+    OS="Windows"
+fi
+
+log_step "InvestorClaw Setup Orchestrator (Detected: $OS)"
+
+# Step 1: Detect/install uv
+log_step "Checking for uv..."
+
+if command -v uv &> /dev/null; then
+    UV_VERSION=$(uv --version)
+    log_success "uv is installed ($UV_VERSION)"
+else
+    log_warning "uv not found, installing..."
+
+    if command -v curl &> /dev/null; then
+        if curl -LsSf https://astral.sh/uv/install.sh | sh; then
+            # Add uv to PATH for this session
+            if [[ "$OS" == "macOS" ]]; then
+                export PATH="$HOME/.local/bin:$PATH"
+            fi
+            log_success "uv installed successfully"
+        else
+            log_error "Failed to install uv"
+            exit 1
+        fi
+    else
+        log_error "curl not found and uv installation requires it"
+        exit 1
+    fi
+fi
+
+# Step 2: Clone repository if needed
+log_step "Checking for InvestorClaw repository..."
+
+REPO_DIR="${INVESTORCLAW_HOME:-$HOME/InvestorClaw}"
+
+if [ -d "$REPO_DIR" ]; then
+    log_success "Repository found at $REPO_DIR"
+else
+    log_warning "Repository not found, cloning from GitHub..."
+
+    if git clone https://github.com/argonautsystems/InvestorClaw.git "$REPO_DIR"; then
+        log_success "Repository cloned to $REPO_DIR"
+    else
+        log_error "Failed to clone repository"
+        exit 2
+    fi
+fi
+
+cd "$REPO_DIR"
+
+# Step 3: Create virtual environment with uv
+log_step "Setting up virtual environment with uv..."
+
+if uv sync; then
+    log_success "Dependencies installed"
+else
+    log_error "Failed to install dependencies with uv sync"
+    exit 3
+fi
+
+# Detect shell for activation
+SHELL_NAME=$(basename "$SHELL")
+if [[ "$SHELL_NAME" == "zsh" ]]; then
+    ACTIVATE_CMD="source $REPO_DIR/.venv/bin/activate"
+elif [[ "$SHELL_NAME" == "fish" ]]; then
+    ACTIVATE_CMD="source $REPO_DIR/.venv/bin/activate.fish"
+else
+    ACTIVATE_CMD="source $REPO_DIR/.venv/bin/activate"
+fi
+
+# Source activation for this script
+source "$REPO_DIR/.venv/bin/activate"
+
+# Step 4: Verify installation
+log_step "Verifying installation..."
+
+if uv run investorclaw --version &> /dev/null; then
+    VERSION=$(uv run investorclaw --version 2>&1 | head -1)
+    log_success "InvestorClaw ready ($VERSION)"
+else
+    log_warning "Could not verify version, but installation should be complete"
+fi
+
+# Step 5: Setup wizard (optional - only if no portfolio exists)
+log_step "Checking for existing portfolio..."
+
+PORTFOLIO_DIR="${INVESTORCLAW_PORTFOLIO_DIR:-$HOME/portfolios}"
+PORTFOLIO_CONFIG="$HOME/.investorclaw/.env"
+
+if [ ! -f "$PORTFOLIO_CONFIG" ] || [ ! -d "$PORTFOLIO_DIR" ]; then
+    log_step "Running portfolio setup wizard..."
+
+    mkdir -p "$PORTFOLIO_DIR"
+    mkdir -p "$HOME/.investorclaw"
+
+    if uv run investorclaw setup; then
+        log_success "Portfolio setup complete"
+    else
+        log_warning "Portfolio setup encountered issues, but environment is ready"
+        exit 4
+    fi
+else
+    log_success "Portfolio configuration found"
+fi
+
+# Summary
+echo ""
+log_success "Setup complete!"
+echo ""
+echo "Next steps:"
+echo "  1. Activate environment: $ACTIVATE_CMD"
+echo "  2. Analyze portfolio: investorclaw ask \"What's in my portfolio?\""
+echo "  3. Refresh stale data: investorclaw refresh"
+echo ""
+echo "For Claude Code users:"
+echo "  Use natural language through InvestorClaude or the adapter's ask surface"
+echo ""
+echo ""
+echo "⚠️  IMPORTANT: InvestorClaw is an educational analysis tool, NOT financial advice."
+echo "   Consult a qualified financial advisor before making investment decisions."
+echo ""
+
+exit 0

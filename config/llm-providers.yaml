@@ -1,0 +1,149 @@
+# LLM Provider Configuration for InvestorClaw (OpenClaw Only)
+#
+# This file lists available cloud and local inference options for the OpenClaw
+# consultative LLM layer. Claude Code users should use subagent verification instead.
+# Users choose which provider to use via /investorclaw-llm-config skill.
+
+providers:
+
+  # Local Inference (Recommended if you have GPU)
+  ollama_local:
+    name: "Local Ollama"
+    type: "local"
+    endpoint: "http://localhost:11434"
+    requires_api_key: false
+    requires_gpu: true
+    min_vram_gb: 10
+    models:
+      - name: "gemma:2b"
+        tokens_per_second: 50
+        quality: "good"
+        recommended_for: "fast_analysis"
+      - name: "gemma4:e4b"
+        tokens_per_second: 30
+        quality: "excellent"
+        recommended_for: "accuracy"
+    setup_url: "https://ollama.ai"
+    advantages:
+      - "Zero cloud costs"
+      - "Data stays local"
+      - "Fastest cold-start"
+      - "HMAC fingerprinting for audit"
+    disadvantages:
+      - "Requires high-end GPU"
+      - "Slower inference than cloud"
+
+  # Cloud: Together.ai (Free tier available)
+  together:
+    name: "Together.ai"
+    type: "cloud"
+    endpoint: "https://api.together.xyz/v1"
+    requires_api_key: true
+    requires_gpu: false
+    free_tier: true
+    free_tier_monthly_limit: 100
+    models:
+      - name: "google/gemma-4-31B-it"
+        tokens_per_second: 100
+        quality: "excellent"
+        cost_per_1k_tokens: 0.0008
+        recommended_for: "default"
+      - name: "deepseek-ai/deepseek-r1"
+        tokens_per_second: 50
+        quality: "excellent"
+        cost_per_1k_tokens: 0.002
+        recommended_for: "complex_reasoning"
+    setup_url: "https://www.together.ai"
+    advantages:
+      - "No GPU required"
+      - "Instant setup"
+      - "High-quality models"
+      - "Free tier (100 calls/month)"
+    disadvantages:
+      - "Requires internet"
+      - "External vendor"
+      - "Paid after free tier"
+
+  # Enterprise: NVIDIA NGC (NVIDIA Employees Only)
+  ngc:
+    name: "NVIDIA NGC"
+    type: "enterprise"
+    endpoint: "${NGC_ENDPOINT}"  # Varies by region
+    requires_api_key: true
+    requires_gpu: false
+    requires_enterprise: true
+    models:
+      - name: "nemo-b-32b"
+        tokens_per_second: 150
+        quality: "excellent"
+        recommended_for: "enterprise"
+      - name: "gemma4-custom"
+        tokens_per_second: 120
+        quality: "excellent"
+        recommended_for: "enterprise"
+    setup_url: "https://ngc.nvidia.com"
+    advantages:
+      - "Enterprise-grade infrastructure"
+      - "NVIDIA optimized"
+      - "No external vendor lock-in"
+      - "Internal cluster (VPN accessible)"
+    disadvantages:
+      - "Requires NVIDIA access"
+      - "May require VPN setup"
+    notes: "NVIDIA employees only. Contact your team for NGC_ENDPOINT."
+
+  # Custom: Self-Hosted Infrastructure
+  custom_internal:
+    name: "Custom Internal Cluster"
+    type: "self-hosted"
+    endpoint: "${YOUR_ENDPOINT}"  # User supplies
+    requires_api_key: true
+    requires_gpu: false
+    requires_setup: true
+    examples:
+      - "vLLM on Spark cluster"
+      - "TensorRT-LLM on Jetson"
+      - "Ollama distributed"
+    advantages:
+      - "Full control"
+      - "Proprietary models possible"
+      - "No vendor lock-in"
+    disadvantages:
+      - "Requires DevOps setup"
+      - "Maintenance responsibility"
+    notes: "Server must support OpenAI-compatible /v1/completions API"
+
+  # Disabled (No consultative layer)
+  disabled:
+    name: "Disabled (No Consultative Layer)"
+    type: "none"
+    enabled: false
+    notes: "Basic portfolio analysis still works. Just no anti-fabrication verification."
+
+# Recommendations by user profile
+recommendations:
+
+  nvidia_employee_with_ngc:
+    provider: "ngc"
+    reason: "Enterprise-grade, optimized for NVIDIA infrastructure"
+    setup_time_minutes: 5
+
+  nvidia_employee_with_cluster:
+    provider: "custom_internal"
+    reason: "Full control, supports proprietary models"
+    setup_time_minutes: 30
+
+  developer_with_gpu:
+    provider: "ollama_local"
+    reason: "Zero cost, data privacy, fastest startup"
+    setup_time_minutes: 10
+
+  developer_without_gpu:
+    provider: "together"
+    reason: "Free tier sufficient, instant setup, no GPU needed"
+    setup_time_minutes: 2
+
+  enterprise_no_infrastructure:
+    provider: "together"
+    reason: "Reliable cloud option, proven at scale"
+    setup_time_minutes: 5

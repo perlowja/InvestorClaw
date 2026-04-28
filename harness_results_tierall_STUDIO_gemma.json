@@ -1,0 +1,242 @@
+{
+  "device": "mac-dev-host",
+  "provider": "gemma",
+  "timestamp": 1776628843.982034,
+  "mock_mode": true,
+  "tiers": {
+    "1": {
+      "tier": 1,
+      "device": "mac-dev-host",
+      "provider": "gemma",
+      "commands_tested": 10,
+      "commands_passed": 10,
+      "commands_failed": 0,
+      "total_time_seconds": 0.0003170967102050781,
+      "command_results": [
+        {
+          "command": "analyst",
+          "description": "Wall Street ratings and consensus data",
+          "execution_time_seconds": 1.3828277587890625e-05,
+          "status": "passed",
+          "ic_result_valid": true,
+          "error": null,
+          "mock": true
+        },
+        {
+          "command": "bonds",
+          "description": "Bond analytics: YTM, duration, FRED comparison",
+          "execution_time_seconds": 1.1205673217773438e-05,
+          "status": "passed",
+          "ic_result_valid": true,
+          "error": null,
+          "mock": true
+        },
+        {
+          "command": "fixed-income",
+          "description": "Fixed-income focused analysis",
+          "execution_time_seconds": 9.775161743164062e-06,
+          "status": "passed",
+          "ic_result_valid": true,
+          "error": null,
+          "mock": true
+        },
+        {
+          "command": "holdings",
+          "description": "Portfolio snapshot with current prices",
+          "execution_time_seconds": 9.059906005859375e-06,
+          "status": "passed",
+          "ic_result_valid": true,
+          "error": null,
+          "mock": true
+        },
+        {
+          "command": "news",
+          "description": "Recent news and sentiment for holdings",
+          "execution_time_seconds": 1.0013580322265625e-05,
+          "status": "passed",
+          "ic_result_valid": true,
+          "error": null,
+          "mock": true
+        },
+        {
+          "command": "news-plan",
+          "description": "News correlation and impact analysis",
+          "execution_time_seconds": 1.0967254638671875e-05,
+          "status": "passed",
+          "ic_result_valid": true,
+          "error": null,
+          "mock": true
+        },
+        {
+          "command": "optimize",
+          "description": "Modern Portfolio Theory optimization",
+          "execution_time_seconds": 1.2159347534179688e-05,
+          "status": "passed",
+          "ic_result_valid": true,
+          "error": null,
+          "mock": true
+        },
+        {
+          "command": "performance",
+          "description": "Returns, Sharpe ratio, volatility analysis",
+          "execution_time_seconds": 1.1682510375976562e-05,
+          "status": "passed",
+          "ic_result_valid": true,
+          "error": null,
+          "mock": true
+        },
+        {
+          "command": "report",
+          "description": "Export portfolio to CSV/Excel",
+          "execution_time_seconds": 1.0013580322265625e-05,
+          "status": "passed",
+          "ic_result_valid": true,
+          "error": null,
+          "mock": true
+        },
+        {
+          "command": "synthesize",
+          "description": "Multi-factor portfolio analysis synthesis",
+          "execution_time_seconds": 9.059906005859375e-06,
+          "status": "passed",
+          "ic_result_valid": true,
+          "error": null,
+          "mock": true
+        }
+      ],
+      "provider_reachable": true
+    },
+    "2": {
+      "tier": 2,
+      "device": "mac-dev-host",
+      "provider": "gemma",
+      "commands_tested": 10,
+      "commands_passed": 10,
+      "commands_failed": 0,
+      "total_time_seconds": 0.0003750324249267578,
+      "command_results": [
+        {
+          "command": "check-updates",
+          "description": "Version and update checking",
+          "execution_time_seconds": 1.0967254638671875e-05,
+          "status": "passed",
+          "ic_result_valid": true,
+          "error": null,
+          "mock": true
+        },
+        {
+          "command": "eod-report",
+          "description": "End-of-day HTML report with email narrative",
+          "execution_time_seconds": 1.5020370483398438e-05,
+          "status": "passed",
+          "ic_result_valid": true,
+          "error": null,
+          "mock": true
+        },
+        {
+          "command": "fa-topics",
+          "description": "Fundamental analysis discussion topics",
+          "execution_time_seconds": 1.0013580322265625e-05,
+          "status": "passed",
+          "ic_result_valid": true,
+          "error": null,
+          "mock": true
+        },
+        {
+          "command": "guardrails",
+          "description": "Financial literacy and risk education",
+          "execution_time_seconds": 2.8133392333984375e-05,
+          "status": "passed",
+          "ic_result_valid": true,
+          "error": null,
+          "mock": true
+        },
+        {
+          "command": "lookup",
+          "description": "Ticker symbol deep-dive analysis",
+          "execution_time_seconds": 1.7881393432617188e-05,
+          "status": "passed",
+          "ic_result_valid": true,
+          "error": null,
+          "mock": true
+        },
+        {
+          "command": "ollama-setup",
+          "description": "Local Ollama inference setup",
+          "execution_time_seconds": 1.0013580322265625e-05,
+          "status": "passed",
+          "ic_result_valid": true,
+          "error": null,
+          "mock": true
+        },
+        {
+          "command": "run",
+          "description": "Full analysis pipeline execution",
+          "execution_time_seconds": 1.0967254638671875e-05,
+          "status": "passed",
+          "ic_result_valid": true,
+          "error": null,
+          "mock": true
+        },
+        {
+          "command": "session",
+          "description": "Risk profiling and session calibration",
+          "execution_time_seconds": 1.0013580322265625e-05,
+          "status": "passed",
+          "ic_result_valid": true,
+          "error": null,
+          "mock": true
+        },
+        {
+          "command": "stonkmode",
+          "description": "Humorous narration mode for synthesis",
+          "execution_time_seconds": 9.059906005859375e-06,
+          "status": "passed",
+          "ic_result_valid": true,
+          "error": null,
+          "mock": true
+        },
+        {
+          "command": "update-identity",
+          "description": "Update portfolio metadata and identity",
+          "execution_time_seconds": 1.0013580322265625e-05,
+          "status": "passed",
+          "ic_result_valid": true,
+          "error": null,
+          "mock": true
+        }
+      ],
+      "provider_reachable": true
+    },
+    "3": {
+      "tier": 3,
+      "device": "mac-dev-host",
+      "provider": "gemma",
+      "commands_tested": 2,
+      "commands_passed": 2,
+      "commands_failed": 0,
+      "total_time_seconds": 6.699562072753906e-05,
+      "command_results": [
+        {
+          "command": "help",
+          "description": "Command help and documentation",
+          "execution_time_seconds": 1.2159347534179688e-05,
+          "status": "passed",
+          "ic_result_valid": true,
+          "error": null,
+          "mock": true
+        },
+        {
+          "command": "setup",
+          "description": "Portfolio setup and initialization",
+          "execution_time_seconds": 1.0967254638671875e-05,
+          "status": "passed",
+          "ic_result_valid": true,
+          "error": null,
+          "mock": true
+        }
+      ],
+      "provider_reachable": true
+    }
+  }
+}

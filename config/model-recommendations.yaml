@@ -1,0 +1,209 @@
+# Model Recommendations for InvestorClaw
+#
+# This guide recommends Anthropic Claude models for different tasks
+# within the InvestorClaw plugin ecosystem.
+
+tasks:
+
+  # Narrative Synthesis (Multi-factor portfolio analysis)
+  narrative_synthesis:
+    recommended_model: "claude-sonnet-4-6"
+    tier: "primary"
+    reasoning: >
+      Portfolio synthesis requires nuanced language, multi-factor reasoning,
+      clear narrative structure, and ability to balance multiple considerations.
+      Sonnet excels at this complexity.
+
+    specifications:
+      context_window: 200_000
+      input_cost_per_1m_tokens: 3
+      output_cost_per_1m_tokens: 15
+      latency_p50_ms: 1500
+      quality_tier: "highest"
+
+    example_tasks:
+      - "Multi-factor portfolio synthesis"
+      - "Prepare analysis for advisor meeting"
+      - "Complex bond ladder optimization"
+      - "Risk assessment across accounts"
+
+    fallback_model: "claude-haiku-4-5"
+    fallback_reason: "If Sonnet quota exceeded, Haiku handles basic synthesis with 10x lower cost"
+    fallback_latency_ms: 500
+
+  # Conversational Q&A (User questions about portfolio)
+  conversational:
+    recommended_model: "claude-haiku-4-5"
+    tier: "primary"
+    reasoning: >
+      Quick questions about portfolio, routing decisions, guardrail enforcement
+      don't require Sonnet's reasoning depth. Haiku is 10x cheaper and fast enough.
+
+    specifications:
+      context_window: 200_000
+      input_cost_per_1m_tokens: 0.3
+      output_cost_per_1m_tokens: 1.5
+      latency_p50_ms: 200
+      quality_tier: "high"
+
+    example_tasks:
+      - "What's my total portfolio value?"
+      - "Which positions have underperformed?"
+      - "Show me my bond holdings"
+      - "What's my Sharpe ratio?"
+
+    fallback_model: null
+    fallback_reason: "Haiku is fast enough for all conversational tasks"
+    notes: "Optimal cost-to-quality ratio for interactive sessions"
+
+  # Command Routing (Claude Code decides which /ic-* command to run)
+  command_routing:
+    recommended_model: "claude-haiku-4-5"
+    tier: "primary"
+    reasoning: >
+      Router only needs to classify user intent (holdings? performance? bonds?)
+      and call the appropriate command. Haiku sufficient.
+
+    specifications:
+      context_window: 200_000
+      latency_p50_ms: 150
+      cost_per_classification: "negligible"
+
+    example_routing:
+      - "What do I own?" → /ic-holdings
+      - "How am I doing?" → /ic-performance
+      - "Bond analysis?" → /ic-bonds
+
+  # Guardrail Enforcement (Educational-only checks)
+  guardrail_enforcement:
+    recommended_model: "claude-haiku-4-5"
+    tier: "primary"
+    reasoning: >
+      Check if response violates educational-only guardrails
+      (no "buy/sell" advice, no suitability assessment).
+      Simple pattern matching, Haiku sufficient.
+
+    specifications:
+      latency_p50_ms: 100
+      cost: "minimal"
+
+  # Consultative Analysis (Optional, Anti-Fabrication Layer)
+  consultative_analysis:
+    recommended_model: "google/gemma-4-31B-it"
+    tier: "optional"
+    reasoning: >
+      Lightweight analysis verification and HMAC fingerprinting.
+      Runs in InvestorClaw Python layer, not Claude.
+      Gemma 4 excellent for this task.
+
+    provider_options:
+      primary: "Together.ai (cloud)"
+      cost_per_call: 0.002
+      latency_ms: 1000
+
+      alternative_local: "Ollama (gemma4:e4b)"
+      cost_per_call: 0
+      latency_ms: 3000
+      requires_gpu: true
+
+      alternative_enterprise: "DeepSeek-R1 (Together)"
+      cost_per_call: 0.005
+      latency_ms: 2000
+      reasoning_quality: "higher"
+
+    notes: >
+      This layer is OPTIONAL. Basic analysis works without it.
+      Only needed if you want HMAC-verified audit trails.
+
+# Cost Analysis for Typical Enterprise User
+
+cost_per_session_estimate:
+  description: "One portfolio analysis session with 100 holdings"
+
+  components:
+    command_routing: 0.00002  # One Haiku call to classify intent
+    portfolio_analysis:
+      python_computation: 0  # All free, runs locally
+      narrative_synthesis_with_sonnet: 0.005  # ~1700 tokens
+    follow_up_qa:
+      3_questions_haiku: 0.0001  # 3x quick Q&A with Haiku
+
+  total_per_session: 0.0051  # ~half a cent
+  monthly_estimate_10_sessions: 0.051  # 5 cents
+  note: "Extremely cost-effective for enterprise users"
+
+# Recommendations by User Profile
+
+by_profile:
+
+  individual_investor:
+    narrative: "claude-haiku-4-5"
+    conversational: "claude-haiku-4-5"
+    reasoning: "Cost-optimized. Haiku sufficient for personal portfolios."
+    estimated_monthly_cost: "$0.05"
+    notes: "Haiku on all tasks. Excellent cost-to-quality."
+
+  enterprise_user:
+    narrative: "claude-sonnet-4-6"
+    conversational: "claude-haiku-4-5"
+    reasoning: "Mixed model strategy. Sonnet for synthesis (highest value), Haiku for Q&A (frequent)."
+    estimated_monthly_cost: "$0.25 - $1.00"
+    notes: "Optimal for multi-team, multi-account analysis."
+
+  financial_advisor:
+    narrative: "claude-sonnet-4-6"
+    conversational: "claude-haiku-4-5"
+    consultative: "google/gemma-4-31B-it (Together.ai)"
+    reasoning: "Sonnet for nuanced advice synthesis. Gemma for anti-fabrication verification."
+    estimated_monthly_cost: "$0.50 - $2.00"
+    notes: "Strongest audit trail. Recommended for regulated use."
+
+  nvidia_employee_with_cluster:
+    narrative: "claude-sonnet-4-6"
+    conversational: "claude-haiku-4-5"
+    consultative: "nemo-b-32b (NGC)"
+    reasoning: "Use enterprise infrastructure. Sonnet for synthesis, NGC for consultation."
+    estimated_monthly_cost: "Depends on NGC contract"
+    notes: "Highest performance. Full internal control."
+
+  developer_with_local_gpu:
+    narrative: "claude-sonnet-4-6"
+    conversational: "claude-haiku-4-5"
+    consultative: "gemma4:e4b (local Ollama)"
+    reasoning: "Free local inference + paid synthesis. Best of both worlds."
+    estimated_monthly_cost: "$0.10 - $0.50"
+    notes: "Privacy + performance. Recommended for developers."
+
+# Usage Optimization Tips
+
+optimization:
+
+  batch_similar_queries:
+    tip: "Ask multiple questions in one prompt to amortize context window cost"
+    example: "Show my holdings, performance, and yield across all accounts"
+    savings: "5-10% reduction in token costs"
+
+  use_haiku_for_routine_qa:
+    tip: "Use Haiku for 'What's my current XYZ?' questions"
+    example: "Instead of synthesize for every question, use holdings + Haiku Q&A"
+    savings: "90% cost reduction vs. Sonnet synthesis per question"
+
+  batch_monthly_analysis:
+    tip: "Run /ic-run (full pipeline) once/month instead of daily"
+    example: "One batch analysis per month gives you artifacts for advisor discussions"
+    savings: "Spreads cost across time, reduces API load"
+
+  cache_frequently_asked:
+    tip: "Reuse output artifacts (holdings.json, performance.json) for related questions"
+    example: "Don't re-run /ic-holdings for Q&A. Load cached JSON and ask Haiku."
+    savings: "Eliminates redundant Python computation"
+
+# See Also
+
+see_also:
+  - file: "llm-providers.yaml"
+    description: "Cloud and local provider endpoints and credentials"
+  - skill: "investorclaw-llm-config"
+    description: "Interactive guide to choose and configure LLM provider"
+  - doc: "DISCOVERY_HIERARCHY.md"
+    description: "How Claude discovers InvestorClaw and routes to commands"
