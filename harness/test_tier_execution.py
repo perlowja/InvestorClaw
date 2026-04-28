@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: Apache-2.0
 """
 Phase 3b: Command Tier Execution Testing (Idempotent)
 

@@ -7,7 +7,7 @@
   </picture>
 </p>
 
-Portfolio analysis and market intelligence | v2.5.0 | Apache 2.0 License
+Portfolio analysis and market intelligence | v2.6.0 | Apache 2.0 License
 
 > ⚠️ The dashboard is in development and is not shipped in the default install. Ask dashboard questions through `investorclaw ask "<question>"`; the deterministic engine returns the current deferral envelope where applicable.
 
@@ -359,4 +359,4 @@ See [LICENSE](LICENSE) for full terms.
 
 Author: Jason Perlow | Questions? [Open an issue on GitHub](https://gitlab.com/argonautsystems/InvestorClaw/-/issues)
 
-v2.5.0 | [Release Notes](RELEASE_NOTES.md) | Apache 2.0 License
+v2.6.0 | [Release Notes](RELEASE_NOTES.md) | Apache 2.0 License

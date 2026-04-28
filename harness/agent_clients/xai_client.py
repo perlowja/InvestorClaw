@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """
 xAI Grok-4.1 client.
 

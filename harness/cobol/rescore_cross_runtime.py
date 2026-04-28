@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Rescore existing cross-runtime JSONLs with the latest detector.
 
 The runner captures the full agent response into result_snippet[:300]

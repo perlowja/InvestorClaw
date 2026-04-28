@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """
 Dual-Path Test Harness Orchestrator
 Executes tests via both direct CLI/API (Path A) and agent systems (Path B)

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """
 Google Gemini-2.5-Flash client.
 

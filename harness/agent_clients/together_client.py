@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """
 Together AI MiniMax-M2.7 client.
 

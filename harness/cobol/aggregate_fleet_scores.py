@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Aggregate COBOL barrage scores across the fleet (4 runtimes).
 
 Loads per-runtime JSONLs from harness/reports/ and emits both a

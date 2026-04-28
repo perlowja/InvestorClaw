@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """COBOL barrage cross-runtime runner — OpenClaw / ZeroClaw / Hermes.
 
 Loads nlq-prompts.json (30 prompts), executes each against the named

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """
 Base agent client interface with sanitization and timeout handling.
 """

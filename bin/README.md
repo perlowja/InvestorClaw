@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 # InvestorClaw Setup Scripts
 
 This directory contains helper scripts for InvestorClaw installation and configuration.

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """
 Remediation workflows (CAP1-CAP6) for automated failure recovery.
 
