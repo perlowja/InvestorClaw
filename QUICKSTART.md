@@ -37,11 +37,11 @@ Choose the platform that fits your workflow.
 
 Claude Code is the easiest and most integrated option.
 
-Use Claude Code's documented marketplace flow.
+The Claude Code plugin is maintained in the InvestorClaude repo. Use Anthropic's documented marketplace flow:
 
 ```text
-/plugin marketplace add https://gitlab.com/argonautsystems/InvestorClaw.git
-/plugin install investorclaw@investorclaw
+/plugin marketplace add https://gitlab.com/argonautsystems/InvestorClaude.git
+/plugin install investorclaw@investorclaude
 ```
 
 After official Anthropic marketplace acceptance, use this command:

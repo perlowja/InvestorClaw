@@ -88,30 +88,16 @@ Choose the platform that matches how you work.
 
 ### Claude Code
 
-Claude Code support now lives in the separate InvestorClaude plugin. This repo keeps a forwarding marketplace entry so existing installs can find the split plugin.
-
-Install the Claude Code plugin with Anthropic's marketplace flow:
+The Claude Code plugin lives in a separate repo at [gitlab.com/argonautsystems/InvestorClaude](https://gitlab.com/argonautsystems/InvestorClaude). InvestorClaw does not ship a Claude Code marketplace; install directly from InvestorClaude using Anthropic's marketplace flow:
 
 ```text
-/plugin marketplace add https://gitlab.com/argonautsystems/InvestorClaw.git
-/plugin install investorclaw@investorclaw
+/plugin marketplace add https://gitlab.com/argonautsystems/InvestorClaude.git
+/plugin install investorclaw@investorclaude
 ```
 
-That marketplace entry forwards to `https://gitlab.com/argonautsystems/InvestorClaude.git`.
+After official Anthropic marketplace acceptance, the install will route through `/plugin install investorclaw@claude-plugins-official`.
 
-Do not clone the repo.
-
-Do not run Python package installers for Claude Code.
-
-The plugin discovers its commands from InvestorClaude, and that plugin prepares its local runtime when first used.
-
-After official Anthropic marketplace acceptance, use:
-
-```text
-/plugin install investorclaw@claude-plugins-official
-```
-
-See [docs/claude/README.md](docs/claude/README.md) for historical context and InvestorClaude references.
+See the [InvestorClaude README](https://gitlab.com/argonautsystems/InvestorClaude/-/blob/main/README.md) for the deterministic ask/refresh interaction model, slash-command reference, and bootstrap flow. Do not clone the InvestorClaw repo for Claude Code use — Claude Code installs from InvestorClaude directly.
 
 ---
 

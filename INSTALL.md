@@ -20,18 +20,18 @@ Choose the install path that matches your runtime.
 
 ### Claude Code
 
-Use this path if you run InvestorClaw in Claude Code. This is the supported pre-store Claude Code install path.
+Use this path if you run InvestorClaw in Claude Code. The Claude Code plugin is maintained in the separate InvestorClaude repo; install from there:
 
 ```text
-/plugin marketplace add https://gitlab.com/argonautsystems/InvestorClaw.git
-/plugin install investorclaw@investorclaw
+/plugin marketplace add https://gitlab.com/argonautsystems/InvestorClaude.git
+/plugin install investorclaw@investorclaude
 ```
 
 This flow follows Anthropic's documented marketplace flow.
 
 After official marketplace acceptance, use `/plugin install investorclaw@claude-plugins-official`.
 
-After installation, run `/investorclaw:investorclaw-setup`.
+After installation, ask InvestorClaude a portfolio question (`/investorclaw:ask "what's in my portfolio?"`).
 
 You can also attach portfolio files and ask Claude to set up InvestorClaw.
 
@@ -319,16 +319,16 @@ After installation, do the following:
 
 ### Claude Code Plugin Did Not Appear
 
-Use Claude Code's plugin manager.
+The Claude Code plugin lives in the InvestorClaude repo. Use Claude Code's plugin manager:
 
 ```text
-/plugin marketplace add https://gitlab.com/argonautsystems/InvestorClaw.git
-/plugin install investorclaw@investorclaw
+/plugin marketplace add https://gitlab.com/argonautsystems/InvestorClaude.git
+/plugin install investorclaw@investorclaude
 ```
 
 Then refresh Claude Code.
 
-Then run `/investorclaw:investorclaw-setup`.
+Then ask a portfolio question via `/investorclaw:ask`.
 
 ### Standalone Installation Failed
 

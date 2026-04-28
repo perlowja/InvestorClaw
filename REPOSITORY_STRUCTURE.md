@@ -20,7 +20,7 @@
 ## Three Distributions
 
 ### 1. Claude Code Skill Payload (~240 KB)
-**What Gets Installed**: `/plugin install investorclaw@investorclaw`
+**What Gets Installed**: `/plugin install investorclaw@investorclaude` from the [InvestorClaude](https://gitlab.com/argonautsystems/InvestorClaude) repo (Claude Code plugin lives there, not here)
 
 ```
 claude/

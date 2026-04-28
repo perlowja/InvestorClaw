@@ -54,8 +54,8 @@ Claude Code needs less setup. OpenClaw gives you more control.
 ### Claude Code
 
 ```text
-/plugin marketplace add https://gitlab.com/argonautsystems/InvestorClaw.git
-/plugin install investorclaw@investorclaw
+/plugin marketplace add https://gitlab.com/argonautsystems/InvestorClaude.git
+/plugin install investorclaw@investorclaude
 ```
 
 After official Anthropic marketplace acceptance, run:
