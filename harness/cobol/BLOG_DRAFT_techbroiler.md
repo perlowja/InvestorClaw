@@ -1,7 +1,7 @@
 # Blog draft — Agentic COBOL
 
 **Landing zone:** techbroiler.net
-**Status:** outline + notes (full draft after v2.4.0 ships with empirical numbers)
+**Status:** draft with v2.5.x empirical numbers (2026-04-28)
 **Target length:** 1500-2500 words
 **Authors:** Jason Perlow + agent collaborators
 **Tags:** agentic-systems, llm, testing, plugin-ecosystem, cobol, bdd
@@ -146,10 +146,11 @@ Show the actual canonical prompt set:
 prompt has runtime-specific expected routes because the same product
 exposes a different surface in each runtime.
 
-Walk through the v2.3.x → v2.4.0 cycle as the empirical narrative:
+Walk through the v2.3.x → v2.5.x cycle as the empirical narrative:
 
-- **v2.3.4 (baseline):** 9/15 = 60% on Claude Code. Eight failures.
-  All silent misroutes — agent answered without invoking the right tool.
+- **v2.3.4 (15-prompt baseline):** 9/15 = 60% on Claude Code. Eight
+  failures. All silent misroutes — agent answered without invoking
+  the right tool.
 - **v2.3.5 (description tuning):** 12/15 = 80%. Three remaining
   failures all looked like *over-routing* — `ic-setup` was greedily
   matching every portfolio query.
@@ -160,8 +161,19 @@ Walk through the v2.3.x → v2.4.0 cycle as the empirical narrative:
 - **v2.3.7 (rebalanced description weights):** 12/15 = 80%. Different
   failure mix. Plateau confirmed.
 - **v2.4.0 (architectural correction):** 27 granular commands → 9
-  consolidated tools matching InvestorClaw's surface. [Show v2.4.0
-  COBOL numbers when run.]
+  consolidated tools. Claude Code 19/30 = 63% on the new 30-prompt
+  set. Better surface, lower score: the new corpus exposes failure
+  modes the 15-prompt set didn't reach.
+- **v2.5.0 (adapter consolidation onto ic-engine v2.5.0):** Claude
+  Code 24/30 = 80%. Five failures clustered on news/market deflects
+  and cross-skill ambiguity (`investorclaude` vs `investorclaw`).
+- **v2.5.1 (slash surface collapsed to `ask` + `refresh`):** Routing
+  is finally tight. But the *measurement* breaks — see sidebar.
+- **v2.5.2 (initial published release):** Claude Code **30/30 = 100%**.
+  Cross-runtime: **OpenClaw 26/30 (86%) STRICT_PASS, Hermes 23/30
+  (76%) PUBLISH** — both above min_pass, with provider stack switched
+  to Together MiniMax-M2.7 for narrative + local gpu-host gemma-4-E4B
+  for consultation (gemini quota stress on prior runs).
 
 The plateau at 12/15 was *the signal*. Description tuning couldn't
 break past it because the surface was structurally too granular —
@@ -169,6 +181,46 @@ break past it because the surface was structurally too granular —
 tuning; it was consolidation.
 
 That's a finding you don't get from any other test methodology.
+
+---
+
+### Sidebar — When the test fixture lies
+
+The v2.5.1 → v2.5.2 jump from "1/30" to "30/30" *on the same recorded
+agent runs* is the most uncomfortable lesson of this cycle.
+
+The harness records every prompt's full agent transcript. The
+v2.5.1 scorer parsed `claude -p --output-format=stream-json` events
+looking for tool invocations on `Bash` or directly-named slash-command
+tool calls. It missed the actual shape Claude Code now ships: plugin
+slash commands surface as a `Skill` tool call with `input.skill =
+"investorclaw:ask"`. The slash name lives in the input, not the tool
+name.
+
+The agent had been routing perfectly the entire time. The scorer
+hadn't.
+
+Rescoring the captured stream-json with a fixed `Skill`-aware
+extractor turned the 1/30 (fail-the-publish-bar) into 30/30 (sail
+past it). Same agent. Same prompts. Same model. Different lens.
+
+The discipline that protects you here: **always commit the raw
+artifact**. The `tool_invocations` field in the JSONL is the truth;
+`detected` is the interpretation. When you can prove the
+interpretation was wrong without re-running the agent, you have a
+shippable fix; when you have to re-run, you've already lost a day to
+provider quotas.
+
+The test pyramid for agentic systems needs a layer the unit-test
+era never had: **scorer correctness**. Treat the scorer like
+production code. Test it against recorded transcripts. Version
+its detection logic. Make it auditable.
+
+(For our case the proof was a 30-row regression test that runs
+the buggy v2.5.1 logic alongside the fixed v2.5.2 logic against
+the recorded JSONL — old logic must reproduce 1/30, new logic
+must hit 30/30. Both invariants are asserted on every CI run.
+The test is in `harness/cobol/test_parse_stream_json.py`.)
 
 ---
 
@@ -244,10 +296,15 @@ spec are public. The pattern is generalizable.
 
 ## Publish checklist
 
-- [ ] v2.4.0 COBOL barrage numbers (linux-x86-host, all 4 runtimes)
-- [ ] Cross-runtime pilot infra working (OpenClaw + ZeroClaw API keys
-  resolved)
-- [ ] Code links pointing at frozen v2.4.0 tags (not main HEAD)
+- [x] v2.5.x COBOL barrage numbers — Claude Code 30/30, OpenClaw
+  26/30, Hermes 23/30 (linux-x86-host, 2026-04-28). Aggregate evidence
+  committed at `harness/reports/2.5.0-fleet-aggregate-2026-04-28.md`.
+- [ ] ZeroClaw barrage — pending `fleet_provider` enc2-auth
+  restoration on linux-x86-host container + Pi units (pi-small/pi-large).
+  Ship without ZeroClaw or wait? (3 of 4 runtimes is publishable.)
+- [x] Code links pointing at the v2.5.1 / v2.5.2 squashed releases
+  on `gitlab.com/argonautsystems/InvestorClaw` and
+  `.../InvestorClaude` — confirmed argonautsystems-org migration.
 - [ ] Run draft past one technical reviewer (cleanroom?)
 - [ ] Cross-post to Hacker News, Lobsters?
 - [ ] Tag InvestorClaw fleet release announcement to coincide
