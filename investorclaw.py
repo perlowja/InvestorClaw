@@ -49,7 +49,7 @@ from pathlib import Path
 # canonical source of truth (the value here mirrors the pyproject entry).
 # `__version__` is also exposed as a module attribute for `from investorclaw
 # import __version__` callers preserved across the Phase 2 shim cut.
-VERSION = "2.5.0"
+VERSION = "2.6.0"
 __version__ = VERSION
 
 _HERE = Path(__file__).resolve().parent

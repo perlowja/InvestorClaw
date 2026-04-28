@@ -150,10 +150,15 @@ INVESTORCLAW_NARRATIVE_ENDPOINT=https://api.together.xyz/v1
 INVESTORCLAW_NARRATIVE_MODEL=MiniMaxAI/MiniMax-M2.7
 INVESTORCLAW_NARRATIVE_API_KEY=
 
-# Consultation layer — fleet default: Gemma 4 (31B) via Together AI
+# Consultation layer — fleet default: Gemma 4 via the same cloud provider as
+# narrative (Together AI hosts `google/gemma-4-31B-it`). Edge nodes / offline
+# deployments can use a local llama.cpp / ollama server (see LOCAL block).
 INVESTORCLAW_CONSULTATION_ENABLED=true
-INVESTORCLAW_CONSULTATION_ENDPOINT=http://192.0.2.96:8080
-INVESTORCLAW_CONSULTATION_MODEL=gemma4-consult
+INVESTORCLAW_CONSULTATION_ENDPOINT=https://api.together.xyz/v1
+INVESTORCLAW_CONSULTATION_MODEL=google/gemma-4-31B-it
+# LOCAL alternative — uncomment + adjust ENDPOINT to your local server:
+#   INVESTORCLAW_CONSULTATION_ENDPOINT=http://localhost:8080
+#   INVESTORCLAW_CONSULTATION_MODEL=gemma4-consult
 
 # Local alternative for offline edge nodes (set ENDPOINT to your host):
 #   INVESTORCLAW_NARRATIVE_ENDPOINT=http://raspberrypi.local:11434

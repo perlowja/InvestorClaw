@@ -30,7 +30,7 @@ cleanup() {
 trap cleanup EXIT
 
 echo -e "${GREEN}╔════════════════════════════════════════════════════════════════╗${NC}"
-echo -e "${GREEN}║          InvestorClaw OpenClaw Skill Installer v2.5.0         ║${NC}"
+echo -e "${GREEN}║          InvestorClaw OpenClaw Skill Installer v2.6.0         ║${NC}"
 echo -e "${GREEN}╚════════════════════════════════════════════════════════════════╝${NC}"
 echo ""
 
@@ -173,14 +173,22 @@ INVESTORCLAW_NARRATIVE_ENDPOINT=https://api.together.xyz/v1
 INVESTORCLAW_NARRATIVE_MODEL=MiniMaxAI/MiniMax-M2.7
 INVESTORCLAW_NARRATIVE_API_KEY=
 
-# Consultation layer — local Gemma 4 via gpu-host llama.cpp (fleet default).
-# llama-server on gpu-host:8080 exposes gemma4-consult as an OpenAI-compatible
-# provider with /v1/chat/completions + /v1/models. Override
-# INVESTORCLAW_CONSULTATION_ENDPOINT to your own Ollama / OpenAI-compat endpoint
-# if running outside the fleet network.
+# Consultation layer — fleet default: Gemma 4 via the same cloud provider as
+# narrative (Together AI hosts `google/gemma-4-31B-it`). Google AI Studio
+# also serves `gemma-4-31b-it` directly under their generative API if you've
+# set the narrative provider to google instead — switch the ENDPOINT below
+# to https://generativelanguage.googleapis.com/v1beta in that case.
+#
+# OPTIONAL local backend: any OpenAI-compatible server (llama.cpp's
+# llama-server with `--alias gemma4-consult`, ollama, vLLM, etc.) is a
+# drop-in. Uncomment the LOCAL block below if you've stood one up; otherwise
+# the cloud default is what fresh installs use.
 INVESTORCLAW_CONSULTATION_ENABLED=true
-INVESTORCLAW_CONSULTATION_ENDPOINT=http://192.0.2.96:8080
-INVESTORCLAW_CONSULTATION_MODEL=gemma4-consult
+INVESTORCLAW_CONSULTATION_ENDPOINT=https://api.together.xyz/v1
+INVESTORCLAW_CONSULTATION_MODEL=google/gemma-4-31B-it
+# LOCAL alternative — uncomment + adjust ENDPOINT to your local server:
+#   INVESTORCLAW_CONSULTATION_ENDPOINT=http://localhost:8080
+#   INVESTORCLAW_CONSULTATION_MODEL=gemma4-consult
 
 # Provider API keys (set the one for your chosen provider)
 TOGETHER_API_KEY=

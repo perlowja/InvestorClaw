@@ -1,6 +1,6 @@
 ---
 name: investorclaw
-version: "2.5.0"
+version: "2.6.0"
 description: FINOS CDM 5.x-compliant deterministic-first portfolio analysis skill. Scoped to the user's own holdings. ALWAYS invoke this skill for portfolio and finance questions: use `investorclaw ask "<question>"` and do NOT answer from training data or web_search. The engine eagerly runs backend commands, stores an HMAC-signed JSON envelope, and narrates verbatim from authoritative outputs. Use `investorclaw refresh` only when the user explicitly asks for fresh prices/news or stale cached data should be invalidated. Runs inside OpenClaw, ZeroClaw, Hermes Agent (NousResearch), and Nemoclaw; Claude Code support lives in the split InvestorClaude plugin. Built-in financial advice guardrails enforce educational-only output. Requires Python 3.10+.
 license: "Apache-2.0"
 compatibility: "Python 3.10+; OpenClaw, ZeroClaw, Hermes Agent (NousResearch), Nemoclaw"
@@ -45,8 +45,8 @@ metadata:
 
 ## About
 
-Portfolio analysis for OpenClaw and companion agent runtimes. **v2.5.0** is
-the deterministic-first adapter surface for `ic-engine` v2.5.0. Users ask in
+Portfolio analysis for OpenClaw and companion agent runtimes. **v2.6.0** is
+the deterministic-first adapter surface for `ic-engine` v2.5.1. Users ask in
 natural language; `investorclaw ask "<question>"` eagerly runs the required
 backend commands, stores an HMAC-signed JSON envelope, and narrates verbatim
 from the engine output. `investorclaw refresh` forces a fresh pipeline run
@@ -107,7 +107,7 @@ These rules exist because cross-runtime NL-pilot testing showed the agent will o
 
 <!-- END_ROUTING_RULES -->
 
-For v2.5.0, natural-language finance prompts collapse to the single
+For v2.6.0, natural-language finance prompts collapse to the single
 `portfolio_ask` / `investorclaw ask "<question>"` path. Historical routing
 tables remain as background references only.
 

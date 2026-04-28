@@ -1,11 +1,11 @@
 {
   "id": "investorclaw",
   "name": "InvestorClaw",
-  "description": "Portfolio analysis skill for OpenClaw agents. Ask natural-language portfolio questions through ic-engine v2.5.0; InvestorClaw eagerly runs the deterministic pipeline, stores HMAC-signed JSON envelopes, and narrates verbatim from authoritative outputs. Built-in financial advice guardrails enforce educational-only output.",
-  "version": "2.5.0",
+  "description": "Portfolio analysis skill for OpenClaw agents. Ask natural-language portfolio questions through ic-engine v2.5.1; InvestorClaw eagerly runs the deterministic pipeline, stores HMAC-signed JSON envelopes, and narrates verbatim from authoritative outputs. Built-in financial advice guardrails enforce educational-only output.",
+  "version": "2.6.0",
   "homepage": "https://gitlab.com/argonautsystems/InvestorClaw",
   "repository": "https://gitlab.com/argonautsystems/InvestorClaw",
-  "license": "Apache 2.0 Dual License",
+  "license": "Apache-2.0",
   "commands": [
     "investorclaw ask",
     "investorclaw refresh"

@@ -1,7 +1,7 @@
 [skill]
 name = "investorclaw"
-version = "2.5.0"
-description = "FINOS CDM 5.x-compliant deterministic-first portfolio analysis. Ask natural-language portfolio and finance questions through ic-engine v2.5.0; signed outputs only. Educational output only — not investment advice."
+version = "2.6.0"
+description = "FINOS CDM 5.x-compliant deterministic-first portfolio analysis. Ask natural-language portfolio and finance questions through ic-engine v2.5.1; signed outputs only. Educational output only — not investment advice."
 author = "Jason Perlow"
 tags = ["finance", "portfolio", "analysis", "bonds", "news"]
 
@@ -110,7 +110,7 @@ advertisement, and model-native capability. No exceptions.
 """]
 
 # ---------------------------------------------------------------------------
-# 2-tool deterministic-first surface (ic-engine v2.5.0)
+# 2-tool deterministic-first surface (ic-engine v2.5.1)
 # ---------------------------------------------------------------------------
 
 [[tools]]
