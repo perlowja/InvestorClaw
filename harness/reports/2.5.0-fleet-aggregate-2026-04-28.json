@@ -1,0 +1,46 @@
+{
+  "version": "2.5.0",
+  "date": "2026-04-28",
+  "runtimes": {
+    "hermes": {
+      "passed": 23,
+      "total": 30,
+      "pct": 76,
+      "gate": {
+        "min_pass": 17,
+        "publish_bar": 20
+      },
+      "verdict": "PUBLISH",
+      "verdict_note": "\u2265 20/30 publish_bar",
+      "report_path": "harness/reports/v2.5.1-linux-x86-host-hermes-cobol-2026-04-28.jsonl"
+    },
+    "claudecode": {
+      "passed": 30,
+      "total": 30,
+      "pct": 100,
+      "gate": {
+        "min_pass": 21,
+        "publish_bar": 24
+      },
+      "verdict": "PUBLISH",
+      "verdict_note": "\u2265 24/30 publish_bar",
+      "report_path": "harness/reports/v2.5.2-linux-x86-host-cobol-2026-04-27.jsonl"
+    },
+    "openclaw": {
+      "passed": 26,
+      "total": 30,
+      "pct": 86,
+      "gate": {
+        "min_pass": 25,
+        "publish_bar": 27
+      },
+      "verdict": "STRICT_PASS",
+      "verdict_note": "\u2265 25/30 min_pass (below 27 publish)",
+      "report_path": "harness/reports/v2.5.1-linux-x86-host-openclaw-cobol-2026-04-28.jsonl"
+    }
+  },
+  "fleet_pass": false,
+  "missing_runtimes": [
+    "zeroclaw"
+  ]
+}
