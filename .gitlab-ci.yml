@@ -8,16 +8,15 @@
 # Uses `uv` as the canonical install path (per project CLAUDE.md):
 # `uv sync` reads pyproject.toml and uv.lock for reproducible builds.
 
-# Trigger fleet alignment (2026-04-27): every fleet repo (clio, ic-engine,
-# InvestorClaude) opts into push + merge_request_event + tag triggers. Apply
-# the same canonical workflow gate here so MR pipelines actually fire — prior
-# to this all jobs ran on the implicit GitLab default and merge_request_event
-# was never selected.
+# Pipelines disabled (2026-04-29): per the fleet CI policy, argonautsystems
+# projects are codex-only-review with no shared-runner minutes burned. The
+# stage definitions below are kept for documentation — they describe the
+# gates that `make ci` mirrors locally — but no pipeline ever runs on push,
+# MR, or tag. Re-enable by replacing this block with the previous push/MR/tag
+# rules if a self-hosted runner gets registered for this project.
 workflow:
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "push"'
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-    - if: '$CI_COMMIT_TAG'
+    - when: never
 
 stages:
   - lint
