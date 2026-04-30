@@ -1,270 +1,200 @@
-#!/bin/bash
-# InvestorClaw zeroclaw Installer (Raspberry Pi)
+#!/usr/bin/env bash
+# InvestorClaw — zeroclaw installer (bundle-based, v2.6.3+)
 #
-# Installs InvestorClaw for zeroclaw runtime on Raspberry Pi
-#
-# Addresses zeroclaw v0.6.9 limitations:
-# - Disables open-skills to prevent token overflow
-# - Configures proper Docker sandbox
-# - Increases context window for portfolio analysis
-# - Handles vendor dependency management
+# Installs the audit-compliant skill bundle into zeroclaw's workspace and
+# patches the user's zeroclaw config so skill tools (portfolio_ask,
+# portfolio_refresh) actually execute (defaults block them via
+# autonomy.forbidden_paths and autonomy.auto_approve).
 #
 # Usage:
-#   bash <(curl -sSL https://gitlab.com/argonautsystems/InvestorClaw/-/raw/main/zeroclaw/install.sh)
+#   bash installers/zeroclaw/install.sh                    # from repo checkout
+#   curl -fsSL <release-url>/install.sh | bash             # from release
 #
-# Copyright 2026 InvestorClaw Contributors
-# Licensed under Apache License 2.0
+# Env overrides:
+#   IC_BUNDLE_TGZ      — path to a local bundle tarball (default: auto-detect)
+#   IC_BUNDLE_VERSION  — version to fetch from releases (default: 2.6.3)
+#   IC_VENV_DIR        — where to put the ic-engine venv (default: ~/.cache/investorclaw/.venv)
+#   ZEROCLAW_HOME      — zeroclaw config root (default: ~/.zeroclaw)
+#
+# Copyright 2026 InvestorClaw Contributors. Apache-2.0.
 
 set -euo pipefail
 
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m'
+GREEN='\033[0;32m'; YELLOW='\033[1;33m'; RED='\033[0;31m'; BLUE='\033[0;34m'; NC='\033[0m'
+log()    { echo -e "${BLUE}→${NC} $*"; }
+ok()     { echo -e "${GREEN}✓${NC} $*"; }
+warn()   { echo -e "${YELLOW}⚠${NC} $*"; }
+err()    { echo -e "${RED}✗${NC} $*" >&2; }
+die()    { err "$*"; exit 1; }
 
-log_info() { echo -e "${BLUE}→${NC} $1"; }
-log_success() { echo -e "${GREEN}✓${NC} $1"; }
-log_warn() { echo -e "${YELLOW}⚠${NC} $1"; }
-log_error() { echo -e "${RED}✗${NC} $1"; }
+VERSION="${IC_BUNDLE_VERSION:-2.6.3}"
+BUNDLE_NAME="investorclaw-skill-${VERSION}"
+ZC_HOME="${ZEROCLAW_HOME:-$HOME/.zeroclaw}"
+SKILL_DIR="$ZC_HOME/workspace/skills/investorclaw"
+VENV_DIR="${IC_VENV_DIR:-$HOME/.cache/investorclaw/.venv}"
+BIN_LINK="$HOME/.local/bin/investorclaw"
+CONFIG_FILE="$ZC_HOME/config.toml"
 
-REPO="${INVESTORCLAW_REPO_URL:-https://gitlab.com/argonautsystems/InvestorClaw.git}"
-INSTALL_DIR="${INVESTORCLAW_HOME:-$HOME/investorclaw}"
-ZEROCLAW_CONFIG="$HOME/.zeroclaw/config.toml"
-CLONE_DIR="/tmp/investorclaw-install-$$"
+# ------------- preflight ---------------------------------------------
+log "InvestorClaw v${VERSION} — zeroclaw installer (bundle-based)"
 
-cleanup() {
-    rm -rf "$CLONE_DIR"
-}
-trap cleanup EXIT
+command -v zeroclaw >/dev/null 2>&1 || die "zeroclaw CLI not found in PATH. Install zeroclaw first."
+ok "zeroclaw: $(zeroclaw --version 2>&1 | head -1)"
 
-echo -e "${GREEN}╔════════════════════════════════════════════════════════════════╗${NC}"
-echo -e "${GREEN}║         InvestorClaw for zeroclaw (Raspberry Pi)              ║${NC}"
-echo -e "${GREEN}║         Fixing v0.6.9 token overflow & sandbox issues        ║${NC}"
-echo -e "${GREEN}╚════════════════════════════════════════════════════════════════╝${NC}"
-echo ""
+command -v uv >/dev/null 2>&1 || die "uv not found in PATH. Install: curl -LsSf https://astral.sh/uv/install.sh | sh"
+ok "uv: $(uv --version 2>&1 | head -1)"
 
-# Check if running on Raspberry Pi
-log_info "Verifying Raspberry Pi environment..."
-if ! grep -q "Raspberry Pi" /proc/device-tree/model 2>/dev/null; then
-    log_warn "Not running on Raspberry Pi, but proceeding..."
-fi
-log_success "Environment check passed"
-
-# Check zeroclaw is installed
-if ! command -v zeroclaw &>/dev/null; then
-    log_error "zeroclaw CLI not found. Please install zeroclaw first."
-    exit 1
-fi
-log_success "zeroclaw is installed"
-
-# Clone repository
-log_info "Cloning InvestorClaw..."
-if ! git clone --depth 1 "$REPO" "$CLONE_DIR" 2>/dev/null; then
-    log_error "Failed to clone repository"
-    exit 1
-fi
-COMMIT=$(cd "$CLONE_DIR" && git rev-parse --short HEAD)
-log_success "Cloned (commit: $COMMIT)"
-
-# Install to target directory
-log_info "Installing to $INSTALL_DIR..."
-if [ -d "$INSTALL_DIR" ]; then
-    log_warn "Updating existing installation..."
-    rm -rf "$INSTALL_DIR"
-fi
-mkdir -p "$(dirname "$INSTALL_DIR")"
-mv "$CLONE_DIR" "$INSTALL_DIR"
-log_success "Installed to $INSTALL_DIR"
-
-# Create directories
-mkdir -p "$HOME/portfolios"
-mkdir -p "$HOME/.investorclaw"
-log_success "Created portfolio & config directories"
-
-# Configure zeroclaw for InvestorClaw
-echo ""
-log_info "Configuring zeroclaw..."
-
-if [ ! -f "$ZEROCLAW_CONFIG" ]; then
-    log_warn "zeroclaw config not found at $ZEROCLAW_CONFIG"
-    log_info "Please run: zeroclaw config init"
-    exit 1
-fi
-
-# Backup original config
-cp "$ZEROCLAW_CONFIG" "$ZEROCLAW_CONFIG.backup.$(date +%s)"
-log_success "Backed up zeroclaw config"
-
-# Apply critical fixes for InvestorClaw
-log_info "Applying zeroclaw configuration fixes..."
-
-# Fix 1: Disable open-skills (prevents 96K token overflow)
-if grep -q "open_skills_enabled = true" "$ZEROCLAW_CONFIG"; then
-    sed -i.bak 's/open_skills_enabled = true/open_skills_enabled = false/g' "$ZEROCLAW_CONFIG"
-    log_success "Disabled open-skills (prevents token overflow)"
-else
-    log_warn "open_skills_enabled already disabled or not found"
-fi
-
-# Fix 2: Increase context window (for portfolio analysis)
-if grep -q "max_context_tokens = 32000" "$ZEROCLAW_CONFIG"; then
-    sed -i.bak 's/max_context_tokens = 32000/max_context_tokens = 131072/g' "$ZEROCLAW_CONFIG"
-    log_success "Increased context window to 131K tokens"
-else
-    log_warn "Context window may already be configured"
-fi
-
-# Fix 3: Enable full autonomy (for non-interactive skill execution)
-if grep -q 'level = "supervised"' "$ZEROCLAW_CONFIG"; then
-    sed -i.bak 's/level = "supervised"/level = "full"/g' "$ZEROCLAW_CONFIG"
-    log_success "Enabled full autonomy for skill execution"
-else
-    log_warn "Autonomy level may already be configured"
-fi
-
-# Fix 4: Disable sandbox (Docker still applies in v0.6.9, but config updates)
-if grep -q 'backend = "auto"' "$ZEROCLAW_CONFIG"; then
-    sed -i.bak 's/backend = "auto"/backend = "none"/g' "$ZEROCLAW_CONFIG"
-    log_success "Configured sandbox backend"
-else
-    log_warn "Sandbox backend may already be configured"
-fi
-
-# Create skill-local .env (canonical path)
-ENV_FILE="$INSTALL_DIR/.env"
-log_info "Creating InvestorClaw configuration at $ENV_FILE ..."
-if [ ! -f "$ENV_FILE" ]; then
-    cat > "$ENV_FILE" << 'ENVFILE'
-# InvestorClaw configuration for ZeroClaw
-# See .env.example in the skill root for the full reference.
-
-# Portfolio paths
-INVESTOR_CLAW_PORTFOLIO_DIR=~/portfolios
-INVESTOR_CLAW_REPORTS_DIR=~/portfolio_reports
-
-# Narrative synthesis — fleet default: MiniMax via Together AI
-# Edge deployments on slow networks may prefer a local backend (see below).
-INVESTORCLAW_NARRATIVE_PROVIDER=openai_compat
-INVESTORCLAW_NARRATIVE_ENDPOINT=https://api.together.xyz/v1
-INVESTORCLAW_NARRATIVE_MODEL=MiniMaxAI/MiniMax-M2.7
-INVESTORCLAW_NARRATIVE_API_KEY=
-
-# Consultation layer — fleet default: Gemma 4 via the same cloud provider as
-# narrative (Together AI hosts `google/gemma-4-31B-it`). Edge nodes / offline
-# deployments can use a local llama.cpp / ollama server (see LOCAL block).
-INVESTORCLAW_CONSULTATION_ENABLED=true
-INVESTORCLAW_CONSULTATION_ENDPOINT=https://api.together.xyz/v1
-INVESTORCLAW_CONSULTATION_MODEL=google/gemma-4-31B-it
-# LOCAL alternative — uncomment + adjust ENDPOINT to your local server:
-#   INVESTORCLAW_CONSULTATION_ENDPOINT=http://localhost:8080
-#   INVESTORCLAW_CONSULTATION_MODEL=gemma4-consult
-
-# Local alternative for offline edge nodes (set ENDPOINT to your host):
-#   INVESTORCLAW_NARRATIVE_ENDPOINT=http://raspberrypi.local:11434
-#   INVESTORCLAW_NARRATIVE_MODEL=<local-model>
-
-# Provider API keys
-TOGETHER_API_KEY=
-# GOOGLE_API_KEY=
-
-# Market-data keys (optional)
-# FINNHUB_KEY=
-# NEWSAPI_KEY=
-# FRED_API_KEY=
-
-INVESTORCLAW_DEPLOYMENT_MODE=single_investor
-ENVFILE
-    chmod 600 "$ENV_FILE"
-    log_success "Created $ENV_FILE (mode 600)"
-else
-    log_success ".env already exists at $ENV_FILE"
-fi
-
-# Install dependencies via uv (auto-installs Python if missing — matches
-# openclaw/install.sh self-bootstrap pattern so this script works on
-# edge containers that don't ship with Python 3 pre-installed).
-log_info "Installing dependencies via uv..."
-
-if ! command -v uv &>/dev/null; then
-    log_info "uv not found — installing via https://astral.sh/uv/install.sh ..."
-    if ! curl -LsSf https://astral.sh/uv/install.sh | sh; then
-        log_error "uv install failed. Install uv manually: https://docs.astral.sh/uv/getting-started/installation/"
-        exit 1
+# ------------- locate the bundle -------------------------------------
+BUNDLE_TGZ="${IC_BUNDLE_TGZ:-}"
+if [ -z "$BUNDLE_TGZ" ]; then
+    # Try repo-local build artifact
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+    if [ -f "$REPO_ROOT/build/${BUNDLE_NAME}.tar.gz" ]; then
+        BUNDLE_TGZ="$REPO_ROOT/build/${BUNDLE_NAME}.tar.gz"
     fi
-    export PATH="$HOME/.cargo/bin:$HOME/.local/bin:$PATH"
 fi
 
-if ! command -v uv &>/dev/null; then
-    log_error "uv still not on PATH after install. Add \$HOME/.local/bin to PATH and re-run."
-    exit 1
-fi
-
-log_info "uv: $(uv --version 2>&1)"
-if ! (cd "$INSTALL_DIR" && uv sync); then
-    log_error "uv sync failed in $INSTALL_DIR — check pyproject.toml and network connectivity."
-    exit 1
-fi
-log_success "Installed dependencies into $INSTALL_DIR/.venv (uv-managed Python)"
-
-# Symlink the investorclaw entry point so /usr/local/bin catches it
-# (needed for agent exec shells that sanitize PATH and don't load ~/.bashrc).
-if [ -x "$INSTALL_DIR/.venv/bin/investorclaw" ]; then
-    mkdir -p "$HOME/.local/bin"
-    ln -sf "$INSTALL_DIR/.venv/bin/investorclaw" "$HOME/.local/bin/investorclaw"
-    if sudo -n true 2>/dev/null; then
-        sudo ln -sf "$INSTALL_DIR/.venv/bin/investorclaw" /usr/local/bin/investorclaw 2>/dev/null
+if [ -z "$BUNDLE_TGZ" ] || [ ! -f "$BUNDLE_TGZ" ]; then
+    # Fall back to building it from the repo
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+    if [ -f "$REPO_ROOT/Makefile" ] && [ -f "$REPO_ROOT/scripts/build_skill_bundle.py" ]; then
+        log "no prebuilt bundle found — building via 'make skill-bundle'"
+        (cd "$REPO_ROOT" && make skill-bundle >/dev/null) || die "make skill-bundle failed"
+        BUNDLE_TGZ="$REPO_ROOT/build/${BUNDLE_NAME}.tar.gz"
+    else
+        die "bundle not found at \$IC_BUNDLE_TGZ or repo build/, and Makefile not present"
     fi
-    log_success "investorclaw CLI on PATH: $($HOME/.local/bin/investorclaw --version 2>&1 | head -1)"
 fi
+[ -f "$BUNDLE_TGZ" ] || die "bundle still not found: $BUNDLE_TGZ"
+ok "bundle: $BUNDLE_TGZ ($(du -h "$BUNDLE_TGZ" | cut -f1))"
 
-# Run setup orchestrator
-echo ""
-log_info "Running setup orchestrator..."
-if bash "$INSTALL_DIR/bin/setup-orchestrator"; then
-    log_success "Setup complete"
+# ------------- extract bundle ----------------------------------------
+log "extracting bundle to $SKILL_DIR..."
+mkdir -p "$ZC_HOME/workspace/skills"
+rm -rf "$SKILL_DIR" "$SKILL_DIR-staging"
+tar -xzf "$BUNDLE_TGZ" -C "$ZC_HOME/workspace/skills"
+mv "$ZC_HOME/workspace/skills/${BUNDLE_NAME}" "$SKILL_DIR"
+ok "extracted ($(find "$SKILL_DIR" -type f | wc -l | tr -d ' ') files)"
+
+# ------------- create venv OUTSIDE skill dir (zeroclaw audit blocks symlinks) ---
+log "creating ic-engine venv at $VENV_DIR..."
+mkdir -p "$(dirname "$VENV_DIR")"
+(cd "$SKILL_DIR" && UV_PROJECT_ENVIRONMENT="$VENV_DIR" uv sync --python 3.12 >/dev/null 2>&1) \
+    || die "uv sync failed in $SKILL_DIR"
+ok "venv ready ($(ls "$VENV_DIR/lib"/python*/site-packages | wc -l | tr -d ' ') packages)"
+
+# ------------- symlink CLI to user PATH ------------------------------
+mkdir -p "$(dirname "$BIN_LINK")"
+ln -sf "$VENV_DIR/bin/investorclaw" "$BIN_LINK"
+ok "symlinked $BIN_LINK"
+
+# ------------- patch zeroclaw config ---------------------------------
+log "patching $CONFIG_FILE..."
+mkdir -p "$ZC_HOME"
+
+# If config doesn't exist yet, init defaults
+if [ ! -f "$CONFIG_FILE" ]; then
+    zeroclaw config init >/dev/null 2>&1 || true
+fi
+[ -f "$CONFIG_FILE" ] || die "could not create $CONFIG_FILE"
+
+CONFIG_FILE="$CONFIG_FILE" python3 <<'PYEOF'
+import os, re
+config_path = os.environ['CONFIG_FILE']
+content = open(config_path).read()
+
+def patch_array(content, key, removals=(), additions=()):
+    pat = re.compile(
+        rf'(^{re.escape(key)}\s*=\s*\[)([^\]]*)(\])',
+        re.MULTILINE | re.DOTALL,
+    )
+    m = pat.search(content)
+    if not m:
+        return content
+    body = m.group(2)
+    items = re.findall(r'"([^"]*)"', body)
+    for r in removals:
+        items = [x for x in items if x != r]
+    for a in additions:
+        if a not in items:
+            items.append(a)
+    new_body = ',\n    '.join(f'"{x}"' for x in items)
+    if new_body:
+        new_body = '\n    ' + new_body + ',\n'
+    return content[:m.start()] + f'{key} = [{new_body}]' + content[m.end():]
+
+content = patch_array(content, 'forbidden_paths', removals=['/home', '/opt'])
+content = patch_array(
+    content,
+    'auto_approve',
+    additions=['investorclaw.portfolio_ask', 'investorclaw.portfolio_refresh'],
+)
+content = patch_array(
+    content,
+    'allowed_commands',
+    additions=['investorclaw', 'uv', 'sh'],
+)
+if re.search(r'^\[skills\]', content, re.MULTILINE):
+    content = re.sub(
+        r'^(allow_scripts\s*=\s*)(false|true)',
+        r'\1true',
+        content,
+        flags=re.MULTILINE,
+    )
+    if 'allow_scripts' not in content:
+        content = re.sub(
+            r'(^\[skills\]\s*\n)',
+            r'\1allow_scripts = true\n',
+            content,
+            count=1,
+            flags=re.MULTILINE,
+        )
+else:
+    content += '\n[skills]\nallow_scripts = true\n'
+
+open(config_path, 'w').write(content)
+print("config patched")
+PYEOF
+
+ok "config patched"
+
+# ------------- verify ------------------------------------------------
+log "verifying skill registration..."
+if zeroclaw skills audit investorclaw 2>&1 | grep -q "Skill audit passed"; then
+    ok "zeroclaw skills audit: PASS"
 else
-    log_warn "Setup had issues"
+    warn "skills audit reported issues — review with: zeroclaw skills audit investorclaw"
 fi
 
-# Restart zeroclaw service
-log_info "Restarting zeroclaw service..."
-if systemctl --user is-active --quiet zeroclaw.service; then
-    systemctl --user restart zeroclaw.service
-    log_success "zeroclaw service restarted"
+if zeroclaw skills list 2>&1 | grep -q "investorclaw"; then
+    ok "skill registered: $(zeroclaw skills list 2>&1 | grep investorclaw | head -1 | sed 's/^[[:space:]]*//')"
 else
-    log_warn "zeroclaw service not found or not running"
-    log_info "Start manually: zeroclaw gateway start"
+    warn "skill not listed — review with: zeroclaw skills list"
 fi
 
+if "$BIN_LINK" --version >/dev/null 2>&1; then
+    ok "investorclaw CLI: $("$BIN_LINK" --version 2>&1 | head -1)"
+else
+    warn "investorclaw CLI not callable from $BIN_LINK"
+fi
+
+# ------------- next steps --------------------------------------------
 echo ""
 echo -e "${GREEN}╔════════════════════════════════════════════════════════════════╗${NC}"
-echo -e "${GREEN}║  ✅ InvestorClaw for zeroclaw Ready                           ║${NC}"
+echo -e "${GREEN}║  InvestorClaw v${VERSION} — installed for zeroclaw                 ║${NC}"
 echo -e "${GREEN}╚════════════════════════════════════════════════════════════════╝${NC}"
 echo ""
-echo "📍 Configuration Applied:"
-echo "   open_skills_enabled = false (prevents token overflow)"
-echo "   max_context_tokens = 131072 (increased for portfolio analysis)"
-echo "   autonomy level = full (allows shell execution)"
-echo "   sandbox backend = none (v0.6.9 workaround)"
+echo "  Skill dir:    $SKILL_DIR"
+echo "  Venv:         $VENV_DIR"
+echo "  CLI:          $BIN_LINK"
+echo "  Config:       $CONFIG_FILE"
 echo ""
-echo "📂 Installation:"
-echo "   Location: $INSTALL_DIR"
-echo "   Config: $ENV_FILE"
-echo "   zeroclaw Config: $ZEROCLAW_CONFIG"
+echo "  Try it:"
+echo "    zeroclaw agent -m \"What is in my portfolio right now?\""
 echo ""
-echo "⚙️  Next Steps:"
-echo "   1. Verify zeroclaw config: cat $ZEROCLAW_CONFIG | grep -E 'open_skills|max_context|level|backend'"
-echo "   2. Test connection: zeroclaw gateway status"
-echo "   3. Run: zeroclaw agent -m 'investorclaw ask \"What's in my portfolio?\"'"
-echo "   4. Refresh when needed: zeroclaw agent -m 'investorclaw refresh'"
-echo ""
-echo "🔧 Troubleshooting:"
-echo "   - Config issues: restore from backup at $ZEROCLAW_CONFIG.backup.*"
-echo "   - Dependencies: cd $INSTALL_DIR && uv sync"
-echo "   - Context overflow: verify open_skills_enabled = false"
-echo ""
-echo ""
-echo "⚠️  IMPORTANT: InvestorClaw is an educational analysis tool, NOT financial advice."
-echo "   Consult a qualified financial advisor before making investment decisions."
-echo ""
+echo "  If you don't have a portfolio CSV yet, drop one in:"
+echo "    $SKILL_DIR/portfolios/"
+echo "  then run:"
+echo "    investorclaw setup"
