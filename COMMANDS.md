@@ -110,7 +110,7 @@ Use the `/portfolio` prefix. This is the recommended public interface.
 
 Use the installed `investorclaw` entrypoint.
 
-`pip install .` or `uv sync` produces this entrypoint.
+`uv sync` produces this entrypoint.
 
 ```bash
 investorclaw holdings
@@ -260,11 +260,11 @@ Use the alias that fits your workflow.
 
 ## Related Documentation
 
-- See [CONFIGURATION.md](CONFIGURATION.md) for API key setup.
-- See [FEATURES.md](FEATURES.md) for a capabilities overview.
+- See CONFIGURATION.md for API key setup.
+- See FEATURES.md for a capabilities overview.
 - See `commands/optimize.py` for the MPT implementation.
 - See [CAPABILITIES.md](CAPABILITIES.md) for the feature overview.
-- See [STONKMODE.md](docs/STONKMODE.md) for entertainment mode.
-- See [DEPLOYMENT.md](DEPLOYMENT.md) for production setup.
+- See STONKMODE.md for entertainment mode.
+- See DEPLOYMENT.md for production setup.
 
-Questions? Open an issue at [github.com/argonautsystems/InvestorClaw/issues](https://gitlab.com/argonautsystems/InvestorClaw/-/issues).
+Questions? Open an issue at github.com/argonautsystems/InvestorClaw/issues.

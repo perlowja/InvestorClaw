@@ -33,7 +33,7 @@ metadata:
       - id: pip
         kind: shell
         label: Install InvestorClaw entry point
-        run: python3 -m pip install .
+        run: "# Install via uv: uv add <package>"
 ---
 
 # InvestorClaw
@@ -115,7 +115,7 @@ tables remain as background references only.
 
 **Runtime prerequisites:**
 - Python 3.10+
-- `investorclaw` entry point on PATH (produced by `pip install .` or `uv sync`)
+- `investorclaw` entry point on PATH (produced by `uv sync`)
 - `$INVESTOR_CLAW_REPORTS_DIR` — default `~/portfolio_reports/`
 - `$INVESTOR_CLAW_PORTFOLIO_DIR` — default `./portfolios/`, or inline path argument
 
@@ -228,14 +228,14 @@ lives in [references/runtime-gemma4-consult.md](references/runtime-gemma4-consul
 It is not a substitute for professional financial advice and does not assess
 personal risk tolerance, goals, or investment suitability.
 
-Licensed under Apache License 2.0 — see [LICENSE](LICENSE).
+Licensed under Apache License 2.0 — see LICENSE.
 
 ## References
 
 - Homepage: https://gitlab.com/argonautsystems/InvestorClaw
-- License: [LICENSE](LICENSE) (Apache 2.0)
+- License: LICENSE (Apache 2.0)
 - User documentation: the InvestorClaude README at gitlab.com/argonautsystems/InvestorClaude
 - Architecture: `docs/`
-- Sample data: [docs/samples/sample_portfolio.csv](docs/samples/sample_portfolio.csv), [docs/samples/stress_test_500.csv](docs/samples/stress_test_500.csv), and [test_sample_holdings.json](test_sample_holdings.json)
+- Sample data: docs/samples/sample_portfolio.csv, docs/samples/stress_test_500.csv, and test_sample_holdings.json
 - Reference documents: [references/](references/) — detail for Output /
   Input / Presentation / Runtime contracts.

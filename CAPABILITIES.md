@@ -614,10 +614,10 @@ InvestorClaw keeps portfolio analysis local by default.
 ## Further Reading
 
 - [COMMANDS.md](COMMANDS.md): All 15 commands with usage examples
-- [CONFIGURATION.md](CONFIGURATION.md): API keys, environment variables, advanced setup
-- [FEATURES.md](FEATURES.md): What InvestorClaw does and doesn't do
-- [MODELS.md](MODELS.md): Sharpe ratio, beta, YTM, duration formulas
-- [DEPLOYMENT.md](DEPLOYMENT.md): Production setup, scaling, multi-user
+- CONFIGURATION.md: API keys, environment variables, advanced setup
+- FEATURES.md: What InvestorClaw does and doesn't do
+- MODELS.md: Sharpe ratio, beta, YTM, duration formulas
+- DEPLOYMENT.md: Production setup, scaling, multi-user
 
 ## Summary
 
