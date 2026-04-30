@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "investorclaw"
-version = "2.6.0"
+version = "2.6.3"
 description = "Adapter package for the InvestorClaw skill: install scripts, manifests, and slash-command contracts for OpenClaw / Hermes / ZeroClaw / standalone runtimes. Engine + foundation primitives live in ic-engine and clio respectively."
 license = { text = "Apache 2.0 Dual License" }
 requires-python = ">=3.10"
@@ -28,7 +28,7 @@ classifiers = [
 # tracking, drift) live in clio. InvestorClaw declares both as deps;
 # `pip install .` here drags the substrate in transitively.
 dependencies = [
-    "ic-engine @ git+https://gitlab.com/argonautsystems/ic-engine.git@v2.5.1",
+    "ic-engine @ git+https://gitlab.com/argonautsystems/ic-engine.git@0cd6ae03a747846ee9de5c83d91ab753311db1f8",
     "clio @ git+https://gitlab.com/argonautsystems/clio.git@v0.1.0",
 ]
 

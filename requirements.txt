@@ -19,5 +19,5 @@
 # Engine + foundation are also pulled transitively via pyproject.toml; pinning
 # them explicitly here documents the version expectations for readers of this
 # fallback path.
-ic-engine @ git+https://gitlab.com/argonautsystems/ic-engine.git@v2.5.1
+ic-engine @ git+https://gitlab.com/argonautsystems/ic-engine.git@0cd6ae03a747846ee9de5c83d91ab753311db1f8
 clio @ git+https://gitlab.com/argonautsystems/clio.git@v0.1.0

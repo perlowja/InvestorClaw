@@ -1934,8 +1934,8 @@ wheels = [
 
 [[package]]
 name = "ic-engine"
-version = "2.5.1"
-source = { git = "https://gitlab.com/argonautsystems/ic-engine.git?rev=v2.5.1#729dd5d9f4c93fe7e61bf4b065623d40b2ec06f7" }
+version = "2.6.3"
+source = { git = "https://gitlab.com/argonautsystems/ic-engine.git?rev=0cd6ae03a747846ee9de5c83d91ab753311db1f8#0cd6ae03a747846ee9de5c83d91ab753311db1f8" }
 dependencies = [
     { name = "camelot-py" },
     { name = "clio" },
@@ -2047,7 +2047,7 @@ wheels = [
 
 [[package]]
 name = "investorclaw"
-version = "2.6.0"
+version = "2.6.3"
 source = { editable = "." }
 dependencies = [
     { name = "clio" },
@@ -2065,7 +2065,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "clio", git = "https://gitlab.com/argonautsystems/clio.git?rev=v0.1.0" },
-    { name = "ic-engine", git = "https://gitlab.com/argonautsystems/ic-engine.git?rev=v2.5.1" },
+    { name = "ic-engine", git = "https://gitlab.com/argonautsystems/ic-engine.git?rev=0cd6ae03a747846ee9de5c83d91ab753311db1f8" },
 ]
 
 [package.metadata.requires-dev]

@@ -1,6 +1,6 @@
 {
   "name": "@argonautsystems/investorclaw",
-  "version": "2.6.0",
+  "version": "2.6.3",
   "description": "Portfolio analysis skill for OpenClaw agents",
   "license": "SEE LICENSE IN LICENSE",
   "type": "module",
